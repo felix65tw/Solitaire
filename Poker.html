@@ -296,33 +296,32 @@
                 --gap: 1vw; /* 縮小牌間距 (從1.5vw減少) */
             }
             
-            /* 手機上卡片字體調整 - 讓文字更大一點 */
-            .card-num, .card-suit-top { 
-                font-size: 1.1rem; /* 從0.9rem增加到1.1rem */
-                top: 5px; /* 位置調整 */
-                left: 5px;
+            /* 手機上卡片字體調整 - 修正右上角花色位置問題 */
+            .card-num { 
+                font-size: 3rem; /* 從1.1rem增加到3rem */
+                font-weight: 800;
+                position: absolute;
+                top: 4px; /* 位置調整 */
+                left: 4px;
+                line-height: 1;
             }
             
             .card-suit-top {
-                right: 5px;
+                font-size: 1.1rem; /* 維持1.1rem不變 */
+                position: absolute;
+                top: 4px; /* 位置調整 */
+                right: 4px; /* 確保在右上角 */
+                line-height: 1;
             }
             
-            /* 調整數字與花色之間的距離 - 縮小30% */
-            /* 我們通過調整card-num和card-suit-top的位置來實現 */
-            .card-num {
-                left: 4px; /* 從5px調整為4px，讓數字更靠左 */
-                top: 4px; /* 微調上方位置 */
-            }
-            
-            .card-suit-top {
-                right: 4px; /* 從5px調整為4px，讓花色更靠右 */
-                top: 4px; /* 微調上方位置 */
-            }
-            
-            /* 手機上中間花色調整為更小，但保持比例 */
+            /* 手機上中間花色調整為2.5rem */
             .card-center-suit { 
-                font-size: 2.2rem; /* 從1.8rem增加到2.2rem */
+                font-size: 2.5rem; /* 從2.2rem增加到2.5rem */
+                position: absolute;
                 top: 60%; /* 調整位置以適應新的大小 */
+                left: 50%;
+                transform: translate(-50%, -50%);
+                font-weight: normal;
             }
             
             /* 手機上工具欄調整 */
@@ -387,12 +386,16 @@
                 }
                 
                 /* 在特別小的屏幕上進一步調整卡片字體 */
-                .card-num, .card-suit-top { 
+                .card-num { 
+                    font-size: 2.5rem; /* 比3rem稍小一點 */
+                }
+                
+                .card-suit-top {
                     font-size: 1rem; /* 比1.1rem稍小一點 */
                 }
                 
                 .card-center-suit { 
-                    font-size: 2rem; /* 從1.6rem增加到2rem */
+                    font-size: 2.2rem; /* 從2rem增加到2.2rem */
                 }
             }
         }
@@ -426,12 +429,16 @@
             }
             
             /* 橫屏模式下卡片字體也相應調整 */
-            .card-num, .card-suit-top { 
-                font-size: 1rem; /* 保持可讀性 */
+            .card-num { 
+                font-size: 2.5rem; /* 保持可讀性 */
+            }
+            
+            .card-suit-top {
+                font-size: 1rem; /* 保持比例 */
             }
             
             .card-center-suit { 
-                font-size: 1.8rem; /* 保持比例 */
+                font-size: 2rem; /* 保持比例 */
             }
         }
     </style>
