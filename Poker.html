@@ -296,20 +296,20 @@
                 --gap: 1.5vw;
             }
             
-            /* 手機上卡片字體調整 */
+            /* 手機上卡片字體調整 - 調整右上角花色和左上角數字為更小 */
             .card-num, .card-suit-top { 
-                font-size: 1.2rem; 
-                top: 5px;
-                left: 5px;
+                font-size: 0.9rem; /* 從1.2rem改為0.9rem */
+                top: 4px; /* 位置稍微上調 */
+                left: 4px;
             }
             
             .card-suit-top {
-                right: 5px;
+                right: 4px;
             }
             
             /* 手機上中間花色調整為更小 */
             .card-center-suit { 
-                font-size: 2rem; /* 從2.5rem改為2rem */
+                font-size: 1.8rem; /* 從2rem改為1.8rem */
                 top: 58%; /* 稍微向上調整以適應更小的字體 */
             }
             
@@ -373,8 +373,13 @@
                     font-size: 11px;
                 }
                 
+                /* 在特別小的屏幕上進一步調整卡片字體 */
+                .card-num, .card-suit-top { 
+                    font-size: 0.8rem; /* 再小一點 */
+                }
+                
                 .card-center-suit { 
-                    font-size: 1.8rem; /* 在更小的屏幕上再小一點 */
+                    font-size: 1.6rem; /* 在更小的屏幕上再小一點 */
                 }
             }
         }
@@ -405,6 +410,15 @@
             
             #game-board {
                 height: calc(100vh - 40px);
+            }
+            
+            /* 橫屏模式下卡片字體也相應調整 */
+            .card-num, .card-suit-top { 
+                font-size: 0.8rem;
+            }
+            
+            .card-center-suit { 
+                font-size: 1.6rem;
             }
         }
     </style>
