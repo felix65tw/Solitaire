@@ -288,29 +288,41 @@
             }
         }
 
-        /* 手機版專用樣式 */
+        /* 手機版專用樣式 - 已調整 */
         @media (max-width: 599px) {
             :root {
-                --card-width: 11vw; /* 手機上卡片更小 */
-                --card-height: 15.4vw; /* 保持16:9比例 */
-                --gap: 1.5vw;
+                --card-width: 12.5vw; /* 卡片再大一點點 (從11vw增加) */
+                --card-height: 17.5vw; /* 等比例增加 (從15.4vw增加) */
+                --gap: 1vw; /* 縮小牌間距 (從1.5vw減少) */
             }
             
-            /* 手機上卡片字體調整 - 調整右上角花色和左上角數字為更小 */
+            /* 手機上卡片字體調整 - 讓文字更大一點 */
             .card-num, .card-suit-top { 
-                font-size: 0.9rem; /* 從1.2rem改為0.9rem */
-                top: 4px; /* 位置稍微上調 */
-                left: 4px;
+                font-size: 1.1rem; /* 從0.9rem增加到1.1rem */
+                top: 5px; /* 位置調整 */
+                left: 5px;
             }
             
             .card-suit-top {
-                right: 4px;
+                right: 5px;
             }
             
-            /* 手機上中間花色調整為更小 */
+            /* 調整數字與花色之間的距離 - 縮小30% */
+            /* 我們通過調整card-num和card-suit-top的位置來實現 */
+            .card-num {
+                left: 4px; /* 從5px調整為4px，讓數字更靠左 */
+                top: 4px; /* 微調上方位置 */
+            }
+            
+            .card-suit-top {
+                right: 4px; /* 從5px調整為4px，讓花色更靠右 */
+                top: 4px; /* 微調上方位置 */
+            }
+            
+            /* 手機上中間花色調整為更小，但保持比例 */
             .card-center-suit { 
-                font-size: 1.8rem; /* 從2rem改為1.8rem */
-                top: 58%; /* 稍微向上調整以適應更小的字體 */
+                font-size: 2.2rem; /* 從1.8rem增加到2.2rem */
+                top: 60%; /* 調整位置以適應新的大小 */
             }
             
             /* 手機上工具欄調整 */
@@ -356,8 +368,9 @@
             /* 特別小的手機 */
             @media (max-width: 320px) {
                 :root {
-                    --card-width: 10.5vw;
-                    --card-height: 14.7vw;
+                    --card-width: 12vw; /* 稍微調整 */
+                    --card-height: 16.8vw; /* 等比例調整 */
+                    --gap: 0.8vw; /* 更小的間距 */
                 }
                 
                 .toolbar-title {
@@ -375,11 +388,11 @@
                 
                 /* 在特別小的屏幕上進一步調整卡片字體 */
                 .card-num, .card-suit-top { 
-                    font-size: 0.8rem; /* 再小一點 */
+                    font-size: 1rem; /* 比1.1rem稍小一點 */
                 }
                 
                 .card-center-suit { 
-                    font-size: 1.6rem; /* 在更小的屏幕上再小一點 */
+                    font-size: 2rem; /* 從1.6rem增加到2rem */
                 }
             }
         }
@@ -387,9 +400,9 @@
         /* 橫屏模式 */
         @media (max-height: 500px) and (orientation: landscape) {
             :root {
-                --card-width: 9vw;
-                --card-height: 12.6vw;
-                --gap: 1vw;
+                --card-width: 10vw; /* 橫屏時卡片稍小 */
+                --card-height: 14vw; /* 等比例調整 */
+                --gap: 0.8vw; /* 更小的間距 */
             }
             
             #game-board {
@@ -414,11 +427,11 @@
             
             /* 橫屏模式下卡片字體也相應調整 */
             .card-num, .card-suit-top { 
-                font-size: 0.8rem;
+                font-size: 1rem; /* 保持可讀性 */
             }
             
             .card-center-suit { 
-                font-size: 1.6rem;
+                font-size: 1.8rem; /* 保持比例 */
             }
         }
     </style>
@@ -1058,13 +1071,13 @@
         const isMobile = window.innerWidth < 600;
         if (isMobile) {
             // 限制手機上最大卡片尺寸
-            const maxCardWidth = Math.min(cardSize.width, 70);
-            const maxCardHeight = Math.min(cardSize.height, 98);
+            const maxCardWidth = Math.min(cardSize.width, 75); // 從70增加到75
+            const maxCardHeight = Math.min(cardSize.height, 105); // 從98增加到105
             cardSize.width = maxCardWidth;
             cardSize.height = maxCardHeight;
         }
 
-        const gap = Math.max(1, (w - (cardSize.width * 7)) / 8);
+        const gap = Math.max(0.5, (w - (cardSize.width * 7)) / 8); // 最小間距0.5px
         const setPos = (id, x, y) => {
             const el = document.getElementById(id);
             el.style.left = x + 'px';
@@ -1086,7 +1099,7 @@
         }
         
         // 下方七列佈局
-        const tableauY = topRowY + cardSize.height + (isMobile ? 15 : 30);
+        const tableauY = topRowY + cardSize.height + (isMobile ? 10 : 30); // 手機上減少間距
         for(let i=0; i<7; i++) {
             let x = gap * (i+1) + cardSize.width * i;
             setPos(`slot-t${i}`, x, tableauY);
@@ -1171,7 +1184,7 @@
                     // 手機上減少重疊比例，讓更多牌可見
                     const isMobile = window.innerWidth < 600;
                     if (isMobile && card.faceUp) {
-                        overlapRatio = 0.6;
+                        overlapRatio = 0.65; // 從0.6增加到0.65，重疊多一點
                     }
                     currentOffset += cardSize.height * (1 - overlapRatio);
                 }
