@@ -34,11 +34,28 @@
             background: rgba(0,0,0,0.2);
         }
         
+        .toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
         .toolbar-title {
             font-size: 14px; /* 手機上字體小一點 */
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+        }
+        
+        .score-display {
+            font-size: 14px;
+            font-weight: bold;
+            color: #FFD700;
+            padding: 2px 8px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            min-width: 60px;
+            text-align: center;
         }
         
         .toolbar-buttons {
@@ -157,7 +174,7 @@
             right: 8px;
         }
         
-        /* [修改] 卡片中間的大花色：往下移動避免太貼近上面 */
+        /* 卡片中間的大花色 */
         .card-center-suit {
             position: absolute;
             top: 62%; /* 原本是 50%，改成 62% 往下移 */
@@ -237,15 +254,16 @@
             83% { transform: translateX(-6px); }
         }
 
-        /* 桌面版樣式 */
+        /* 桌面版樣式 - 維持原始文字和花色大小 */
         @media (min-width: 600px) {
             :root {
                 --card-width: 80px;
                 --card-height: 112px;
                 --gap: 15px;
             }
-            .card-num, .card-suit-top { font-size: 1.5rem; }
-            .card-center-suit { font-size: 3.5rem; }
+            /* 桌面版保持原始大小 */
+            .card-num, .card-suit-top { font-size: 1.8rem; }
+            .card-center-suit { font-size: 4rem; }
             
             .toolbar {
                 padding: 0 20px;
@@ -262,6 +280,11 @@
             button {
                 padding: 8px 16px;
                 font-size: 14px;
+            }
+            
+            .score-display {
+                font-size: 16px;
+                padding: 4px 12px;
             }
         }
 
@@ -284,9 +307,10 @@
                 right: 5px;
             }
             
+            /* 手機上中間花色調整為更小 */
             .card-center-suit { 
-                font-size: 2.5rem; 
-                top: 60%;
+                font-size: 2rem; /* 從2.5rem改為2rem */
+                top: 58%; /* 稍微向上調整以適應更小的字體 */
             }
             
             /* 手機上工具欄調整 */
@@ -297,7 +321,7 @@
             
             .toolbar-title {
                 font-size: 12px;
-                max-width: 40%;
+                max-width: 30%;
             }
             
             .toolbar-buttons {
@@ -308,6 +332,12 @@
                 padding: 5px 8px;
                 font-size: 11px;
                 border-radius: 3px;
+            }
+            
+            .score-display {
+                font-size: 12px;
+                padding: 2px 6px;
+                min-width: 50px;
             }
             
             #game-board {
@@ -338,6 +368,14 @@
                     padding: 4px 6px;
                     font-size: 10px;
                 }
+                
+                .score-display {
+                    font-size: 11px;
+                }
+                
+                .card-center-suit { 
+                    font-size: 1.8rem; /* 在更小的屏幕上再小一點 */
+                }
             }
         }
 
@@ -361,6 +399,10 @@
                 font-size: 11px;
             }
             
+            .score-display {
+                font-size: 11px;
+            }
+            
             #game-board {
                 height: calc(100vh - 40px);
             }
@@ -370,10 +412,12 @@
 <body>
 
 <div class="toolbar">
-    <span class="toolbar-title">經典接龍</span>
+    <div class="toolbar-left">
+        <span class="toolbar-title">經典接龍</span>
+        <div class="score-display">分數: <span id="current-score">1000</span></div>
+    </div>
     <div class="toolbar-buttons">
-        <button onclick="initGame('guaranteed')">可通關</button>
-        <button onclick="initGame('random')">隨機</button>
+        <button onclick="initGame('guaranteed')" id="new-game-btn">新牌局</button>
         <button onclick="undoMove()" id="undo-btn" disabled>撤回</button>
         <button onclick="showHint()" id="hint-btn">提示</button>
     </div>
@@ -415,7 +459,8 @@
         gameMode: 'guaranteed',
         moves: 0,
         startTime: null,
-        timerInterval: null
+        timerInterval: null,
+        score: 1000
     };
     
     let history = [];
@@ -438,15 +483,30 @@
     let lastClickCardId = null;
     let isAnimating = false; // 防止動畫期間重複操作
     
+    // --- 分數計算與更新 ---
+    function updateScore() {
+        // 計算當前分數
+        const elapsed = state.startTime ? Date.now() - state.startTime : 0;
+        const timeBonus = Math.max(0, 600 - Math.floor(elapsed / 10000)) * 10;
+        const movesBonus = Math.max(0, 100 - state.moves) * 5;
+        state.score = 1000 + timeBonus + movesBonus;
+        
+        // 更新顯示
+        document.getElementById('current-score').textContent = state.score;
+    }
+    
     // --- 計時器 ---
     function startTimer() {
         if (state.timerInterval) clearInterval(state.timerInterval);
         state.startTime = Date.now();
+        updateScore(); // 初始化分數
         state.timerInterval = setInterval(updateTimer, 1000);
     }
     
     function updateTimer() {
         if (!state.startTime) return;
+        
+        // 更新時間顯示
         const elapsed = Date.now() - state.startTime;
         const minutes = Math.floor(elapsed / 60000);
         const seconds = Math.floor((elapsed % 60000) / 1000);
@@ -455,6 +515,9 @@
         if (timerElement) {
             timerElement.textContent = `接龍 | ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')} | ${state.moves}步`;
         }
+        
+        // 更新分數
+        updateScore();
     }
     
     function stopTimer() {
@@ -469,16 +532,14 @@
         stopTimer();
         state.gameMode = mode;
         state.moves = 0;
+        state.score = 1000;
         history = [];
         updateUndoButton();
         
         let deck = [];
         if (mode === 'guaranteed') {
-            showMessage("使用可通關牌局，請按照提示進行遊戲！", 2000);
+            showMessage("新牌局開始！", 2000);
             deck = createGuaranteedDeck();
-        } else {
-            showMessage("隨機牌局開始！", 2000);
-            deck = createRandomDeck();
         }
 
         state.stock = [];
@@ -516,7 +577,8 @@
             tableau: JSON.parse(JSON.stringify(state.tableau)),
             moves: state.moves,
             gameMode: state.gameMode,
-            startTime: state.startTime
+            startTime: state.startTime,
+            score: state.score
         };
         history.push(stateCopy);
         updateUndoButton();
@@ -535,9 +597,11 @@
         state.moves = prevState.moves;
         state.gameMode = prevState.gameMode;
         state.startTime = prevState.startTime;
+        state.score = prevState.score;
         
         updateUndoButton();
         render();
+        updateScore(); // 更新分數顯示
     }
     
     function updateUndoButton() {
@@ -604,27 +668,6 @@
         const rotations = Math.floor(Math.random() * 10);
         for (let i = 0; i < rotations; i++) {
             deck.push(deck.shift());
-        }
-        return deck;
-    }
-
-    function createRandomDeck() {
-        let deck = [];
-        SUITS.forEach(suit => {
-            RANKS.forEach((rank, index) => {
-                deck.push({
-                    suit: suit,
-                    text: rank,
-                    rank: index + 1,
-                    color: COLORS[suit],
-                    faceUp: false
-                });
-            });
-        });
-
-        for (let i = deck.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [deck[i], deck[j]] = [deck[j], deck[i]];
         }
         return deck;
     }
@@ -1134,6 +1177,7 @@
                 saveStateToHistory();
                 render();
                 updateTimer();
+                updateScore(); // 更新分數
             }
         }
     }
@@ -1148,6 +1192,7 @@
         saveStateToHistory();
         render();
         updateTimer();
+        updateScore(); // 更新分數
     }
 
     function resetStock() {
@@ -1159,6 +1204,7 @@
         saveStateToHistory();
         render();
         updateTimer();
+        updateScore(); // 更新分數
     }
 
     // --- 自動移動動畫函式 ---
@@ -1277,6 +1323,7 @@
                     saveStateToHistory();
                     render();
                     updateTimer();
+                    updateScore(); // 更新分數
                     checkWin();
                 });
                 return; 
@@ -1322,6 +1369,7 @@
                     saveStateToHistory();
                     render();
                     updateTimer();
+                    updateScore(); // 更新分數
                     checkWin();
                 });
                 return;
@@ -1538,6 +1586,7 @@
             saveStateToHistory();
             render();
             updateTimer();
+            updateScore(); // 更新分數
             checkWin();
         } else {
             render();
@@ -1600,19 +1649,12 @@
         state.foundations.forEach(pile => totalCards += pile.length);
         if (totalCards === 52) {
             stopTimer();
+            // 計算最終分數
+            updateScore();
             setTimeout(() => {
-                const elapsed = Date.now() - state.startTime;
-                const score = calculateScore(elapsed, state.moves);
-                alert(`🎉 恭喜破關！ 🎉\n移動次數：${state.moves}\n得分：${score}`);
+                alert(`🎉 恭喜破關！ 🎉\n移動次數：${state.moves}\n最終分數：${state.score}`);
             }, 200);
         }
-    }
-    
-    function calculateScore(elapsed, moves) {
-        const baseScore = 1000;
-        const timeBonus = Math.max(0, 600 - Math.floor(elapsed / 10000)) * 10;
-        const movesBonus = Math.max(0, 100 - moves) * 5;
-        return baseScore + timeBonus + movesBonus;
     }
 
     window.addEventListener('load', () => {
