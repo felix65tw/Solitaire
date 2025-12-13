@@ -1401,11 +1401,34 @@
             pile.forEach((card, idx) => {
                 if (idx > 0) {
                     const prevCard = pile[idx - 1];
-                    // 計算重疊比例 - 現在手機版和網頁版使用相同的重疊比例
-                    // 已翻開的牌重疊在已翻開的牌上：70%
-                    // 已翻開的牌重疊在未翻開的牌上：90%
-                    // 未翻開的牌重疊在任何牌上：90%
-                    let overlapRatio = prevCard.faceUp ? (card.faceUp ? 0.7 : 0.9) : 0.9;
+                    
+                    // ==================== 修改開始：分開手機版和網頁版的重疊比例計算邏輯 ====================
+                    let overlapRatio;
+                    const isMobile = window.innerWidth < 600;
+                    
+                    if (isMobile) {
+                        // 手機版重疊比例計算邏輯
+                        // 1. 已翻開的牌重疊在已翻開的牌上：50% 重疊
+                        // 2. 已翻開的牌重疊在未翻開的牌上：90% 重疊
+                        // 3. 未翻開的牌重疊在任何牌上：90% 重疊
+                        if (prevCard.faceUp) {
+                            overlapRatio = card.faceUp ? 0.5 : 0.9;
+                        } else {
+                            overlapRatio = 0.9;
+                        }
+                    } else {
+                        // 網頁版重疊比例計算邏輯（保持原樣不變）
+                        // 1. 已翻開的牌重疊在已翻開的牌上：70% 重疊
+                        // 2. 已翻開的牌重疊在未翻開的牌上：90% 重疊
+                        // 3. 未翻開的牌重疊在任何牌上：90% 重疊
+                        if (prevCard.faceUp) {
+                            overlapRatio = card.faceUp ? 0.7 : 0.9;
+                        } else {
+                            overlapRatio = 0.9;
+                        }
+                    }
+                    // ==================== 修改結束 ====================
+                    
                     currentOffset += cardSize.height * (1 - overlapRatio); // 計算偏移量
                 }
                 drawCard(card, pos.left, pos.top + currentOffset, 'tableau', i, idx);
@@ -1479,6 +1502,12 @@
         isAnimating = true; // 標記動畫開始
         const ghosts = []; // 幽靈卡片陣列
         
+        // ==================== 修改開始：分開手機版和網頁版的重疊比例 ====================
+        // 根據當前設備類型決定重疊比例
+        const isMobile = window.innerWidth < 600;
+        const overlapRatio = isMobile ? 0.5 : 0.7; // 手機版50%，網頁版70%
+        // ==================== 修改結束 ====================
+        
         // 建立幽靈卡片
         cards.forEach((card, i) => {
             const ghost = document.createElement('div');
@@ -1492,7 +1521,6 @@
             `;
             
             // 計算堆疊偏移量
-            const overlapRatio = 0.7;
             const overlapHeight = cardSize.height * overlapRatio;
             const offset = i * (cardSize.height - overlapHeight);
 
@@ -1511,7 +1539,6 @@
 
         // 設定目標位置
         ghosts.forEach((ghost, i) => {
-            const overlapRatio = 0.7; // 保持一致
             const overlapHeight = cardSize.height * overlapRatio;
             const offset = i * (cardSize.height - overlapHeight);
             
@@ -1787,10 +1814,13 @@
                 </div>
             `;
             
-            // 計算堆疊偏移量
-            const overlapRatio = 0.7;
+            // ==================== 修改開始：分開手機版和網頁版的重疊比例 ====================
+            // 根據當前設備類型決定重疊比例
+            const isMobile = window.innerWidth < 600;
+            const overlapRatio = isMobile ? 0.5 : 0.7; // 手機版50%，網頁版70%
             const overlapHeight = cardSize.height * overlapRatio;
             const ghostOffset = i * (cardSize.height - overlapHeight);
+            // ==================== 修改結束 ====================
             
             // 設定初始位置
             ghost.style.left = rect.left + 'px';
@@ -1839,9 +1869,13 @@
             if (e.cancelable) e.preventDefault(); // 防止預設行為
             
             drag.elGhosts.forEach((el, i) => {
-                const overlapRatio = 0.7;
+                // ==================== 修改開始：分開手機版和網頁版的重疊比例 ====================
+                const isMobile = window.innerWidth < 600;
+                const overlapRatio = isMobile ? 0.5 : 0.7; // 手機版50%，網頁版70%
                 const overlapHeight = cardSize.height * overlapRatio;
                 const ghostOffset = i * (cardSize.height - overlapHeight);
+                // ==================== 修改結束 ====================
+                
                 el.style.left = (clientX - drag.offset.x) + 'px';
                 el.style.top = (clientY - drag.offset.y + ghostOffset) + 'px';
             });
