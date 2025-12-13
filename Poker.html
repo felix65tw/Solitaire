@@ -1402,8 +1402,8 @@
                 if (idx > 0) {
                     const prevCard = pile[idx - 1];
                     // 計算重疊比例 - 現在手機版和網頁版使用相同的重疊比例
-                    // 翻開的牌重疊在翻開的牌上：70%
-                    // 翻開的牌重疊在未翻開的牌上：90%
+                    // 已翻開的牌重疊在已翻開的牌上：70%
+                    // 已翻開的牌重疊在未翻開的牌上：90%
                     // 未翻開的牌重疊在任何牌上：90%
                     let overlapRatio = prevCard.faceUp ? (card.faceUp ? 0.7 : 0.9) : 0.9;
                     currentOffset += cardSize.height * (1 - overlapRatio); // 計算偏移量
