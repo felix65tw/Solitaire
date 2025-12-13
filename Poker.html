@@ -407,15 +407,19 @@
         .mobile-toolbar-container {
             display: none;
             position: absolute;
-            top: 212px;
-            right: 10px;
+            top: 601px; /* 從212px改為601px */
+            right: 50%;
+            transform: translateX(50%);
             z-index: 1000;
             background: rgba(0,0,0,0.7);
             border-radius: 10px;
             padding: 8px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            flex-direction: column;
-            gap: 5px;
+            flex-direction: row; /* 從column改為row，豎的改成橫的 */
+            gap: 10px; /* 增加間距 */
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 90%;
         }
         
         /* 桌面版樣式 - 維持原始文字和花色大小 */
@@ -630,6 +634,17 @@
                 .card-count {
                     font-size: 1.8rem; /* 調整蓋牌數字大小 (從2.0rem調整) */
                 }
+                
+                /* 在特別小的屏幕上調整手機功能區 */
+                .mobile-toolbar-container {
+                    gap: 5px; /* 減少間距 */
+                    padding: 6px; /* 減少padding */
+                }
+                
+                .mobile-toolbar-container button {
+                    padding: 4px 6px; /* 更小的按鈕 */
+                    font-size: 9px; /* 更小的字體 */
+                }
             }
         }
     </style>
@@ -751,12 +766,6 @@
         // 將分數格式化為4位數字，前面補零
         const formattedScore = state.score.toString().padStart(4, '0');
         document.getElementById('current-score').textContent = formattedScore;
-        
-        // 同時更新手機版顯示
-        const mobileScoreElement = document.getElementById('mobile-current-score');
-        if (mobileScoreElement) {
-            mobileScoreElement.textContent = formattedScore;
-        }
     }
     
     /**
@@ -1565,6 +1574,9 @@
         // 上方區域佈局
         const topRowY = 10;
         
+        // 計算三張牌需要的總寬度：卡片寬度 + 2 * (卡片寬度 * 0.3)
+        const wasteTotalWidth = cardSize.width * (1 + 0.3 * 2);
+        
         if (state.handMode === 'right') {
             // 右手模式：花色區在左，廢牌堆在中間（靠右），牌堆在最右邊
             // 1. 四個花色區（安置區）放在最左邊
@@ -1573,8 +1585,6 @@
             }
             
             // 2. 廢牌堆放在牌堆左邊，但要為三張牌留出空間，向左移動
-            // 計算三張牌需要的總寬度：卡片寬度 + 2 * (卡片寬度 * 0.3)
-            const wasteTotalWidth = cardSize.width * (1 + 0.3 * 2);
             const wasteX = w - gap - cardSize.width - wasteTotalWidth - gap;
             setPos('slot-waste', wasteX, topRowY);
             
@@ -1582,18 +1592,29 @@
             const stockX = w - gap - cardSize.width;
             setPos('slot-stock', stockX, topRowY);
         } else {
-            // 左手模式：牌堆在左，廢牌堆在中間（靠左），花色區在右邊
+            // 左手模式：牌堆在左，廢牌堆在牌堆右邊，花色區在右邊
             // 1. 牌堆（蓋牌區）放在最左邊
-            setPos('slot-stock', gap, topRowY);
+            const stockX = gap;
+            setPos('slot-stock', stockX, topRowY);
             
             // 2. 廢牌堆放在牌堆右邊，但要為三張牌留出空間
-            const wasteTotalWidth = cardSize.width * (1 + 0.3 * 2);
-            const wasteX = gap + cardSize.width + gap;
+            // 廢牌堆的位置應該與右手模式對稱：在右手模式中，廢牌堆在牌堆左邊，距離牌堆左邊緣一個gap
+            // 在左手模式中，廢牌堆應該在牌堆右邊，距離牌堆右邊緣一個gap
+            const wasteX = stockX + cardSize.width + gap;
             setPos('slot-waste', wasteX, topRowY);
             
             // 3. 四個花色區（安置區）放在最右邊
+            // 計算花色區需要的總寬度：4張卡片 + 3個間距
+            const foundationsTotalWidth = 4 * cardSize.width + 3 * gap;
+            // 花色區右邊緣對齊屏幕右邊緣減去一個gap
+            const foundationsRight = w - gap;
+            // 花色區左邊緣位置
+            const foundationsLeft = foundationsRight - foundationsTotalWidth;
+            
+            // 設置花色區位置，從左到右排列
             for(let i=0; i<4; i++) {
-                setPos(`slot-f${i}`, w - gap*(4-i) - cardSize.width*(4-i), topRowY);
+                const foundationX = foundationsLeft + i * (cardSize.width + gap);
+                setPos(`slot-f${i}`, foundationX, topRowY);
             }
         }
         
@@ -1844,6 +1865,9 @@
             animCard.style.width = stockRect.width + 'px';
             animCard.style.height = stockRect.height + 'px';
             
+            // 添加data-text屬性，以便CSS樣式正確應用
+            animCard.dataset.text = card.text;
+            
             // 確保背景為白色
             animCard.style.backgroundColor = 'white';
             
@@ -1873,9 +1897,17 @@
             setTimeout(() => {
                 animCard.classList.remove('back');
                 animCard.classList.add(card.color);
+                
+                // 針對數字10的特殊處理
+                let numHtml = `<div class="card-num ${card.color}">${card.text}</div>`;
+                if (card.text === "10") {
+                    // 如果是10，添加特殊的CSS類
+                    numHtml = `<div class="card-num ${card.color}" style="font-size: 2.5rem; transform: scaleX(0.75); transform-origin: left top; left: 0.8px;">${card.text}</div>`;
+                }
+                
                 animCard.innerHTML = `
                     <div class="card-face">
-                        <div class="card-num ${card.color}">${card.text}</div>
+                        ${numHtml}
                         <div class="card-suit-top ${card.color}">${card.suit}</div>
                         <div class="card-center-suit ${card.color}">${card.suit}</div>
                     </div>
@@ -1951,9 +1983,20 @@
             const ghost = document.createElement('div');
             ghost.className = `card flying-card ${card.color}`;
             ghost.style.backgroundColor = 'white'; // 確保背景為白色
+            
+            // 添加data-text屬性
+            ghost.dataset.text = card.text;
+            
+            // 針對數字10的特殊處理
+            let numHtml = `<div class="card-num ${card.color}">${card.text}</div>`;
+            if (card.text === "10") {
+                // 如果是10，添加特殊的CSS樣式
+                numHtml = `<div class="card-num ${card.color}" style="font-size: 1.8rem; transform: scaleX(0.75); transform-origin: left top; left: 4px;">${card.text}</div>`;
+            }
+            
             ghost.innerHTML = `
                 <div class="card-face">
-                    <div class="card-num ${card.color}">${card.text}</div>
+                    ${numHtml}
                     <div class="card-suit-top ${card.color}">${card.suit}</div>
                     <div class="card-center-suit ${card.color}">${card.suit}</div>
                 </div>
@@ -2060,6 +2103,9 @@
         magicCard.style.width = sourceRect.width + 'px';
         magicCard.style.height = sourceRect.height + 'px';
         
+        // 添加data-text屬性
+        magicCard.dataset.text = card.text;
+        
         // 確保背景為白色
         magicCard.style.backgroundColor = 'white';
         
@@ -2090,9 +2136,17 @@
         setTimeout(() => {
             magicCard.classList.remove('back');
             magicCard.classList.add(card.color);
+            
+            // 針對數字10的特殊處理
+            let numHtml = `<div class="card-num ${card.color}">${card.text}</div>`;
+            if (card.text === "10") {
+                // 如果是10，添加特殊的CSS樣式
+                numHtml = `<div class="card-num ${card.color}" style="font-size: 2.5rem; transform: scaleX(0.75); transform-origin: left top; left: 0.8px;">${card.text}</div>`;
+            }
+            
             magicCard.innerHTML = `
                 <div class="card-face">
-                    <div class="card-num ${card.color}">${card.text}</div>
+                    ${numHtml}
                     <div class="card-suit-top ${card.color}">${card.suit}</div>
                     <div class="card-center-suit ${card.color}">${card.suit}</div>
                 </div>
@@ -2414,9 +2468,20 @@
             const ghost = document.createElement('div');
             ghost.className = `card dragging-card ${card.color}`;
             ghost.style.backgroundColor = 'white'; // 確保背景為白色
+            
+            // 添加data-text屬性
+            ghost.dataset.text = card.text;
+            
+            // 針對數字10的特殊處理
+            let numHtml = `<div class="card-num ${card.color}">${card.text}</div>`;
+            if (card.text === "10") {
+                // 如果是10，添加特殊的CSS樣式
+                numHtml = `<div class="card-num ${card.color}" style="font-size: 1.8rem; transform: scaleX(0.75); transform-origin: left top; left: 4px;">${card.text}</div>`;
+            }
+            
             ghost.innerHTML = `
                 <div class="card-face">
-                    <div class="card-num ${card.color}">${card.text}</div>
+                    ${numHtml}
                     <div class="card-suit-top ${card.color}">${card.suit}</div>
                     <div class="card-center-suit ${card.color}">${card.suit}</div>
                 </div>
