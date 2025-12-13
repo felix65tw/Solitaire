@@ -44,14 +44,6 @@
             gap: 10px; /* 元素間距 */
         }
         
-        /* 工具欄標題 */
-        .toolbar-title {
-            font-size: 14px; /* 手機上字體小一點 */
-            white-space: nowrap; /* 不換行 */
-            overflow: hidden; /* 隱藏溢出內容 */
-            text-overflow: ellipsis; /* 文字溢出顯示省略號 */
-        }
-        
         /* 分數顯示 */
         .score-display {
             font-size: 14px;
@@ -214,6 +206,19 @@
             );
             border: 2px solid #fff; /* 白色邊框 */
         }
+        
+        /* 牌堆卡片上的剩餘數量顯示 */
+        .card-count {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.9);
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+            z-index: 2;
+        }
 
         /* 拖曳中的卡片 */
         .dragging-card {
@@ -293,10 +298,6 @@
                 padding: 0 20px; /* 桌面版增加padding */
             }
             
-            .toolbar-title {
-                font-size: 16px; /* 桌面版字體稍大 */
-            }
-            
             .toolbar-buttons {
                 gap: 10px; /* 桌面版按鈕間距稍大 */
             }
@@ -325,16 +326,22 @@
                 font-size: 2.5rem; /* 調整為2.5rem (從3rem減少) */
                 font-weight: 800;
                 position: absolute;
-                top: 0.1px; /* 修改：改為1.3px (從2px調整) */
-                left: 1.3px; /* 修改：改為1.3px (從2px調整) */
+                top: 0.1px;
+                left: 1.3px;
                 line-height: 0.8;
             }
             
+            /* 特殊處理數字"10" */
+            .card[data-text="10"] .card-num {
+                font-size: 2.2rem; /* 數字10使用稍小的字體 */
+                left: 0.5px; /* 稍微調整位置 */
+            }
+            
             .card-suit-top {
-                font-size: 0.8rem; /* 維持1.1rem不變 */
+                font-size: 0.8rem;
                 position: absolute;
-                top: 6px; /* 修改：改為1.3px (從2px調整) */
-                right: 2px; /* 修改：改為1.3px (從2px調整) */
+                top: 6px;
+                right: 2px;
                 line-height: 1;
             }
             
@@ -342,10 +349,9 @@
             .card-center-suit { 
                 font-size: 2.2rem; /* 從2.2rem增加到2.5rem */
                 position: absolute;
-                /* 修改：移除top屬性，改用bottom讓花色靠近底部 */
-                top: 25px; /* 修改：使用bottom屬性，離底端1.1px */
+                top: 25px;
                 left: 50%;
-                transform: translateX(-50%); /* 修改：只水平居中，垂直居中由bottom控制 */
+                transform: translateX(-50%);
                 font-weight: normal;
             }
             
@@ -353,11 +359,6 @@
             .toolbar {
                 height: 45px; /* 手機版工具欄稍矮 */
                 padding: 0 8px; /* 手機版padding稍小 */
-            }
-            
-            .toolbar-title {
-                font-size: 12px; /* 手機版字體稍小 */
-                max-width: 30%; /* 最大寬度限制 */
             }
             
             .toolbar-buttons {
@@ -397,10 +398,6 @@
                     --gap: 0.8vw; /* 更小的間距 */
                 }
                 
-                .toolbar-title {
-                    font-size: 11px; /* 更小的字體 */
-                }
-                
                 button {
                     padding: 4px 6px; /* 更小的按鈕 */
                     font-size: 10px; /* 更小的字體 */
@@ -415,6 +412,12 @@
                     font-size: 2.2rem; /* 比2.5rem稍小一點 */
                     top: 1.3px; /* 保持1.3px邊距 */
                     left: 1.3px; /* 保持1.3px邊距 */
+                }
+                
+                /* 特別小的屏幕上數字"10"的處理 */
+                .card[data-text="10"] .card-num {
+                    font-size: 2.0rem; /* 數字10使用更小的字體 */
+                    left: 0.3px; /* 稍微調整位置 */
                 }
                 
                 .card-suit-top {
@@ -437,8 +440,7 @@
 <!-- 工具欄區塊 -->
 <div class="toolbar">
     <div class="toolbar-left">
-        <span class="toolbar-title">經典接龍</span>
-        <div class="score-display">分數: <span id="current-score">1000</span></div>
+        <div class="score-display">分數: <span id="current-score">0</span></div>
     </div>
     <div class="toolbar-buttons">
         <button onclick="initGame('guaranteed')" id="new-game-btn">新牌局</button>
@@ -491,7 +493,7 @@
         moves: 0, // 移動次數
         startTime: null, // 遊戲開始時間
         timerInterval: null, // 計時器間隔ID
-        score: 1000 // 初始分數
+        score: 0 // 初始分數
     };
     
     let history = []; // 遊戲歷史紀錄，用於撤回功能
@@ -516,21 +518,19 @@
     
     // ==================== 分數計算與更新函數 ====================
     /**
-     * 更新遊戲分數
-     * 分數計算公式：基礎分數1000 + 時間獎勵 + 步數獎勵
+     * 更新分數顯示
      */
-    function updateScore() {
-        // 計算經過的時間
-        const elapsed = state.startTime ? Date.now() - state.startTime : 0;
-        // 時間獎勵：每10秒減少10分，最低為0
-        const timeBonus = Math.max(0, 600 - Math.floor(elapsed / 10000)) * 10;
-        // 步數獎勵：每步5分，最多100步
-        const movesBonus = Math.max(0, 100 - state.moves) * 5;
-        // 計算總分數
-        state.score = 1000 + timeBonus + movesBonus;
-        
-        // 更新顯示
+    function updateScoreDisplay() {
         document.getElementById('current-score').textContent = state.score;
+    }
+    
+    /**
+     * 增加分數
+     * @param {number} points - 要增加的分數
+     */
+    function addScore(points) {
+        state.score += points;
+        updateScoreDisplay();
     }
     
     // ==================== 計時器相關函數 ====================
@@ -540,7 +540,6 @@
     function startTimer() {
         if (state.timerInterval) clearInterval(state.timerInterval); // 清除現有計時器
         state.startTime = Date.now(); // 記錄開始時間
-        updateScore(); // 初始化分數
         state.timerInterval = setInterval(updateTimer, 1000); // 每秒更新一次
     }
     
@@ -556,13 +555,10 @@
         const seconds = Math.floor((elapsed % 60000) / 1000); // 計算秒數
         
         // 更新工具欄標題
-        const timerElement = document.querySelector('.toolbar-title');
+        const timerElement = document.querySelector('.toolbar-left');
         if (timerElement) {
-            timerElement.textContent = `接龍 | ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')} | ${state.moves}步`;
+            timerElement.innerHTML = `<div class="score-display">分數: <span id="current-score">${state.score}</span></div>`;
         }
-        
-        // 更新分數
-        updateScore();
     }
     
     /**
@@ -584,7 +580,7 @@
         stopTimer(); // 停止計時器
         state.gameMode = mode; // 設定遊戲模式
         state.moves = 0; // 重置移動次數
-        state.score = 1000; // 重置分數
+        state.score = 0; // 重置分數為0
         history = []; // 清空歷史紀錄
         updateUndoButton(); // 更新撤回按鈕狀態
         
@@ -622,6 +618,7 @@
         layoutSlots(); // 佈局槽位
         render(); // 渲染遊戲畫面
         startTimer(); // 開始計時
+        updateScoreDisplay(); // 更新分數顯示
     }
     
     // ==================== 歷史紀錄相關函數 ====================
@@ -664,7 +661,7 @@
         
         updateUndoButton(); // 更新撤回按鈕狀態
         render(); // 重新渲染
-        updateScore(); // 更新分數顯示
+        updateScoreDisplay(); // 更新分數顯示
     }
     
     /**
@@ -1273,6 +1270,7 @@
             div.dataset.type = type;
             div.dataset.pileIdx = pileIdx;
             div.dataset.cardIdx = cardIdx;
+            div.dataset.text = card.text; // 添加牌面文字用於CSS選擇器
 
             if (card.faceUp) {
                 div.classList.add(card.color);
@@ -1305,7 +1303,21 @@
         // 繪製牌堆
         const sPos = slotPositions['slot-stock'];
         if (state.stock.length > 0) {
-            drawCard(state.stock[state.stock.length-1], sPos.left, sPos.top, 'stock', 0, 0);
+            // 創建牌堆卡片
+            const stockDiv = document.createElement('div');
+            stockDiv.className = 'card back';
+            stockDiv.style.left = sPos.left + 'px';
+            stockDiv.style.top = sPos.top + 'px';
+            stockDiv.dataset.type = 'stock';
+            
+            // 添加牌堆剩餘數量顯示
+            const countDiv = document.createElement('div');
+            countDiv.className = 'card-count';
+            countDiv.textContent = state.stock.length;
+            
+            stockDiv.appendChild(countDiv);
+            stockDiv.addEventListener('click', drawStock);
+            layer.appendChild(stockDiv);
         } else {
             // 牌堆為空時顯示重新整理按鈕
             const emptyStock = document.createElement('div');
@@ -1340,13 +1352,8 @@
             pile.forEach((card, idx) => {
                 if (idx > 0) {
                     const prevCard = pile[idx - 1];
-                    // 計算重疊比例
+                    // 計算重疊比例 - 現在手機版和網頁版使用相同的重疊比例
                     let overlapRatio = prevCard.faceUp ? (card.faceUp ? 0.7 : 0.9) : 0.9;
-                    // 修改：手機版翻開的牌重疊50%
-                    const isMobile = window.innerWidth < 600;
-                    if (isMobile && card.faceUp) {
-                        overlapRatio = 0.5; // 修改：改為50%重疊 (從0.65減少)
-                    }
                     currentOffset += cardSize.height * (1 - overlapRatio); // 計算偏移量
                 }
                 drawCard(card, pos.left, pos.top + currentOffset, 'tableau', i, idx);
@@ -1366,10 +1373,10 @@
             if (!topCard.faceUp) {
                 topCard.faceUp = true; // 翻開卡片
                 state.moves++; // 增加移動次數
+                addScore(5); // 翻開一張牌得5分
                 saveStateToHistory(); // 儲存狀態
                 render(); // 重新渲染
                 updateTimer(); // 更新計時器
-                updateScore(); // 更新分數
             }
         }
     }
@@ -1384,10 +1391,10 @@
         card.faceUp = true; // 翻開卡片
         state.waste.push(card); // 放入廢牌堆
         state.moves++; // 增加移動次數
+        addScore(5); // 翻開一張牌得5分
         saveStateToHistory(); // 儲存狀態
         render(); // 重新渲染
         updateTimer(); // 更新計時器
-        updateScore(); // 更新分數
     }
 
     /**
@@ -1402,10 +1409,10 @@
         });
         state.waste = []; // 清空廢牌堆
         state.moves++; // 增加移動次數
+        addScore(-100); // 重新循環廢牌堆扣100分
         saveStateToHistory(); // 儲存狀態
         render(); // 重新渲染
         updateTimer(); // 更新計時器
-        updateScore(); // 更新分數
     }
 
     // ==================== 自動移動動畫函數 ====================
@@ -1533,10 +1540,15 @@
                     }
                     
                     state.moves++;
+                    // 根據移動類型加分
+                    if (type === 'waste') {
+                        addScore(10); // 從廢牌堆移動到花色區得10分
+                    } else {
+                        addScore(10); // 從表格列移動到花色區得10分
+                    }
                     saveStateToHistory();
                     render();
                     updateTimer();
-                    updateScore(); // 更新分數
                     checkWin(); // 檢查是否獲勝
                 });
                 return; 
@@ -1578,10 +1590,15 @@
                     }
                     
                     state.moves++;
+                    // 根據移動類型加分
+                    if (type === 'waste') {
+                        addScore(5); // 從廢牌堆移動到表格列得5分
+                    } else {
+                        addScore(5 * cardsToMove.length); // 從表格列移動到表格列，每張牌得5分
+                    }
                     saveStateToHistory();
                     render();
                     updateTimer();
-                    updateScore(); // 更新分數
                     checkWin(); // 檢查是否獲勝
                 });
                 return;
@@ -1845,7 +1862,6 @@
             saveStateToHistory();
             render();
             updateTimer();
-            updateScore(); // 更新分數
             checkWin(); // 檢查是否獲勝
         } else {
             render(); // 移動失敗，重新渲染恢復原狀
@@ -1915,8 +1931,20 @@
         // 添加到目標
         if (target.type === 'foundation') {
             state.foundations[target.idx].push(...cards);
+            // 根據來源加分
+            if (source.type === 'waste') {
+                addScore(10); // 從廢牌堆移動到花色區得10分
+            } else if (source.type === 'tableau') {
+                addScore(10); // 從表格列移動到花色區得10分
+            }
         } else if (target.type === 'tableau') {
             state.tableau[target.idx].push(...cards);
+            // 根據來源加分
+            if (source.type === 'waste') {
+                addScore(5); // 從廢牌堆移動到表格列得5分
+            } else if (source.type === 'tableau') {
+                addScore(5 * cards.length); // 從表格列移動到表格列，每張牌得5分
+            }
         }
     }
 
@@ -1929,7 +1957,6 @@
         state.foundations.forEach(pile => totalCards += pile.length); // 計算花色區總牌數
         if (totalCards === 52) { // 所有牌都在花色區
             stopTimer(); // 停止計時器
-            updateScore(); // 計算最終分數
             setTimeout(() => {
                 alert(`🎉 恭喜破關！ 🎉\n移動次數：${state.moves}\n最終分數：${state.score}`);
             }, 200);
