@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>經典接龍 (手機適配版)</title>
+    <title>經典接龍 (手機適配版) - 三張翻牌模式</title>
     <style>
         /* CSS 變數定義，方便全域調整樣式 */
         :root {
@@ -68,6 +68,72 @@
             text-align: center;
         }
         
+        /* 模式切換按鈕容器 */
+        .mode-toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: white;
+            font-size: 12px;
+        }
+        
+        /* 模式切換按鈕 */
+        .mode-toggle {
+            display: flex;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            padding: 4px;
+            gap: 4px;
+        }
+        
+        .mode-option {
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+        
+        .mode-option.active {
+            background: white;
+            color: #35654d;
+        }
+        
+        /* 左右手模式切換按鈕容器 */
+        .hand-toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: white;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        
+        .hand-toggle {
+            display: flex;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            padding: 4px;
+            gap: 4px;
+        }
+        
+        .hand-option {
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+        
+        .hand-option.active {
+            background: white;
+            color: #35654d;
+        }
+        
         /* 工具欄按鈕區塊 */
         .toolbar-buttons {
             display: flex;
@@ -84,6 +150,25 @@
             cursor: pointer; /* 游標手形 */
             font-size: 12px; /* 手機上字體小一點 */
             white-space: nowrap; /* 不換行 */
+        }
+        
+        /* 魔法按鈕特殊樣式 */
+        #magic-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        #magic-btn:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+        
+        #magic-btn:disabled {
+            background: #cccccc;
+            color: #666;
+            border: 2px solid #999;
+            box-shadow: none;
         }
         
         /* 按鈕懸停效果 */
@@ -143,7 +228,7 @@
             width: var(--card-width); /* 使用CSS變數設定寬度 */
             height: var(--card-height); /* 使用CSS變數設定高度 */
             max-width: var(--max-w); /* 最大寬度限制 */
-            max-height: var(--max-h); /* 最大高度限制 */
+            max-height: var(--max-h); /* 卡片最大高度限制 */
             background-color: white; /* 白色背景 */
             border-radius: 6px; /* 圓角 */
             box-shadow: 1px 1px 3px rgba(0,0,0,0.4); /* 陰影效果 */
@@ -294,6 +379,28 @@
             83% { transform: translateX(-6px); }
         }
 
+        /* 翻牌動畫卡片 */
+        .draw-animation-card {
+            position: fixed;
+            z-index: 99998;
+            pointer-events: none;
+            transition: all 0.4s ease-in-out;
+            transform-origin: center;
+            background-color: white !important; /* 確保動畫卡片背景為白色 */
+        }
+        
+        /* 魔法動畫卡片 */
+        .magic-animation-card {
+            position: fixed;
+            z-index: 99997;
+            pointer-events: none;
+            transition: all 0.5s ease-in-out;
+            transform-origin: center;
+            background-color: white !important;
+            border: 2px solid #667eea;
+            box-shadow: 0 0 20px #667eea !important;
+        }
+        
         /* 桌面版樣式 - 維持原始文字和花色大小 */
         @media (min-width: 600px) {
             :root {
@@ -327,6 +434,17 @@
             .score-display {
                 font-size: 16px; /* 桌面版字體稍大 */
                 padding: 4px 12px; /* 桌面版padding稍大 */
+            }
+            
+            .mode-toggle-container,
+            .hand-toggle-container {
+                font-size: 14px;
+            }
+            
+            .mode-option,
+            .hand-option {
+                font-size: 13px;
+                padding: 5px 12px;
             }
         }
 
@@ -406,6 +524,18 @@
                 min-width: 50px; /* 最小寬度 */
             }
             
+            .mode-toggle-container,
+            .hand-toggle-container {
+                font-size: 10px;
+                gap: 4px;
+            }
+            
+            .mode-option,
+            .hand-option {
+                font-size: 9px;
+                padding: 3px 6px;
+            }
+            
             #game-board {
                 height: calc(100vh - 45px); /* 減去工具欄高度 */
                 margin-top: 3px; /* 手機版上邊距稍小 */
@@ -446,6 +576,17 @@
                     font-size: 10px; /* 更小的字體 */
                 }
                 
+                .mode-toggle-container,
+                .hand-toggle-container {
+                    font-size: 9px;
+                }
+                
+                .mode-option,
+                .hand-option {
+                    font-size: 8px;
+                    padding: 2px 4px;
+                }
+                
                 /* 在特別小的屏幕上進一步調整卡片字體 */
                 .card-num { 
                     font-size: 2.2rem; /* 比2.5rem稍小一點 */
@@ -478,7 +619,6 @@
                 }
             }
         }
-        /* 注意：已移除所有橫屏模式的媒體查詢，本遊戲只支持豎屏模式 */
     </style>
 </head>
 <body>
@@ -488,11 +628,26 @@
     <div class="toolbar-left">
         <div class="time-moves-display" id="time-moves">00:00 | 0步</div>
         <div class="score-display">分數: <span id="current-score">0</span></div>
+        <div class="mode-toggle-container">
+            <span>翻牌:</span>
+            <div class="mode-toggle">
+                <div class="mode-option active" id="mode-1" onclick="setDrawMode(1)">1張</div>
+                <div class="mode-option" id="mode-3" onclick="setDrawMode(3)">3張</div>
+            </div>
+        </div>
+        <div class="hand-toggle-container">
+            <span>手別:</span>
+            <div class="hand-toggle">
+                <div class="hand-option active" id="hand-right" onclick="setHandMode('right')">右手</div>
+                <div class="hand-option" id="hand-left" onclick="setHandMode('left')">左手</div>
+            </div>
+        </div>
     </div>
     <div class="toolbar-buttons">
         <button onclick="initGame('guaranteed')" id="new-game-btn">新牌局</button>
         <button onclick="undoMove()" id="undo-btn" disabled>撤回</button>
         <button onclick="showHint()" id="hint-btn">提示</button>
+        <button onclick="magicMove()" id="magic-btn" disabled>魔法</button>
     </div>
 </div>
 
@@ -501,21 +656,23 @@
 
 <!-- 遊戲主區域 -->
 <div id="game-board">
-    <!-- 牌堆槽位 -->
-    <div id="slot-stock" class="slot"></div>
-    <!-- 廢牌堆槽位 -->
-    <div id="slot-waste" class="slot"></div>
-    <!-- 四個花色區槽位 -->
+    <!-- 四個花色區槽位 (安置區) - 位置由手別模式決定 -->
     <div id="slot-f0" class="slot" data-type="foundation" data-idx="0"></div>
     <div id="slot-f1" class="slot" data-type="foundation" data-idx="1"></div>
     <div id="slot-f2" class="slot" data-type="foundation" data-idx="2"></div>
     <div id="slot-f3" class="slot" data-type="foundation" data-idx="3"></div>
 
+    <!-- 廢牌堆槽位 - 位置由手別模式決定 -->
+    <div id="slot-waste" class="slot"></div>
+    
+    <!-- 牌堆槽位 (蓋牌區) - 位置由手別模式決定 -->
+    <div id="slot-stock" class="slot"></div>
+
     <!-- 七列表格槽位 -->
     <div id="slot-t0" class="slot" data-type="tableau" data-idx="0"></div>
     <div id="slot-t1" class="slot" data-type="tableau" data-idx="1"></div>
     <div id="slot-t2" class="slot" data-type="tableau" data-idx="2"></div>
-    <div id="slot-t3" class="slot" data-type="tableau" data-idx="3"></div>
+<div id="slot-t3" class="slot" data-type="tableau" data-idx="3"></div>
     <div id="slot-t4" class="slot" data-type="tableau" data-idx="4"></div>
     <div id="slot-t5" class="slot" data-type="tableau" data-idx="5"></div>
     <div id="slot-t6" class="slot" data-type="tableau" data-idx="6"></div>
@@ -540,7 +697,9 @@
         moves: 0, // 移動次數
         startTime: null, // 遊戲開始時間
         timerInterval: null, // 計時器間隔ID
-        score: 0 // 初始分數
+        score: 0, // 初始分數
+        drawMode: 1, // 翻牌模式：1張或3張，預設為1張
+        handMode: 'right' // 手別模式：右手或左手，預設為右手
     };
     
     let history = []; // 遊戲歷史紀錄，用於撤回功能
@@ -617,6 +776,47 @@
             state.timerInterval = null;
         }
     }
+    
+    // ==================== 翻牌模式設定函數 ====================
+    /**
+     * 設定翻牌模式
+     * @param {number} mode - 翻牌模式 (1或3)
+     */
+    function setDrawMode(mode) {
+        if (mode !== 1 && mode !== 3) return;
+        
+        state.drawMode = mode;
+        
+        // 更新UI顯示
+        document.getElementById('mode-1').classList.toggle('active', mode === 1);
+        document.getElementById('mode-3').classList.toggle('active', mode === 3);
+        
+        // 重新渲染以更新廢牌堆顯示
+        render();
+        
+        showMessage(`已切換為一次翻${mode}張牌模式`, 1500);
+    }
+    
+    // ==================== 手別模式設定函數 ====================
+    /**
+     * 設定手別模式
+     * @param {string} mode - 手別模式 ('left' 或 'right')
+     */
+    function setHandMode(mode) {
+        if (mode !== 'left' && mode !== 'right') return;
+        
+        state.handMode = mode;
+        
+        // 更新UI顯示
+        document.getElementById('hand-right').classList.toggle('active', mode === 'right');
+        document.getElementById('hand-left').classList.toggle('active', mode === 'left');
+        
+        // 重新佈局並渲染
+        layoutSlots();
+        render();
+        
+        showMessage(`已切換為${mode === 'right' ? '右手' : '左手'}模式`, 1500);
+    }
 
     // ==================== 遊戲初始化函數 ====================
     /**
@@ -630,6 +830,7 @@
         state.score = 0; // 重置分數為0
         history = []; // 清空歷史紀錄
         updateUndoButton(); // 更新撤回按鈕狀態
+        updateMagicButton(); // 更新魔法按鈕狀態
         
         let deck = []; // 牌組
         if (mode === 'guaranteed') {
@@ -682,10 +883,13 @@
             moves: state.moves, // 移動次數
             gameMode: state.gameMode, // 遊戲模式
             startTime: state.startTime, // 開始時間
-            score: state.score // 分數
+            score: state.score, // 分數
+            drawMode: state.drawMode, // 翻牌模式
+            handMode: state.handMode // 手別模式
         };
         history.push(stateCopy); // 加入歷史紀錄
         updateUndoButton(); // 更新撤回按鈕狀態
+        updateMagicButton(); // 更新魔法按鈕狀態
     }
     
     /**
@@ -706,8 +910,17 @@
         state.gameMode = prevState.gameMode;
         state.startTime = prevState.startTime;
         state.score = prevState.score;
+        state.drawMode = prevState.drawMode;
+        state.handMode = prevState.handMode;
+        
+        // 更新模式顯示
+        document.getElementById('mode-1').classList.toggle('active', state.drawMode === 1);
+        document.getElementById('mode-3').classList.toggle('active', state.drawMode === 3);
+        document.getElementById('hand-right').classList.toggle('active', state.handMode === 'right');
+        document.getElementById('hand-left').classList.toggle('active', state.handMode === 'left');
         
         updateUndoButton(); // 更新撤回按鈕狀態
+        updateMagicButton(); // 更新魔法按鈕狀態
         render(); // 重新渲染
         updateTimer(); // 更新時間顯示
         updateScoreDisplay(); // 更新分數顯示
@@ -718,6 +931,17 @@
      */
     function updateUndoButton() {
         document.getElementById('undo-btn').disabled = history.length <= 1;
+    }
+    
+    /**
+     * 更新魔法按鈕狀態
+     */
+    function updateMagicButton() {
+        // 檢查是否有蓋著的牌
+        const hasFacedDownCards = state.tableau.some(pile => 
+            pile.some(card => !card.faceUp)
+        );
+        document.getElementById('magic-btn').disabled = !hasFacedDownCards || isAnimating;
     }
 
     // ==================== 牌組建立函數 ====================
@@ -859,6 +1083,7 @@
         
         // 5. 檢查廢牌區移動
         if (state.waste.length > 0) {
+            // 在三張模式下，只能移動廢牌堆最上面的一張牌
             const wasteCard = state.waste[state.waste.length - 1];
             for (let j = 0; j < 4; j++) {
                 const foundation = state.foundations[j];
@@ -899,7 +1124,7 @@
         
         // 7. 預設提示
         if (state.stock.length > 0) {
-            showMessage("提示：點擊牌堆來翻開新牌", 2000);
+            showMessage(`提示：點擊牌堆來翻開新牌（${state.drawMode}張模式）`, 2000);
             highlightStock();
         } else if (state.waste.length > 0) {
             showMessage("提示：點擊廢牌堆左側的箭頭重新使用廢牌", 2000);
@@ -1277,12 +1502,37 @@
 
         // 上方區域佈局
         const topRowY = 10;
-        setPos('slot-stock', gap, topRowY); // 牌堆
-        setPos('slot-waste', gap*2 + cardSize.width, topRowY); // 廢牌堆
         
-        // 四個花色區從右到左排列
-        for(let i=0; i<4; i++) {
-            setPos(`slot-f${i}`, w - gap*(4-i) - cardSize.width*(4-i), topRowY);
+        if (state.handMode === 'right') {
+            // 右手模式：花色區在左，廢牌堆在中間（靠右），牌堆在最右邊
+            // 1. 四個花色區（安置區）放在最左邊
+            for(let i=0; i<4; i++) {
+                setPos(`slot-f${i}`, gap + i * (cardSize.width + gap), topRowY);
+            }
+            
+            // 2. 廢牌堆放在牌堆左邊，但要為三張牌留出空間，向左移動
+            // 計算三張牌需要的總寬度：卡片寬度 + 2 * (卡片寬度 * 0.3)
+            const wasteTotalWidth = cardSize.width * (1 + 0.3 * 2);
+            const wasteX = w - gap - cardSize.width - wasteTotalWidth - gap;
+            setPos('slot-waste', wasteX, topRowY);
+            
+            // 3. 牌堆（蓋牌區）放在最右邊
+            const stockX = w - gap - cardSize.width;
+            setPos('slot-stock', stockX, topRowY);
+        } else {
+            // 左手模式：牌堆在左，廢牌堆在中間（靠左），花色區在右邊
+            // 1. 牌堆（蓋牌區）放在最左邊
+            setPos('slot-stock', gap, topRowY);
+            
+            // 2. 廢牌堆放在牌堆右邊，但要為三張牌留出空間
+            const wasteTotalWidth = cardSize.width * (1 + 0.3 * 2);
+            const wasteX = gap + cardSize.width + gap;
+            setPos('slot-waste', wasteX, topRowY);
+            
+            // 3. 四個花色區（安置區）放在最右邊
+            for(let i=0; i<4; i++) {
+                setPos(`slot-f${i}`, w - gap*(4-i) - cardSize.width*(4-i), topRowY);
+            }
         }
         
         // 下方七列表格佈局
@@ -1309,11 +1559,20 @@
          * @param {string} type - 卡片類型
          * @param {number} pileIdx - 所在堆疊索引
          * @param {number} cardIdx - 卡片在堆疊中的索引
+         * @param {boolean} isWaste - 是否為廢牌堆卡片
+         * @param {number} wasteOffset - 廢牌堆偏移量
          */
-        const drawCard = (card, x, y, type, pileIdx, cardIdx) => {
+        const drawCard = (card, x, y, type, pileIdx, cardIdx, isWaste = false, wasteOffset = 0) => {
             const div = document.createElement('div');
             div.className = `card ${card.faceUp ? '' : 'back'}`;
-            div.style.left = x + 'px';
+            
+            // 計算卡片位置
+            let finalX = x;
+            if (isWaste && wasteOffset > 0) {
+                finalX += wasteOffset;
+            }
+            
+            div.style.left = finalX + 'px';
             div.style.top = y + 'px';
             div.dataset.id = card.id;
             div.dataset.type = type;
@@ -1332,13 +1591,16 @@
                 `;
                 
                 // 添加拖曳事件監聽器
-                div.addEventListener('mousedown', (e) => startDrag(e, type, pileIdx, cardIdx));
-                div.addEventListener('touchstart', (e) => startDrag(e, type, pileIdx, cardIdx), {passive: false});
+                // 在三張模式下，廢牌堆只有最上面的一張牌可以拖曳
+                if (type !== 'waste' || cardIdx === state.waste.length - 1) {
+                    div.addEventListener('mousedown', (e) => startDrag(e, type, pileIdx, cardIdx));
+                    div.addEventListener('touchstart', (e) => startDrag(e, type, pileIdx, cardIdx), {passive: false});
+                }
                 
             } else {
                 // 背面朝上的卡片添加點擊事件
                 if (type === 'stock') {
-                    div.addEventListener('click', drawStock);
+                    div.addEventListener('click', () => drawStockWithAnimation());
                 } else if (type === 'tableau') {
                     const pile = state.tableau[pileIdx];
                     if (cardIdx === pile.length - 1) {
@@ -1365,7 +1627,7 @@
             countDiv.textContent = state.stock.length;
             
             stockDiv.appendChild(countDiv);
-            stockDiv.addEventListener('click', drawStock);
+            stockDiv.addEventListener('click', () => drawStockWithAnimation());
             layer.appendChild(stockDiv);
         } else {
             // 牌堆為空時顯示重新整理按鈕
@@ -1379,9 +1641,32 @@
         // 繪製廢牌堆
         const wPos = slotPositions['slot-waste'];
         const wasteLen = state.waste.length;
+        
         if (wasteLen > 0) {
-            const topWasteCard = state.waste[wasteLen - 1];
-            drawCard(topWasteCard, wPos.left, wPos.top, 'waste', 0, wasteLen - 1);
+            if (state.drawMode === 3 && wasteLen >= 3) {
+                // 三張模式：顯示最近的三張牌
+                const displayCards = state.waste.slice(-3); // 取最後三張牌
+                
+                // 計算每張牌的偏移量 - 確保最舊的在左邊（偏移0），最新的在右邊（偏移最大）
+                for (let i = 0; i < 3; i++) {
+                    const card = displayCards[i];
+                    // 第一張（最舊）偏移0，第二張偏移30%，第三張（最新）偏移60%
+                    const offset = i * (cardSize.width * 0.3);
+                    drawCard(card, wPos.left, wPos.top, 'waste', 0, wasteLen-3+i, true, offset);
+                }
+            } else if (state.drawMode === 3 && wasteLen < 3) {
+                // 三張模式但牌不夠三張
+                for (let i = 0; i < wasteLen; i++) {
+                    const card = state.waste[i];
+                    // 計算偏移：每張牌向右偏移卡片寬度的30%
+                    const offset = i * (cardSize.width * 0.3);
+                    drawCard(card, wPos.left, wPos.top, 'waste', 0, i, true, offset);
+                }
+            } else {
+                // 一張模式：只顯示最上面的一張牌
+                const topWasteCard = state.waste[wasteLen - 1];
+                drawCard(topWasteCard, wPos.left, wPos.top, 'waste', 0, wasteLen - 1);
+            }
         }
 
         // 繪製四個花色區
@@ -1402,15 +1687,12 @@
                 if (idx > 0) {
                     const prevCard = pile[idx - 1];
                     
-                    // ==================== 修改開始：分開手機版和網頁版的重疊比例計算邏輯 ====================
+                    // 分開手機版和網頁版的重疊比例計算邏輯
                     let overlapRatio;
                     const isMobile = window.innerWidth < 600;
                     
                     if (isMobile) {
                         // 手機版重疊比例計算邏輯
-                        // 1. 已翻開的牌重疊在已翻開的牌上：50% 重疊
-                        // 2. 已翻開的牌重疊在未翻開的牌上：90% 重疊
-                        // 3. 未翻開的牌重疊在任何牌上：90% 重疊
                         if (prevCard.faceUp) {
                             overlapRatio = card.faceUp ? 0.5 : 0.9;
                         } else {
@@ -1418,22 +1700,21 @@
                         }
                     } else {
                         // 網頁版重疊比例計算邏輯（保持原樣不變）
-                        // 1. 已翻開的牌重疊在已翻開的牌上：70% 重疊
-                        // 2. 已翻開的牌重疊在未翻開的牌上：90% 重疊
-                        // 3. 未翻開的牌重疊在任何牌上：90% 重疊
                         if (prevCard.faceUp) {
                             overlapRatio = card.faceUp ? 0.7 : 0.9;
                         } else {
                             overlapRatio = 0.9;
                         }
                     }
-                    // ==================== 修改結束 ====================
                     
                     currentOffset += cardSize.height * (1 - overlapRatio); // 計算偏移量
                 }
                 drawCard(card, pos.left, pos.top + currentOffset, 'tableau', i, idx);
             });
         }
+        
+        // 更新魔法按鈕狀態
+        updateMagicButton();
     }
     
     /**
@@ -1456,20 +1737,114 @@
         }
     }
 
+    // ==================== 翻牌動畫邏輯 ====================
     /**
-     * 從牌堆抽牌
+     * 從牌堆抽牌（帶動畫）
      */
-    function drawStock() {
+    function drawStockWithAnimation() {
         if (isAnimating) return;
         if (state.stock.length === 0) return;
-        const card = state.stock.pop(); // 從牌堆取牌
-        card.faceUp = true; // 翻開卡片
-        state.waste.push(card); // 放入廢牌堆
-        state.moves++; // 增加移動次數
-        addScore(5); // 翻開一張牌得5分
-        saveStateToHistory(); // 儲存狀態
-        render(); // 重新渲染
-        updateTimer(); // 更新計時器
+        
+        isAnimating = true; // 標記動畫開始
+        
+        const drawCount = Math.min(state.drawMode, state.stock.length); // 實際要翻開的牌數
+        
+        // 取得牌堆和廢牌堆的視窗座標
+        const stockSlot = document.getElementById('slot-stock');
+        const wasteSlot = document.getElementById('slot-waste');
+        
+        if (!stockSlot || !wasteSlot) return;
+        
+        const stockRect = stockSlot.getBoundingClientRect();
+        const wasteRect = wasteSlot.getBoundingClientRect();
+        
+        // 先從牌堆中取出牌，保持正確的順序
+        const cardsToDraw = [];
+        for (let i = 0; i < drawCount; i++) {
+            // 從牌堆頂部取牌（最後一張是最上面的牌）
+            const cardIndex = state.stock.length - 1 - i;
+            cardsToDraw.unshift(state.stock[cardIndex]); // 使用 unshift 確保順序正確
+        }
+        
+        // 現在 cardsToDraw 的順序是：[最舊的牌, ..., 最新的牌]
+        // 索引0是最舊的牌，索引 drawCount-1 是最新的牌
+        
+        // 為每張牌創建動畫卡片
+        const animationCards = [];
+        
+        // 創建動畫卡片，從最舊的牌開始動畫（這樣視覺上舊牌先飛出，新牌後飛出）
+        for (let i = 0; i < drawCount; i++) {
+            const card = cardsToDraw[i];
+            const animCard = document.createElement('div');
+            animCard.className = `card draw-animation-card back`;
+            animCard.style.left = stockRect.left + 'px';
+            animCard.style.top = stockRect.top + 'px';
+            animCard.style.width = stockRect.width + 'px';
+            animCard.style.height = stockRect.height + 'px';
+            
+            // 確保背景為白色
+            animCard.style.backgroundColor = 'white';
+            
+            document.body.appendChild(animCard);
+            animationCards.push({card, element: animCard, index: i});
+        }
+        
+        // 保持順序，最舊的牌先動畫，最新的牌最後動畫
+        animationCards.forEach((item, animIndex) => {
+            const {card, element: animCard, index: originalIndex} = item;
+            
+            // 強制瀏覽器 Reflow 以確保動畫發生
+            void animCard.offsetWidth;
+            
+            // 計算目標位置
+            // 在廢牌堆中，最舊的牌在左邊（偏移0），最新的牌在右邊（偏移最大）
+            // originalIndex 是 cardsToDraw 中的索引，0=最舊，drawCount-1=最新
+            // 所以偏移量是：originalIndex * (cardSize.width * 0.3)
+            let targetLeft = wasteRect.left + (originalIndex * (cardSize.width * 0.3));
+            let targetTop = wasteRect.top;
+            
+            // 設置動畫
+            animCard.style.left = targetLeft + 'px';
+            animCard.style.top = targetTop + 'px';
+            
+            // 每張牌延遲50毫秒翻面，最舊的牌先翻面
+            setTimeout(() => {
+                animCard.classList.remove('back');
+                animCard.classList.add(card.color);
+                animCard.innerHTML = `
+                    <div class="card-face">
+                        <div class="card-num ${card.color}">${card.text}</div>
+                        <div class="card-suit-top ${card.color}">${card.suit}</div>
+                        <div class="card-center-suit ${card.color}">${card.suit}</div>
+                    </div>
+                `;
+            }, animIndex * 50);
+        });
+        
+        // 動畫完成後更新遊戲狀態
+        setTimeout(() => {
+            // 移除動畫卡片
+            animationCards.forEach(item => item.element.remove());
+            
+            // 更新遊戲狀態 - 先從牌堆取出牌
+            const drawnCards = [];
+            for (let i = 0; i < drawCount; i++) {
+                drawnCards.unshift(state.stock.pop()); // unshift 保持順序：[最舊, ..., 最新]
+            }
+            // 將取出的牌加入廢牌堆
+            drawnCards.forEach(card => {
+                card.faceUp = true;
+                state.waste.push(card); // push 確保最新的牌在最後（最上面）
+            });
+            
+            state.moves++; // 增加移動次數
+            addScore(5 * drawCount); // 每張牌得5分
+            saveStateToHistory(); // 儲存狀態
+            render(); // 重新渲染
+            updateTimer(); // 更新計時器
+            
+            isAnimating = false; // 標記動畫結束
+        }, 400 + (drawCount * 50));
     }
 
     /**
@@ -1478,6 +1853,9 @@
     function resetStock() {
         if (isAnimating) return;
         if (state.waste.length === 0) return;
+        
+        // 在三張模式下，需要保持廢牌堆的順序
+        // 經典接龍規則：當牌堆用完時，將廢牌堆的牌翻轉後重新成為牌堆，順序不變
         state.stock = state.waste.reverse().map(c => { 
             c.faceUp = false; // 將牌面朝下
             return c; 
@@ -1502,16 +1880,15 @@
         isAnimating = true; // 標記動畫開始
         const ghosts = []; // 幽靈卡片陣列
         
-        // ==================== 修改開始：分開手機版和網頁版的重疊比例 ====================
-        // 根據當前設備類型決定重疊比例
+        // 分開手機版和網頁版的重疊比例
         const isMobile = window.innerWidth < 600;
         const overlapRatio = isMobile ? 0.5 : 0.7; // 手機版50%，網頁版70%
-        // ==================== 修改結束 ====================
         
         // 建立幽靈卡片
         cards.forEach((card, i) => {
             const ghost = document.createElement('div');
             ghost.className = `card flying-card ${card.color}`;
+            ghost.style.backgroundColor = 'white'; // 確保背景為白色
             ghost.innerHTML = `
                 <div class="card-face">
                     <div class="card-num ${card.color}">${card.text}</div>
@@ -1554,6 +1931,157 @@
         }, 300); // 配合 CSS transition 0.3s
     }
 
+    // ==================== 魔法按鈕功能 ====================
+    /**
+     * 魔法移動：隨機翻開一張蓋牌並移動到廢牌堆
+     */
+    function magicMove() {
+        if (isAnimating) return;
+        
+        // 收集所有蓋著的牌（只收集每列最上面一張蓋牌）
+        const facedDownCards = [];
+        for (let col = 0; col < 7; col++) {
+            const pile = state.tableau[col];
+            // 找到每列最上面一張蓋牌
+            for (let i = pile.length - 1; i >= 0; i--) {
+                if (!pile[i].faceUp) {
+                    // 確保這是該列最上面的蓋牌（上面沒有其他蓋牌）
+                    if (i === pile.length - 1 || pile[i+1].faceUp) {
+                        facedDownCards.push({
+                            card: pile[i],
+                            pileIdx: col,
+                            cardIdx: i,
+                            pile: pile
+                        });
+                        break; // 只取最上面一張蓋牌
+                    }
+                }
+            }
+        }
+        
+        // 如果沒有蓋著的牌，禁用按鈕並返回
+        if (facedDownCards.length === 0) {
+            document.getElementById('magic-btn').disabled = true;
+            showMessage("沒有可翻開的蓋牌", 1500);
+            return;
+        }
+        
+        // 隨機選擇一張蓋牌
+        const randomIndex = Math.floor(Math.random() * facedDownCards.length);
+        const selected = facedDownCards[randomIndex];
+        const { card, pileIdx, cardIdx, pile } = selected;
+        
+        isAnimating = true; // 標記動畫開始
+        document.getElementById('magic-btn').disabled = true; // 禁用魔法按鈕
+        
+        // 取得廢牌堆位置
+        const wasteSlot = document.getElementById('slot-waste');
+        if (!wasteSlot) return;
+        
+        const wasteRect = wasteSlot.getBoundingClientRect();
+        
+        // 獲取選中卡片的位置
+        const cardElement = document.querySelector(`[data-id="${card.id}"]`);
+        if (!cardElement) {
+            // 如果卡片元素不存在（可能尚未渲染），則直接更新狀態
+            performMagicMove(card, pileIdx, cardIdx, pile);
+            return;
+        }
+        
+        const sourceRect = cardElement.getBoundingClientRect();
+        
+        // 創建魔法動畫卡片
+        const magicCard = document.createElement('div');
+        magicCard.className = `card magic-animation-card back`;
+        magicCard.style.left = sourceRect.left + 'px';
+        magicCard.style.top = sourceRect.top + 'px';
+        magicCard.style.width = sourceRect.width + 'px';
+        magicCard.style.height = sourceRect.height + 'px';
+        
+        // 確保背景為白色
+        magicCard.style.backgroundColor = 'white';
+        
+        document.body.appendChild(magicCard);
+        
+        // 強制瀏覽器 Reflow 以確保動畫發生
+        void magicCard.offsetWidth;
+        
+        // 計算目標位置（廢牌堆最右邊的位置）
+        let targetLeft, targetTop;
+        if (state.drawMode === 3 && state.waste.length >= 3) {
+            // 三張模式，已有三張牌，新牌放在最右邊
+            targetLeft = wasteRect.left + (2 * (cardSize.width * 0.3));
+        } else if (state.drawMode === 3 && state.waste.length < 3) {
+            // 三張模式，牌不夠三張，新牌放在適當位置
+            targetLeft = wasteRect.left + (state.waste.length * (cardSize.width * 0.3));
+        } else {
+            // 一張模式，新牌放在廢牌堆位置
+            targetLeft = wasteRect.left;
+        }
+        targetTop = wasteRect.top;
+        
+        // 設置動畫
+        magicCard.style.left = targetLeft + 'px';
+        magicCard.style.top = targetTop + 'px';
+        
+        // 動畫中途翻開卡片
+        setTimeout(() => {
+            magicCard.classList.remove('back');
+            magicCard.classList.add(card.color);
+            magicCard.innerHTML = `
+                <div class="card-face">
+                    <div class="card-num ${card.color}">${card.text}</div>
+                    <div class="card-suit-top ${card.color}">${card.suit}</div>
+                    <div class="card-center-suit ${card.color}">${card.suit}</div>
+                </div>
+            `;
+        }, 250);
+        
+        // 動畫完成後更新遊戲狀態
+        setTimeout(() => {
+            // 移除動畫卡片
+            magicCard.remove();
+            
+            // 執行魔法移動
+            performMagicMove(card, pileIdx, cardIdx, pile);
+        }, 500);
+    }
+    
+    /**
+     * 執行魔法移動（更新遊戲狀態）
+     */
+    function performMagicMove(card, pileIdx, cardIdx, pile) {
+        // 從表格中移除卡片
+        pile.splice(cardIdx, 1);
+        
+        // 翻開卡片
+        card.faceUp = true;
+        
+        // 添加到廢牌堆（最上面）
+        state.waste.push(card);
+        
+        // 更新遊戲狀態
+        state.moves++; // 增加移動次數
+        addScore(-20); // 使用魔法扣20分
+        
+        // 如果表格列還有牌，確保最上面一張是翻開的
+        if (state.tableau[pileIdx].length > 0) {
+            const newTopCard = state.tableau[pileIdx][state.tableau[pileIdx].length - 1];
+            if (!newTopCard.faceUp) {
+                newTopCard.faceUp = true;
+            }
+        }
+        
+        saveStateToHistory(); // 儲存狀態
+        render(); // 重新渲染
+        updateTimer(); // 更新計時器
+        
+        isAnimating = false; // 標記動畫結束
+        updateMagicButton(); // 更新魔法按鈕狀態
+        
+        showMessage(`魔法發動！翻開了${card.text}${card.suit}`, 1500);
+    }
+
     // ==================== 雙擊自動移動邏輯 ====================
     /**
      * 處理雙擊事件
@@ -1568,6 +2096,7 @@
         
         let sourcePile;
         let card;
+        let cardsToMove = [];
         
         // 根據卡片類型取得來源堆疊和卡片
         if (type === 'tableau') {
@@ -1584,10 +2113,14 @@
                     return;
                 }
             }
+            
+            // 取得要移動的所有牌（從點擊的牌到最後一張）
+            cardsToMove = sourcePile.slice(cardIdx);
         } else if (type === 'waste') {
             sourcePile = state.waste;
             if (cardIdx !== sourcePile.length - 1) return; // 只能移動最上面的牌
             card = sourcePile[cardIdx];
+            cardsToMove = [card];
         } else {
             return;
         }
@@ -1602,32 +2135,33 @@
             const foundation = state.foundations[i];
             if (canMoveToFoundation(card, foundation)) {
                 // 花色區只能移動最上面的單張牌
-                let cardsToMove;
-                if (type === 'tableau') {
-                    // 如果是表格中的牌，必須是最上面的牌才能移動到花色區
-                    if (cardIdx !== sourcePile.length - 1) {
-                        shakeCard(cardId); // 震動提示，不是最上面的牌
-                        return;
-                    }
-                    cardsToMove = [card]; // 只移動這一張牌
-                } else if (type === 'waste') {
-                    cardsToMove = [sourcePile[sourcePile.length-1]];
+                if (cardsToMove.length > 1) {
+                    shakeCard(cardId); // 不能移動多張牌到花色區
+                    return;
                 }
-
+                
+                // 從原始位置移除牌
+                if (type === 'tableau') {
+                    state.tableau[pileIdx].splice(cardIdx, 1);
+                    // 如果還有牌，翻開最上面一張
+                    if (state.tableau[pileIdx].length > 0) {
+                        state.tableau[pileIdx][state.tableau[pileIdx].length - 1].faceUp = true;
+                    }
+                } else if (type === 'waste') {
+                    state.waste.pop();
+                }
+                
+                // 立即重新渲染以移除原始位置的牌
+                render();
+                
                 // 取得目標位置
                 const targetEl = document.getElementById(`slot-f${i}`);
                 const targetRect = targetEl.getBoundingClientRect();
                 
                 // 播放動畫
                 animateMove(cardsToMove, sourceRect, targetRect, () => {
-                    // 動畫結束後執行數據更新
-                    if (type === 'tableau') {
-                        sourcePile.splice(cardIdx, 1); // 只移除這一張牌
-                        foundation.push(...cardsToMove);
-                        if (sourcePile.length > 0) sourcePile[sourcePile.length - 1].faceUp = true;
-                    } else if (type === 'waste') {
-                        foundation.push(sourcePile.pop());
-                    }
+                    // 動畫結束後將牌添加到目標位置
+                    state.foundations[i].push(...cardsToMove);
                     
                     state.moves++;
                     // 根據移動類型加分
@@ -1637,7 +2171,7 @@
                         addScore(10); // 從表格列移動到花色區得10分
                     }
                     saveStateToHistory();
-                    render();
+                    render(); // 重新渲染以顯示目標位置的牌
                     updateTimer();
                     checkWin(); // 檢查是否獲勝
                 });
@@ -1653,6 +2187,20 @@
             if (card.rank === 13 && targetPile.length === 0 && type === 'tableau' && cardIdx === 0) continue; 
 
             if (canMoveToTableau(card, targetPile)) {
+                // 從原始位置移除牌
+                if (type === 'tableau') {
+                    state.tableau[pileIdx].splice(cardIdx, cardsToMove.length);
+                    // 如果還有牌，翻開最上面一張
+                    if (state.tableau[pileIdx].length > 0) {
+                        state.tableau[pileIdx][state.tableau[pileIdx].length - 1].faceUp = true;
+                    }
+                } else if (type === 'waste') {
+                    state.waste.pop();
+                }
+                
+                // 立即重新渲染以移除原始位置的牌
+                render();
+                
                 // 取得目標位置
                 let targetRect;
                 if (targetPile.length > 0) {
@@ -1668,17 +2216,10 @@
                     targetRect = slotEl.getBoundingClientRect();
                 }
 
-                // 對於表格移動，可以移動整疊牌（從點擊的牌到最上面的所有牌）
-                const cardsToMove = (type === 'tableau') ? sourcePile.slice(cardIdx) : [sourcePile[sourcePile.length-1]];
-                
+                // 播放動畫
                 animateMove(cardsToMove, sourceRect, targetRect, () => {
-                    if (type === 'tableau') {
-                        sourcePile.splice(cardIdx);
-                        targetPile.push(...cardsToMove);
-                        if (sourcePile.length > 0) sourcePile[sourcePile.length - 1].faceUp = true;
-                    } else if (type === 'waste') {
-                        targetPile.push(sourcePile.pop());
-                    }
+                    // 動畫結束後將牌添加到目標位置
+                    state.tableau[targetIdx].push(...cardsToMove);
                     
                     state.moves++;
                     // 根據移動類型加分
@@ -1688,7 +2229,7 @@
                         addScore(5 * cardsToMove.length); // 從表格列移動到表格列，每張牌得5分
                     }
                     saveStateToHistory();
-                    render();
+                    render(); // 重新渲染以顯示目標位置的牌
                     updateTimer();
                     checkWin(); // 檢查是否獲勝
                 });
@@ -1728,7 +2269,7 @@
         
         const now = Date.now(); // 當前時間
         
-        // 根據類型取得來源堆疊
+        // 根據類型取得來源堆疊和卡片
         let sourcePile = (type === 'tableau') ? state.tableau[pileIdx] : (type === 'waste' ? state.waste : []);
         if (type === 'foundation') sourcePile = state.foundations[pileIdx];
         const clickedCard = sourcePile[cardIdx];
@@ -1748,6 +2289,10 @@
         if (drag.isDragging || drag.pending) return; // 已在拖曳中
 
         if (!clickedCard.faceUp) return; // 背面朝上的牌不能拖曳
+        
+        // 在三張模式下，廢牌堆只能拖曳最上面的牌
+        if (type === 'waste' && cardIdx !== sourcePile.length - 1) return;
+        
         if ((type === 'waste' || type === 'foundation') && cardIdx !== sourcePile.length - 1) return; // 只能拖曳最上面的牌
         
         drag.pending = true; // 標記為等待拖曳
@@ -1806,6 +2351,7 @@
         drag.cards.forEach((card, i) => {
             const ghost = document.createElement('div');
             ghost.className = `card dragging-card ${card.color}`;
+            ghost.style.backgroundColor = 'white'; // 確保背景為白色
             ghost.innerHTML = `
                 <div class="card-face">
                     <div class="card-num ${card.color}">${card.text}</div>
@@ -1814,13 +2360,11 @@
                 </div>
             `;
             
-            // ==================== 修改開始：分開手機版和網頁版的重疊比例 ====================
-            // 根據當前設備類型決定重疊比例
+            // 分開手機版和網頁版的重疊比例
             const isMobile = window.innerWidth < 600;
             const overlapRatio = isMobile ? 0.5 : 0.7; // 手機版50%，網頁版70%
             const overlapHeight = cardSize.height * overlapRatio;
             const ghostOffset = i * (cardSize.height - overlapHeight);
-            // ==================== 修改結束 ====================
             
             // 設定初始位置
             ghost.style.left = rect.left + 'px';
@@ -1869,12 +2413,11 @@
             if (e.cancelable) e.preventDefault(); // 防止預設行為
             
             drag.elGhosts.forEach((el, i) => {
-                // ==================== 修改開始：分開手機版和網頁版的重疊比例 ====================
+                // 分開手機版和網頁版的重疊比例
                 const isMobile = window.innerWidth < 600;
                 const overlapRatio = isMobile ? 0.5 : 0.7; // 手機版50%，網頁版70%
                 const overlapHeight = cardSize.height * overlapRatio;
                 const ghostOffset = i * (cardSize.height - overlapHeight);
-                // ==================== 修改結束 ====================
                 
                 el.style.left = (clientX - drag.offset.x) + 'px';
                 el.style.top = (clientY - drag.offset.y + ghostOffset) + 'px';
