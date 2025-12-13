@@ -41,7 +41,19 @@
         .toolbar-left {
             display: flex;
             align-items: center;
-            gap: 10px; /* 元素間距 */
+            gap: 15px; /* 元素間距 */
+        }
+        
+        /* 時間與步數顯示 */
+        .time-moves-display {
+            font-size: 14px;
+            font-weight: bold;
+            color: white;
+            padding: 2px 8px;
+            background: rgba(0,0,0,0.3); /* 半透明背景 */
+            border-radius: 10px; /* 圓角 */
+            min-width: 80px;
+            text-align: center;
         }
         
         /* 分數顯示 */
@@ -298,6 +310,11 @@
                 padding: 0 20px; /* 桌面版增加padding */
             }
             
+            .time-moves-display {
+                font-size: 16px; /* 桌面版字體稍大 */
+                padding: 4px 12px; /* 桌面版padding稍大 */
+            }
+            
             .toolbar-buttons {
                 gap: 10px; /* 桌面版按鈕間距稍大 */
             }
@@ -331,9 +348,9 @@
                 line-height: 0.8;
             }
             
-            /* 特殊處理數字"10" */
+            /* 特殊處理數字"10" - 進一步縮小 */
             .card[data-text="10"] .card-num {
-                font-size: 2.2rem; /* 數字10使用稍小的字體 */
+                font-size: 2.0rem; /* 數字10使用更小的字體 (從2.2rem調整) */
                 left: 0.5px; /* 稍微調整位置 */
             }
             
@@ -361,6 +378,16 @@
                 padding: 0 8px; /* 手機版padding稍小 */
             }
             
+            .toolbar-left {
+                gap: 8px; /* 手機版工具欄左側間距稍小 */
+            }
+            
+            .time-moves-display {
+                font-size: 11px; /* 手機版字體稍小 */
+                padding: 2px 6px; /* 手機版padding稍小 */
+                min-width: 70px; /* 最小寬度 */
+            }
+            
             .toolbar-buttons {
                 gap: 4px; /* 手機版按鈕間距稍小 */
             }
@@ -372,7 +399,7 @@
             }
             
             .score-display {
-                font-size: 12px; /* 手機版字體稍小 */
+                font-size: 11px; /* 手機版字體稍小 */
                 padding: 2px 6px; /* 手機版padding稍小 */
                 min-width: 50px; /* 最小寬度 */
             }
@@ -390,6 +417,11 @@
                 max-width: 95%; /* 最大寬度限制 */
             }
             
+            /* 手機版蓋牌上的數字顯示調整 */
+            .card-count {
+                font-size: 2.0rem; /* 調整蓋牌數字大小 (從2.5rem調整) */
+            }
+            
             /* 特別小的手機 */
             @media (max-width: 320px) {
                 :root {
@@ -398,13 +430,18 @@
                     --gap: 0.8vw; /* 更小的間距 */
                 }
                 
+                .time-moves-display {
+                    font-size: 10px; /* 更小的字體 */
+                    min-width: 65px; /* 更小的最小寬度 */
+                }
+                
                 button {
                     padding: 4px 6px; /* 更小的按鈕 */
                     font-size: 10px; /* 更小的字體 */
                 }
                 
                 .score-display {
-                    font-size: 11px; /* 更小的字體 */
+                    font-size: 10px; /* 更小的字體 */
                 }
                 
                 /* 在特別小的屏幕上進一步調整卡片字體 */
@@ -416,12 +453,12 @@
                 
                 /* 特別小的屏幕上數字"10"的處理 */
                 .card[data-text="10"] .card-num {
-                    font-size: 2.0rem; /* 數字10使用更小的字體 */
+                    font-size: 1.8rem; /* 數字10使用更小的字體 (從2.0rem調整) */
                     left: 0.3px; /* 稍微調整位置 */
                 }
                 
                 .card-suit-top {
-                    font-size: 1rem; /* 比1.1rem稍小一點 */
+                    font-size: 0.9rem; /* 比1.1rem稍小一點 */
                     top: 1.3px; /* 保持1.3px邊距 */
                     right: 1.3px; /* 保持1.3px邊距 */
                 }
@@ -429,6 +466,11 @@
                 .card-center-suit { 
                     font-size: 2.2rem; /* 從2rem增加到2.2rem */
                     bottom: 1.1px; /* 保持離底端1.1px */
+                }
+                
+                /* 特別小的手機上蓋牌上的數字顯示調整 */
+                .card-count {
+                    font-size: 1.8rem; /* 調整蓋牌數字大小 (從2.0rem調整) */
                 }
             }
         }
@@ -440,6 +482,7 @@
 <!-- 工具欄區塊 -->
 <div class="toolbar">
     <div class="toolbar-left">
+        <div class="time-moves-display" id="time-moves">00:00 | 0步</div>
         <div class="score-display">分數: <span id="current-score">0</span></div>
     </div>
     <div class="toolbar-buttons">
@@ -554,10 +597,10 @@
         const minutes = Math.floor(elapsed / 60000); // 計算分鐘
         const seconds = Math.floor((elapsed % 60000) / 1000); // 計算秒數
         
-        // 更新工具欄標題
-        const timerElement = document.querySelector('.toolbar-left');
-        if (timerElement) {
-            timerElement.innerHTML = `<div class="score-display">分數: <span id="current-score">${state.score}</span></div>`;
+        // 更新時間和步數顯示
+        const timeMovesElement = document.getElementById('time-moves');
+        if (timeMovesElement) {
+            timeMovesElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')} | ${state.moves}步`;
         }
     }
     
@@ -618,6 +661,7 @@
         layoutSlots(); // 佈局槽位
         render(); // 渲染遊戲畫面
         startTimer(); // 開始計時
+        updateTimer(); // 更新時間顯示
         updateScoreDisplay(); // 更新分數顯示
     }
     
@@ -661,6 +705,7 @@
         
         updateUndoButton(); // 更新撤回按鈕狀態
         render(); // 重新渲染
+        updateTimer(); // 更新時間顯示
         updateScoreDisplay(); // 更新分數顯示
     }
     
