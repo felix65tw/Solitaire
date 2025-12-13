@@ -5,154 +5,168 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>經典接龍 (手機適配版)</title>
     <style>
+        /* CSS 變數定義，方便全域調整樣式 */
         :root {
-            --bg-color: #35654d;
-            --card-width: 13vw;
-            --card-height: 18.2vw;
-            --max-w: 100px;
-            --max-h: 140px;
-            --gap: 2vw;
+            --bg-color: #35654d; /* 遊戲背景顏色 */
+            --card-width: 13vw; /* 卡片預設寬度 (視窗寬度百分比) */
+            --card-height: 18.2vw; /* 卡片預設高度 (視窗寬度百分比) */
+            --max-w: 100px; /* 卡片最大寬度 */
+            --max-h: 140px; /* 卡片最大高度 */
+            --gap: 2vw; /* 卡片間距 */
         }
 
+        /* 全域樣式設定 */
         body {
-            background-color: var(--bg-color);
+            background-color: var(--bg-color); /* 使用CSS變數設定背景色 */
             margin: 0;
-            overflow: hidden; 
-            user-select: none;
-            font-family: sans-serif;
-            -webkit-tap-highlight-color: transparent;
+            overflow: hidden; /* 隱藏滾動條 */
+            user-select: none; /* 禁止文字選取 */
+            font-family: sans-serif; /* 字型設定 */
+            -webkit-tap-highlight-color: transparent; /* 移除移動端點擊高亮 */
             touch-action: manipulation; /* 改善觸控響應 */
         }
 
+        /* 工具欄樣式 */
         .toolbar {
-            height: 50px;
+            height: 50px; /* 工具欄高度 */
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 0 10px; /* 手機上減少padding */
             color: white;
-            background: rgba(0,0,0,0.2);
+            background: rgba(0,0,0,0.2); /* 半透明黑色背景 */
         }
         
+        /* 工具欄左側區塊 */
         .toolbar-left {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 10px; /* 元素間距 */
         }
         
+        /* 工具欄標題 */
         .toolbar-title {
             font-size: 14px; /* 手機上字體小一點 */
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            white-space: nowrap; /* 不換行 */
+            overflow: hidden; /* 隱藏溢出內容 */
+            text-overflow: ellipsis; /* 文字溢出顯示省略號 */
         }
         
+        /* 分數顯示 */
         .score-display {
             font-size: 14px;
             font-weight: bold;
-            color: #FFD700;
+            color: #FFD700; /* 金色文字 */
             padding: 2px 8px;
-            background: rgba(0,0,0,0.3);
-            border-radius: 10px;
+            background: rgba(0,0,0,0.3); /* 半透明背景 */
+            border-radius: 10px; /* 圓角 */
             min-width: 60px;
             text-align: center;
         }
         
+        /* 工具欄按鈕區塊 */
         .toolbar-buttons {
             display: flex;
             gap: 5px; /* 手機上按鈕間距小一點 */
         }
         
+        /* 按鈕基礎樣式 */
         button {
             background: white;
             border: none;
             padding: 6px 10px; /* 手機上按鈕小一點 */
-            border-radius: 4px;
+            border-radius: 4px; /* 圓角 */
             font-weight: bold;
-            cursor: pointer;
+            cursor: pointer; /* 游標手形 */
             font-size: 12px; /* 手機上字體小一點 */
-            white-space: nowrap;
+            white-space: nowrap; /* 不換行 */
         }
         
+        /* 按鈕懸停效果 */
         button:hover {
             background: #f0f0f0;
         }
         
+        /* 禁用按鈕樣式 */
         button:disabled {
             background: #cccccc;
-            cursor: not-allowed;
+            cursor: not-allowed; /* 禁用游標 */
         }
         
+        /* 訊息提示框 */
         #message {
-            position: fixed;
+            position: fixed; /* 固定定位 */
             top: 60px;
             left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.8);
+            transform: translateX(-50%); /* 水平居中 */
+            background: rgba(0,0,0,0.8); /* 半透明黑色背景 */
             color: white;
             padding: 10px 20px;
-            border-radius: 5px;
-            z-index: 10000;
-            display: none;
+            border-radius: 5px; /* 圓角 */
+            z-index: 10000; /* 確保在最上層 */
+            display: none; /* 預設隱藏 */
             font-size: 14px;
-            max-width: 90%;
-            text-align: center;
+            max-width: 90%; /* 最大寬度 */
+            text-align: center; /* 文字居中 */
         }
 
+        /* 遊戲主區域 */
         #game-board {
-            position: relative;
-            width: 100vw;
-            height: calc(100vh - 50px);
-            max-width: 800px;
-            margin: 0 auto;
+            position: relative; /* 相對定位 */
+            width: 100vw; /* 全視窗寬度 */
+            height: calc(100vh - 50px); /* 減去工具欄高度 */
+            max-width: 800px; /* 最大寬度限制 */
+            margin: 0 auto; /* 水平居中 */
             margin-top: 5px; /* 手機上減少上邊距 */
             overflow: hidden; /* 防止溢出 */
         }
 
+        /* 卡片位置槽位 */
         .slot {
-            position: absolute;
-            width: var(--card-width);
-            height: var(--card-height);
-            max-width: var(--max-w);
-            max-height: var(--max-h);
-            border: 2px solid rgba(255,255,255,0.2);
-            border-radius: 8px;
-            box-sizing: border-box;
+            position: absolute; /* 絕對定位 */
+            width: var(--card-width); /* 使用CSS變數設定寬度 */
+            height: var(--card-height); /* 使用CSS變數設定高度 */
+            max-width: var(--max-w); /* 最大寬度限制 */
+            max-height: var(--max-h); /* 最大高度限制 */
+            border: 2px solid rgba(255,255,255,0.2); /* 半透明邊框 */
+            border-radius: 8px; /* 圓角 */
+            box-sizing: border-box; /* 盒模型設定 */
         }
 
+        /* 卡片基礎樣式 */
         .card {
-            position: absolute;
-            width: var(--card-width);
-            height: var(--card-height);
-            max-width: var(--max-w);
-            max-height: var(--max-h);
-            background-color: white;
-            border-radius: 6px;
-            box-shadow: 1px 1px 3px rgba(0,0,0,0.4);
+            position: absolute; /* 絕對定位 */
+            width: var(--card-width); /* 使用CSS變數設定寬度 */
+            height: var(--card-height); /* 使用CSS變數設定高度 */
+            max-width: var(--max-w); /* 最大寬度限制 */
+            max-height: var(--max-h); /* 最大高度限制 */
+            background-color: white; /* 白色背景 */
+            border-radius: 6px; /* 圓角 */
+            box-shadow: 1px 1px 3px rgba(0,0,0,0.4); /* 陰影效果 */
             display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 10;
-            cursor: pointer;
-            box-sizing: border-box;
-            /* 讓卡片切換位置時平滑一點，但手動拖曳時我們會覆蓋這個設定 */
-            transition: box-shadow 0.2s;
+            justify-content: center; /* 水平居中 */
+            align-items: center; /* 垂直居中 */
+            z-index: 10; /* 圖層順序 */
+            cursor: pointer; /* 游標手形 */
+            box-sizing: border-box; /* 盒模型設定 */
+            transition: box-shadow 0.2s; /* 陰影過渡效果 */
             -webkit-user-drag: none; /* 防止拖曳圖片 */
         }
 
         /* 用於自動移動時的飛行卡片 */
         .flying-card {
-            position: fixed;
-            z-index: 99999;
-            pointer-events: none;
-            transition: all 0.3s ease-in-out; /* 這裡控制飛行速度 */
+            position: fixed; /* 固定定位 */
+            z-index: 99999; /* 最高圖層 */
+            pointer-events: none; /* 禁止觸發事件 */
+            transition: all 0.3s ease-in-out; /* 過渡動畫 */
         }
 
+        /* 卡片面 */
         .card-face {
             width: 100%;
             height: 100%;
-            position: relative;
-            pointer-events: none;
+            position: relative; /* 相對定位 */
+            pointer-events: none; /* 禁止觸發事件 */
         }
 
         /* 左上角數字 */
@@ -161,8 +175,10 @@
             font-weight: 800; 
             line-height: 1;
             position: absolute;
-            top: 8px;
-            left: 8px;
+            /* 修改前：top: 8px; left: 8px; */
+            /* 修改後：縮小文字與牌的邊界 */
+            top: 4px; /* 減少上邊距 */
+            left: 4px; /* 減少左邊距 */
         }
         
         /* 右上角花色 */
@@ -170,8 +186,10 @@
             font-size: 1.8rem; 
             line-height: 1; 
             position: absolute;
-            top: 8px;
-            right: 8px;
+            /* 修改前：top: 8px; right: 8px; */
+            /* 修改後：縮小文字與牌的邊界 */
+            top: 4px; /* 減少上邊距 */
+            right: 4px; /* 減少右邊距 */
         }
         
         /* 卡片中間的大花色 */
@@ -179,33 +197,38 @@
             position: absolute;
             top: 62%; /* 原本是 50%，改成 62% 往下移 */
             left: 50%;
-            transform: translate(-50%, -50%);
+            transform: translate(-50%, -50%); /* 居中對齊 */
             font-size: 4rem;
             font-weight: normal;
         }
         
+        /* 紅色花色 */
         .red { color: #d32f2f; }
+        /* 黑色花色 */
         .black { color: #212121; }
 
+        /* 卡片背面樣式 */
         .back {
-            background: repeating-linear-gradient(
-                45deg,
-                #1565c0,
-                #1565c0 10px,
-                #0d47a1 10px,
-                #0d47a1 20px
+            background: repeating-linear-gradient( /* 重複線性漸變 */
+                45deg, /* 45度角 */
+                #1565c0, /* 顏色1 */
+                #1565c0 10px, /* 顏色1結束位置 */
+                #0d47a1 10px, /* 顏色2開始位置 */
+                #0d47a1 20px /* 顏色2結束位置 */
             );
-            border: 2px solid #fff;
+            border: 2px solid #fff; /* 白色邊框 */
         }
 
+        /* 拖曳中的卡片 */
         .dragging-card {
-            position: fixed; 
-            z-index: 9999;
-            pointer-events: none; 
-            box-shadow: 5px 5px 15px rgba(0,0,0,0.5);
-            opacity: 0.9;
+            position: fixed; /* 固定定位 */
+            z-index: 9999; /* 高圖層 */
+            pointer-events: none; /* 禁止觸發事件 */
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.5); /* 更明顯的陰影 */
+            opacity: 0.9; /* 半透明 */
         }
 
+        /* 重新整理按鈕 */
         .refresh-btn {
             width: 100%; height: 100%;
             display: flex; justify-content: center; align-items: center;
@@ -213,15 +236,16 @@
             cursor: pointer;
         }
 
-        /* [修改] 高光效果：增加 pointer-events: none 防止擋住點擊 */
+        /* 高光效果：增加 pointer-events: none 防止擋住點擊 */
         .highlight {
-            animation: yellowPulse 0.8s infinite alternate;
+            animation: yellowPulse 0.8s infinite alternate; /* 動畫效果 */
             box-shadow: 0 0 0 4px #FFEB3B, 0 0 20px 8px #FFEB3B !important;
             border: 2px solid #FFEB3B !important;
             z-index: 1000;
             pointer-events: none; /* 關鍵修復：讓點擊穿透高光框 */
         }
 
+        /* 目標高光效果 */
         .target-highlight {
             animation: targetPulse 0.8s infinite alternate;
             box-shadow: 0 0 0 4px #4CAF50, 0 0 20px 8px #4CAF50 !important;
@@ -230,11 +254,13 @@
             pointer-events: none; /* 關鍵修復 */
         }
 
+        /* 黃色脈衝動畫 */
         @keyframes yellowPulse {
             0% { box-shadow: 0 0 0 4px #FFEB3B, 0 0 20px 8px #FFEB3B !important; transform: scale(1.02); }
             100% { box-shadow: 0 0 0 6px #FFEB3B, 0 0 30px 12px #FFEB3B !important; transform: scale(1.05); }
         }
 
+        /* 綠色脈衝動畫 */
         @keyframes targetPulse {
             0% { box-shadow: 0 0 0 4px #4CAF50, 0 0 20px 8px #4CAF50 !important; transform: scale(1.02); }
             100% { box-shadow: 0 0 0 6px #4CAF50, 0 0 30px 12px #4CAF50 !important; transform: scale(1.05); }
@@ -245,6 +271,7 @@
             animation: shake 0.4s ease-in-out;
         }
 
+        /* 抖動動畫關鍵影格 */
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             16% { transform: translateX(-6px); }
@@ -257,60 +284,61 @@
         /* 桌面版樣式 - 維持原始文字和花色大小 */
         @media (min-width: 600px) {
             :root {
-                --card-width: 80px;
-                --card-height: 112px;
-                --gap: 15px;
+                --card-width: 80px; /* 桌面版固定寬度 */
+                --card-height: 112px; /* 桌面版固定高度 */
+                --gap: 15px; /* 桌面版固定間距 */
             }
+            
             /* 桌面版保持原始大小 */
             .card-num, .card-suit-top { font-size: 1.8rem; }
             .card-center-suit { font-size: 4rem; }
             
             .toolbar {
-                padding: 0 20px;
+                padding: 0 20px; /* 桌面版增加padding */
             }
             
             .toolbar-title {
-                font-size: 16px;
+                font-size: 16px; /* 桌面版字體稍大 */
             }
             
             .toolbar-buttons {
-                gap: 10px;
+                gap: 10px; /* 桌面版按鈕間距稍大 */
             }
             
             button {
-                padding: 8px 16px;
-                font-size: 14px;
+                padding: 8px 16px; /* 桌面版按鈕稍大 */
+                font-size: 14px; /* 桌面版字體稍大 */
             }
             
             .score-display {
-                font-size: 16px;
-                padding: 4px 12px;
+                font-size: 16px; /* 桌面版字體稍大 */
+                padding: 4px 12px; /* 桌面版padding稍大 */
             }
         }
 
         /* 手機版專用樣式 - 已調整 */
         @media (max-width: 599px) {
             :root {
-                --card-width: 12.5vw; /* 卡片再大一點點 (從11vw增加) */
-                --card-height: 17.5vw; /* 等比例增加 (從15.4vw增加) */
+                --card-width: 12.5vw; /* 卡片寬度 (從11vw增加) */
+                --card-height: 17.5vw; /* 卡片高度 (從15.4vw增加) */
                 --gap: 1vw; /* 縮小牌間距 (從1.5vw減少) */
             }
             
             /* 手機上卡片字體調整 - 修正右上角花色位置問題 */
             .card-num { 
-                font-size: 3rem; /* 從1.1rem增加到3rem */
+                font-size: 2.5rem; /* 修改：調整為2.5rem (從3rem減少) */
                 font-weight: 800;
                 position: absolute;
-                top: 4px; /* 位置調整 */
-                left: 4px;
+                top: 2px; /* 修改：進一步減少邊距 (從4px減少) */
+                left: 2px; /* 修改：進一步減少邊距 (從4px減少) */
                 line-height: 1;
             }
             
             .card-suit-top {
                 font-size: 1.1rem; /* 維持1.1rem不變 */
                 position: absolute;
-                top: 4px; /* 位置調整 */
-                right: 4px; /* 確保在右上角 */
+                top: 2px; /* 修改：進一步減少邊距 (從4px減少) */
+                right: 2px; /* 修改：進一步減少邊距 (從4px減少) */
                 line-height: 1;
             }
             
@@ -326,42 +354,42 @@
             
             /* 手機上工具欄調整 */
             .toolbar {
-                height: 45px;
-                padding: 0 8px;
+                height: 45px; /* 手機版工具欄稍矮 */
+                padding: 0 8px; /* 手機版padding稍小 */
             }
             
             .toolbar-title {
-                font-size: 12px;
-                max-width: 30%;
+                font-size: 12px; /* 手機版字體稍小 */
+                max-width: 30%; /* 最大寬度限制 */
             }
             
             .toolbar-buttons {
-                gap: 4px;
+                gap: 4px; /* 手機版按鈕間距稍小 */
             }
             
             button {
-                padding: 5px 8px;
-                font-size: 11px;
-                border-radius: 3px;
+                padding: 5px 8px; /* 手機版按鈕稍小 */
+                font-size: 11px; /* 手機版字體稍小 */
+                border-radius: 3px; /* 手機版圓角稍小 */
             }
             
             .score-display {
-                font-size: 12px;
-                padding: 2px 6px;
-                min-width: 50px;
+                font-size: 12px; /* 手機版字體稍小 */
+                padding: 2px 6px; /* 手機版padding稍小 */
+                min-width: 50px; /* 最小寬度 */
             }
             
             #game-board {
-                height: calc(100vh - 45px);
-                margin-top: 3px;
+                height: calc(100vh - 45px); /* 減去工具欄高度 */
+                margin-top: 3px; /* 手機版上邊距稍小 */
             }
             
             /* 手機上訊息框調整 */
             #message {
-                font-size: 12px;
-                padding: 8px 15px;
-                top: 50px;
-                max-width: 95%;
+                font-size: 12px; /* 手機版字體稍小 */
+                padding: 8px 15px; /* 手機版padding稍小 */
+                top: 50px; /* 調整位置 */
+                max-width: 95%; /* 最大寬度限制 */
             }
             
             /* 特別小的手機 */
@@ -373,29 +401,34 @@
                 }
                 
                 .toolbar-title {
-                    font-size: 11px;
+                    font-size: 11px; /* 更小的字體 */
                 }
                 
                 button {
-                    padding: 4px 6px;
-                    font-size: 10px;
+                    padding: 4px 6px; /* 更小的按鈕 */
+                    font-size: 10px; /* 更小的字體 */
                 }
                 
                 .score-display {
-                    font-size: 11px;
+                    font-size: 11px; /* 更小的字體 */
                 }
                 
                 /* 在特別小的屏幕上進一步調整卡片字體 */
                 .card-num { 
-                    font-size: 2.5rem; /* 比3rem稍小一點 */
+                    font-size: 2.2rem; /* 比2.5rem稍小一點 */
+                    top: 2px; /* 保持小邊距 */
+                    left: 2px; /* 保持小邊距 */
                 }
                 
                 .card-suit-top {
                     font-size: 1rem; /* 比1.1rem稍小一點 */
+                    top: 2px; /* 保持小邊距 */
+                    right: 2px; /* 保持小邊距 */
                 }
                 
                 .card-center-suit { 
                     font-size: 2.2rem; /* 從2rem增加到2.2rem */
+                    top: 60%; /* 保持位置 */
                 }
             }
         }
@@ -409,42 +442,48 @@
             }
             
             #game-board {
-                margin-top: 2px;
+                margin-top: 2px; /* 更小的上邊距 */
             }
             
             .toolbar {
-                height: 40px;
+                height: 40px; /* 橫屏工具欄更矮 */
             }
             
             .toolbar-title {
-                font-size: 11px;
+                font-size: 11px; /* 橫屏字體更小 */
             }
             
             .score-display {
-                font-size: 11px;
+                font-size: 11px; /* 橫屏字體更小 */
             }
             
             #game-board {
-                height: calc(100vh - 40px);
+                height: calc(100vh - 40px); /* 減去工具欄高度 */
             }
             
             /* 橫屏模式下卡片字體也相應調整 */
             .card-num { 
-                font-size: 2.5rem; /* 保持可讀性 */
+                font-size: 2.2rem; /* 保持可讀性 */
+                top: 2px; /* 小邊距 */
+                left: 2px; /* 小邊距 */
             }
             
             .card-suit-top {
                 font-size: 1rem; /* 保持比例 */
+                top: 2px; /* 小邊距 */
+                right: 2px; /* 小邊距 */
             }
             
             .card-center-suit { 
                 font-size: 2rem; /* 保持比例 */
+                top: 60%; /* 保持位置 */
             }
         }
     </style>
 </head>
 <body>
 
+<!-- 工具欄區塊 -->
 <div class="toolbar">
     <div class="toolbar-left">
         <span class="toolbar-title">經典接龍</span>
@@ -457,16 +496,22 @@
     </div>
 </div>
 
+<!-- 訊息提示框 -->
 <div id="message"></div>
 
+<!-- 遊戲主區域 -->
 <div id="game-board">
+    <!-- 牌堆槽位 -->
     <div id="slot-stock" class="slot"></div>
+    <!-- 廢牌堆槽位 -->
     <div id="slot-waste" class="slot"></div>
+    <!-- 四個花色區槽位 -->
     <div id="slot-f0" class="slot" data-type="foundation" data-idx="0"></div>
     <div id="slot-f1" class="slot" data-type="foundation" data-idx="1"></div>
     <div id="slot-f2" class="slot" data-type="foundation" data-idx="2"></div>
     <div id="slot-f3" class="slot" data-type="foundation" data-idx="3"></div>
 
+    <!-- 七列表格槽位 -->
     <div id="slot-t0" class="slot" data-type="tableau" data-idx="0"></div>
     <div id="slot-t1" class="slot" data-type="tableau" data-idx="1"></div>
     <div id="slot-t2" class="slot" data-type="tableau" data-idx="2"></div>
@@ -475,76 +520,91 @@
     <div id="slot-t5" class="slot" data-type="tableau" data-idx="5"></div>
     <div id="slot-t6" class="slot" data-type="tableau" data-idx="6"></div>
 
+    <!-- 卡片圖層 -->
     <div id="card-layer"></div>
 </div>
 
 <script>
-    // --- 遊戲常數 ---
-    const SUITS = ['♠', '♥', '♣', '♦'];
-    const COLORS = { '♠': 'black', '♥': 'red', '♣': 'black', '♦': 'red' };
-    const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+    // ==================== 遊戲常數定義 ====================
+    const SUITS = ['♠', '♥', '♣', '♦']; // 花色陣列
+    const COLORS = { '♠': 'black', '♥': 'red', '♣': 'black', '♦': 'red' }; // 花色對應顏色
+    const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K']; // 牌面值陣列
 
-    // --- 遊戲狀態 ---
+    // ==================== 遊戲狀態變數 ====================
     let state = {
-        stock: [],
-        waste: [],
-        foundations: [[], [], [], []],
-        tableau: [[], [], [], [], [], [], []],
-        gameMode: 'guaranteed',
-        moves: 0,
-        startTime: null,
-        timerInterval: null,
-        score: 1000
+        stock: [], // 牌堆
+        waste: [], // 廢牌堆
+        foundations: [[], [], [], []], // 四個花色區
+        tableau: [[], [], [], [], [], [], []], // 七列表格
+        gameMode: 'guaranteed', // 遊戲模式
+        moves: 0, // 移動次數
+        startTime: null, // 遊戲開始時間
+        timerInterval: null, // 計時器間隔ID
+        score: 1000 // 初始分數
     };
     
-    let history = [];
+    let history = []; // 遊戲歷史紀錄，用於撤回功能
 
-    // --- 拖曳暫存 & 雙擊檢測變數 ---
+    // ==================== 拖曳相關變數 ====================
     let drag = {
-        isDragging: false,
-        pending: false,
-        startX: 0,
-        startY: 0,
-        cards: [],
-        origin: null,
-        elGhosts: [],
-        offset: {x:0, y:0},
-        gameBoardRect: null
+        isDragging: false, // 是否正在拖曳
+        pending: false, // 是否等待拖曳開始
+        startX: 0, // 拖曳起始X座標
+        startY: 0, // 拖曳起始Y座標
+        cards: [], // 拖曳中的卡片陣列
+        origin: null, // 拖曳來源資訊
+        elGhosts: [], // 拖曳時的幽靈卡片元素陣列
+        offset: {x:0, y:0}, // 滑鼠/手指與卡片的偏移量
+        gameBoardRect: null // 遊戲區域的邊界資訊
     };
     
-    // 雙擊與動畫控制
-    let lastClickTime = 0;
-    let lastClickCardId = null;
-    let isAnimating = false; // 防止動畫期間重複操作
+    // 雙擊與動畫控制變數
+    let lastClickTime = 0; // 上次點擊時間
+    let lastClickCardId = null; // 上次點擊的卡片ID
+    let isAnimating = false; // 是否正在執行動畫，防止動畫期間重複操作
     
-    // --- 分數計算與更新 ---
+    // ==================== 分數計算與更新函數 ====================
+    /**
+     * 更新遊戲分數
+     * 分數計算公式：基礎分數1000 + 時間獎勵 + 步數獎勵
+     */
     function updateScore() {
-        // 計算當前分數
+        // 計算經過的時間
         const elapsed = state.startTime ? Date.now() - state.startTime : 0;
+        // 時間獎勵：每10秒減少10分，最低為0
         const timeBonus = Math.max(0, 600 - Math.floor(elapsed / 10000)) * 10;
+        // 步數獎勵：每步5分，最多100步
         const movesBonus = Math.max(0, 100 - state.moves) * 5;
+        // 計算總分數
         state.score = 1000 + timeBonus + movesBonus;
         
         // 更新顯示
         document.getElementById('current-score').textContent = state.score;
     }
     
-    // --- 計時器 ---
+    // ==================== 計時器相關函數 ====================
+    /**
+     * 開始計時器
+     */
     function startTimer() {
-        if (state.timerInterval) clearInterval(state.timerInterval);
-        state.startTime = Date.now();
+        if (state.timerInterval) clearInterval(state.timerInterval); // 清除現有計時器
+        state.startTime = Date.now(); // 記錄開始時間
         updateScore(); // 初始化分數
-        state.timerInterval = setInterval(updateTimer, 1000);
+        state.timerInterval = setInterval(updateTimer, 1000); // 每秒更新一次
     }
     
+    /**
+     * 更新計時器顯示
+     */
     function updateTimer() {
         if (!state.startTime) return;
         
-        // 更新時間顯示
+        // 計算經過的時間
         const elapsed = Date.now() - state.startTime;
-        const minutes = Math.floor(elapsed / 60000);
-        const seconds = Math.floor((elapsed % 60000) / 1000);
+        const minutes = Math.floor(elapsed / 60000); // 計算分鐘
+        const seconds = Math.floor((elapsed % 60000) / 1000); // 計算秒數
         
+        // 更新工具欄標題
         const timerElement = document.querySelector('.toolbar-title');
         if (timerElement) {
             timerElement.textContent = `接龍 | ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')} | ${state.moves}步`;
@@ -554,6 +614,9 @@
         updateScore();
     }
     
+    /**
+     * 停止計時器
+     */
     function stopTimer() {
         if (state.timerInterval) {
             clearInterval(state.timerInterval);
@@ -561,69 +624,84 @@
         }
     }
 
-    // --- 初始化 ---
+    // ==================== 遊戲初始化函數 ====================
+    /**
+     * 初始化遊戲
+     * @param {string} mode - 遊戲模式
+     */
     function initGame(mode = 'guaranteed') {
-        stopTimer();
-        state.gameMode = mode;
-        state.moves = 0;
-        state.score = 1000;
-        history = [];
-        updateUndoButton();
+        stopTimer(); // 停止計時器
+        state.gameMode = mode; // 設定遊戲模式
+        state.moves = 0; // 重置移動次數
+        state.score = 1000; // 重置分數
+        history = []; // 清空歷史紀錄
+        updateUndoButton(); // 更新撤回按鈕狀態
         
-        let deck = [];
+        let deck = []; // 牌組
         if (mode === 'guaranteed') {
-            showMessage("新牌局開始！", 2000);
-            deck = createGuaranteedDeck();
+            showMessage("新牌局開始！", 2000); // 顯示開始訊息
+            deck = createGuaranteedDeck(); // 建立保證可解的牌組
         }
 
+        // 重置遊戲狀態
         state.stock = [];
         state.waste = [];
         state.foundations = [[], [], [], []];
         state.tableau = [[], [], [], [], [], [], []];
 
+        // 發牌到七列表格
         for (let i = 0; i < 7; i++) {
             for (let j = i; j < 7; j++) {
                 if (deck.length === 0) break;
-                let card = deck.pop();
-                card.id = Math.random().toString(36).substr(2,9);
-                card.faceUp = (i === j);
-                state.tableau[j].push(card);
+                let card = deck.pop(); // 從牌組取牌
+                card.id = Math.random().toString(36).substr(2,9); // 產生唯一ID
+                card.faceUp = (i === j); // 只有每列最後一張牌面朝上
+                state.tableau[j].push(card); // 放入表格
             }
         }
 
-        state.stock = deck.reverse();
+        // 剩餘牌放入牌堆
+        state.stock = deck.reverse(); // 反轉牌組順序
         state.stock.forEach(card => {
-            card.id = Math.random().toString(36).substr(2,9);
-            card.faceUp = false;
+            card.id = Math.random().toString(36).substr(2,9); // 產生唯一ID
+            card.faceUp = false; // 牌堆中的牌面朝下
         });
         
-        saveStateToHistory();
-        layoutSlots();
-        render();
-        startTimer();
+        saveStateToHistory(); // 儲存初始狀態到歷史紀錄
+        layoutSlots(); // 佈局槽位
+        render(); // 渲染遊戲畫面
+        startTimer(); // 開始計時
     }
     
+    // ==================== 歷史紀錄相關函數 ====================
+    /**
+     * 儲存當前遊戲狀態到歷史紀錄
+     */
     function saveStateToHistory() {
         const stateCopy = {
-            stock: JSON.parse(JSON.stringify(state.stock)),
-            waste: JSON.parse(JSON.stringify(state.waste)),
-            foundations: JSON.parse(JSON.stringify(state.foundations)),
-            tableau: JSON.parse(JSON.stringify(state.tableau)),
-            moves: state.moves,
-            gameMode: state.gameMode,
-            startTime: state.startTime,
-            score: state.score
+            stock: JSON.parse(JSON.stringify(state.stock)), // 深拷貝牌堆
+            waste: JSON.parse(JSON.stringify(state.waste)), // 深拷貝廢牌堆
+            foundations: JSON.parse(JSON.stringify(state.foundations)), // 深拷貝花色區
+            tableau: JSON.parse(JSON.stringify(state.tableau)), // 深拷貝表格
+            moves: state.moves, // 移動次數
+            gameMode: state.gameMode, // 遊戲模式
+            startTime: state.startTime, // 開始時間
+            score: state.score // 分數
         };
-        history.push(stateCopy);
-        updateUndoButton();
+        history.push(stateCopy); // 加入歷史紀錄
+        updateUndoButton(); // 更新撤回按鈕狀態
     }
     
+    /**
+     * 撤回上一步移動
+     */
     function undoMove() {
         if (isAnimating) return; // 動畫中禁止撤回
-        if (history.length <= 1) return;
-        history.pop();
-        const prevState = history[history.length - 1];
+        if (history.length <= 1) return; // 沒有歷史紀錄可撤回
+        history.pop(); // 移除當前狀態
+        const prevState = history[history.length - 1]; // 取得上一個狀態
         
+        // 恢復上一個狀態
         state.stock = JSON.parse(JSON.stringify(prevState.stock));
         state.waste = JSON.parse(JSON.stringify(prevState.waste));
         state.foundations = JSON.parse(JSON.stringify(prevState.foundations));
@@ -633,16 +711,25 @@
         state.startTime = prevState.startTime;
         state.score = prevState.score;
         
-        updateUndoButton();
-        render();
+        updateUndoButton(); // 更新撤回按鈕狀態
+        render(); // 重新渲染
         updateScore(); // 更新分數顯示
     }
     
+    /**
+     * 更新撤回按鈕狀態
+     */
     function updateUndoButton() {
         document.getElementById('undo-btn').disabled = history.length <= 1;
     }
 
+    // ==================== 牌組建立函數 ====================
+    /**
+     * 建立保證可解的牌組
+     * @returns {Array} - 牌組陣列
+     */
     function createGuaranteedDeck() {
+        // 基礎牌組，保證可解
         const baseDeck = [
             {suit: '♠', rank: 5, text: '5', color: 'black'},
             {suit: '♦', rank: 10, text: '10', color: 'red'},
@@ -698,14 +785,20 @@
             {suit: '♥', rank: 3, text: '3', color: 'red'}
         ];
         
-        const deck = JSON.parse(JSON.stringify(baseDeck));
-        const rotations = Math.floor(Math.random() * 10);
+        const deck = JSON.parse(JSON.stringify(baseDeck)); // 深拷貝基礎牌組
+        const rotations = Math.floor(Math.random() * 10); // 隨機旋轉次數
         for (let i = 0; i < rotations; i++) {
-            deck.push(deck.shift());
+            deck.push(deck.shift()); // 旋轉牌組
         }
         return deck;
     }
     
+    // ==================== 訊息顯示函數 ====================
+    /**
+     * 顯示訊息
+     * @param {string} text - 訊息內容
+     * @param {number} duration - 顯示持續時間(毫秒)
+     */
     function showMessage(text, duration = 2000) {
         const messageEl = document.getElementById('message');
         messageEl.textContent = text;
@@ -715,18 +808,23 @@
         }, duration);
     }
     
-    // --- 提示系統 ---
+    // ==================== 提示系統函數 ====================
+    /**
+     * 顯示遊戲提示
+     */
     function showHint() {
-        if (isAnimating) return;
+        if (isAnimating) return; // 動畫中不顯示提示
         const hintBtn = document.getElementById('hint-btn');
-        hintBtn.disabled = true;
+        hintBtn.disabled = true; // 禁用提示按鈕
         
+        // 清除現有高光效果
         document.querySelectorAll('.highlight, .target-highlight').forEach(el => {
             el.classList.remove('highlight', 'target-highlight');
         });
         
         let hint = null;
         
+        // 1. 尋找Ace移動
         hint = findAceMove();
         if (hint) {
             showMessage(hint.message, 2000);
@@ -735,6 +833,7 @@
             return;
         }
         
+        // 2. 尋找花色區移動
         hint = findFoundationMove();
         if (hint) {
             showMessage(hint.message, 2000);
@@ -743,6 +842,7 @@
             return;
         }
         
+        // 3. 根據翻開牌數量尋找最佳表格移動
         hint = findBestTableauMoveByUncoveredCards();
         if (hint) {
             showMessage(hint.message, 2000);
@@ -751,6 +851,7 @@
             return;
         }
         
+        // 4. 根據連鎖長度尋找最佳表格移動
         hint = findBestTableauMoveByChainLength();
         if (hint) {
             showMessage(hint.message, 2000);
@@ -759,6 +860,7 @@
             return;
         }
         
+        // 5. 檢查廢牌區移動
         if (state.waste.length > 0) {
             const wasteCard = state.waste[state.waste.length - 1];
             for (let j = 0; j < 4; j++) {
@@ -789,6 +891,7 @@
             }
         }
         
+        // 6. 尋找可翻開的牌
         hint = findFlipCardHint();
         if (hint) {
             showMessage(hint.message, 2000);
@@ -797,6 +900,7 @@
             return;
         }
         
+        // 7. 預設提示
         if (state.stock.length > 0) {
             showMessage("提示：點擊牌堆來翻開新牌", 2000);
             highlightStock();
@@ -810,7 +914,12 @@
         setTimeout(() => { hintBtn.disabled = false; }, 500);
     }
     
+    /**
+     * 尋找Ace移動
+     * @returns {Object|null} - 提示物件或null
+     */
     function findAceMove() {
+        // 檢查表格中的Ace
         for (let i = 0; i < 7; i++) {
             const pile = state.tableau[i];
             if (pile.length === 0) continue;
@@ -818,6 +927,7 @@
             if (!topCard.faceUp) continue;
             if (topCard.rank === 1) {
                 let alreadyInFoundation = false;
+                // 檢查是否已在花色區
                 for (let j = 0; j < 4; j++) {
                     const foundation = state.foundations[j];
                     if (foundation.length > 0 && foundation[0].suit === topCard.suit) {
@@ -836,6 +946,7 @@
                 }
             }
         }
+        // 檢查廢牌區中的Ace
         if (state.waste.length > 0) {
             const wasteCard = state.waste[state.waste.length - 1];
             if (wasteCard.rank === 1) {
@@ -861,6 +972,10 @@
         return null;
     }
     
+    /**
+     * 取得空的花色區索引
+     * @returns {number} - 花色區索引
+     */
     function getEmptyFoundationIndex() {
         for (let i = 0; i < 4; i++) {
             if (state.foundations[i].length === 0) return i;
@@ -868,7 +983,12 @@
         return 0;
     }
     
+    /**
+     * 尋找花色區移動
+     * @returns {Object|null} - 提示物件或null
+     */
     function findFoundationMove() {
+        // 檢查表格中的牌
         for (let i = 0; i < 7; i++) {
             const pile = state.tableau[i];
             if (pile.length === 0) continue;
@@ -889,6 +1009,7 @@
                 }
             }
         }
+        // 檢查廢牌區的牌
         if (state.waste.length > 0) {
             const wasteCard = state.waste[state.waste.length - 1];
             for (let j = 0; j < 4; j++) {
@@ -909,6 +1030,10 @@
         return null;
     }
     
+    /**
+     * 根據翻開牌數量尋找最佳表格移動
+     * @returns {Object|null} - 提示物件或null
+     */
     function findBestTableauMoveByUncoveredCards() {
         let bestMove = null;
         let bestUncoveredCount = -1;
@@ -916,6 +1041,7 @@
             const sourcePile = state.tableau[sourceCol];
             if (sourcePile.length === 0) continue;
             let sourceIdx = -1;
+            // 尋找最上面翻開的牌
             for (let i = sourcePile.length - 1; i >= 0; i--) {
                 if (sourcePile[i].faceUp) {
                     sourceIdx = i;
@@ -924,12 +1050,15 @@
             }
             if (sourceIdx === -1) continue;
             const card = sourcePile[sourceIdx];
+            // 檢查所有目標列
             for (let targetCol = 0; targetCol < 7; targetCol++) {
                 if (sourceCol === targetCol) continue;
                 const targetPile = state.tableau[targetCol];
                 if (canMoveToTableau(card, targetPile)) {
+                    // 計算移動後會翻開多少張牌
                     let uncoveredCount = 0;
                     if (sourceIdx > 0 && !sourcePile[sourceIdx - 1].faceUp) uncoveredCount = 1;
+                    // 選擇翻開最多牌的移動
                     if (uncoveredCount > bestUncoveredCount) {
                         bestUncoveredCount = uncoveredCount;
                         let targetCardId = null;
@@ -949,6 +1078,10 @@
         return bestMove;
     }
     
+    /**
+     * 根據連鎖長度尋找最佳表格移動
+     * @returns {Object|null} - 提示物件或null
+     */
     function findBestTableauMoveByChainLength() {
         let bestMove = null;
         let bestChainLength = -1;
@@ -956,6 +1089,7 @@
             const sourcePile = state.tableau[sourceCol];
             if (sourcePile.length === 0) continue;
             let sourceIdx = -1;
+            // 尋找最上面翻開的牌
             for (let i = sourcePile.length - 1; i >= 0; i--) {
                 if (sourcePile[i].faceUp) {
                     sourceIdx = i;
@@ -964,11 +1098,13 @@
             }
             if (sourceIdx === -1) continue;
             const card = sourcePile[sourceIdx];
-            const chainLength = sourcePile.length - sourceIdx;
+            const chainLength = sourcePile.length - sourceIdx; // 計算連鎖長度
+            // 檢查所有目標列
             for (let targetCol = 0; targetCol < 7; targetCol++) {
                 if (sourceCol === targetCol) continue;
                 const targetPile = state.tableau[targetCol];
                 if (canMoveToTableau(card, targetPile)) {
+                    // 選擇最長連鎖的移動
                     if (chainLength > bestChainLength) {
                         bestChainLength = chainLength;
                         let targetCardId = null;
@@ -988,6 +1124,10 @@
         return bestMove;
     }
     
+    /**
+     * 尋找可翻開的牌
+     * @returns {Object|null} - 提示物件或null
+     */
     function findFlipCardHint() {
         for (let i = 0; i < 7; i++) {
             const pile = state.tableau[i];
@@ -1004,6 +1144,10 @@
         return null;
     }
     
+    /**
+     * 高光顯示單張卡片
+     * @param {string} cardId - 卡片ID
+     */
     function highlightCard(cardId) {
         if (!cardId) return;
         const cardElement = document.querySelector(`[data-id="${cardId}"]`);
@@ -1013,12 +1157,21 @@
         }
     }
     
+    /**
+     * 高光顯示卡片對（來源和目標）
+     * @param {string} sourceCardId - 來源卡片ID
+     * @param {string} targetType - 目標類型
+     * @param {number} targetIdx - 目標索引
+     * @param {string} targetCardId - 目標卡片ID
+     */
     function highlightCardPair(sourceCardId, targetType, targetIdx, targetCardId = null) {
+        // 高光源卡片
         const sourceElement = document.querySelector(`[data-id="${sourceCardId}"]`);
         if (sourceElement) {
             sourceElement.classList.add('highlight');
             setTimeout(() => { sourceElement.classList.remove('highlight'); }, 2000);
         }
+        // 高光目標
         if (targetCardId) {
             const targetElement = document.querySelector(`[data-id="${targetCardId}"]`);
             if (targetElement) {
@@ -1040,6 +1193,9 @@
         }
     }
     
+    /**
+     * 高光顯示牌堆
+     */
     function highlightStock() {
         const stockElement = document.querySelector('#slot-stock');
         if (stockElement) {
@@ -1048,25 +1204,43 @@
         }
     }
     
+    // ==================== 移動規則檢查函數 ====================
+    /**
+     * 檢查是否可以移動到花色區
+     * @param {Object} card - 卡片物件
+     * @param {Array} foundation - 花色區陣列
+     * @returns {boolean} - 是否可以移動
+     */
     function canMoveToFoundation(card, foundation) {
-        if (foundation.length === 0) return card.rank === 1;
-        const topCard = foundation[foundation.length - 1];
-        return card.suit === topCard.suit && card.rank === topCard.rank + 1;
+        if (foundation.length === 0) return card.rank === 1; // 空的花色區只能放Ace
+        const topCard = foundation[foundation.length - 1]; // 花色區最上面的牌
+        return card.suit === topCard.suit && card.rank === topCard.rank + 1; // 同花色且數字連續
     }
     
+    /**
+     * 檢查是否可以移動到表格
+     * @param {Object} card - 卡片物件
+     * @param {Array} tableauPile - 表格列陣列
+     * @returns {boolean} - 是否可以移動
+     */
     function canMoveToTableau(card, tableauPile) {
-        if (tableauPile.length === 0) return card.rank === 13;
-        const topCard = tableauPile[tableauPile.length - 1];
-        return card.color !== topCard.color && card.rank === topCard.rank - 1;
+        if (tableauPile.length === 0) return card.rank === 13; // 空的表格列只能放King
+        const topCard = tableauPile[tableauPile.length - 1]; // 表格列最上面的牌
+        return card.color !== topCard.color && card.rank === topCard.rank - 1; // 不同顏色且數字連續
     }
 
-    // --- 佈局計算 ---
-    let slotPositions = {};
-    let cardSize = {width: 0, height: 0};
+    // ==================== 佈局計算函數 ====================
+    let slotPositions = {}; // 槽位位置資訊
+    let cardSize = {width: 0, height: 0}; // 卡片尺寸
     
+    /**
+     * 佈局所有槽位
+     */
     function layoutSlots() {
         const board = document.getElementById('game-board');
-        const w = board.clientWidth;
+        const w = board.clientWidth; // 遊戲區域寬度
+        
+        // 建立測量元素計算卡片尺寸
         const measure = document.createElement('div');
         measure.className = 'slot';
         board.appendChild(measure);
@@ -1074,7 +1248,7 @@
         cardSize.height = measure.offsetHeight;
         board.removeChild(measure);
 
-        // 手機上確保卡片不會太大
+        // 檢查是否為手機版
         const isMobile = window.innerWidth < 600;
         if (isMobile) {
             // 限制手機上最大卡片尺寸
@@ -1084,11 +1258,20 @@
             cardSize.height = maxCardHeight;
         }
 
+        // 計算間距
         const gap = Math.max(0.5, (w - (cardSize.width * 7)) / 8); // 最小間距0.5px
+        
+        /**
+         * 設定槽位位置
+         * @param {string} id - 槽位ID
+         * @param {number} x - X座標
+         * @param {number} y - Y座標
+         */
         const setPos = (id, x, y) => {
             const el = document.getElementById(id);
             el.style.left = x + 'px';
             el.style.top = y + 'px';
+            // 儲存位置資訊
             slotPositions[id] = { 
                 left: x, top: y, right: x + cardSize.width, bottom: y + cardSize.height,
                 cx: x + cardSize.width/2, cy: y + cardSize.height/2
@@ -1097,15 +1280,15 @@
 
         // 上方區域佈局
         const topRowY = 10;
-        setPos('slot-stock', gap, topRowY);
-        setPos('slot-waste', gap*2 + cardSize.width, topRowY);
+        setPos('slot-stock', gap, topRowY); // 牌堆
+        setPos('slot-waste', gap*2 + cardSize.width, topRowY); // 廢牌堆
         
         // 四個花色區從右到左排列
         for(let i=0; i<4; i++) {
             setPos(`slot-f${i}`, w - gap*(4-i) - cardSize.width*(4-i), topRowY);
         }
         
-        // 下方七列佈局
+        // 下方七列表格佈局
         const tableauY = topRowY + cardSize.height + (isMobile ? 10 : 30); // 手機上減少間距
         for(let i=0; i<7; i++) {
             let x = gap * (i+1) + cardSize.width * i;
@@ -1113,11 +1296,23 @@
         }
     }
 
-    // --- 渲染引擎 ---
+    // ==================== 渲染引擎函數 ====================
+    /**
+     * 渲染遊戲畫面
+     */
     function render() {
         const layer = document.getElementById('card-layer');
-        layer.innerHTML = ''; 
+        layer.innerHTML = ''; // 清空圖層
 
+        /**
+         * 繪製單張卡片
+         * @param {Object} card - 卡片物件
+         * @param {number} x - X座標
+         * @param {number} y - Y座標
+         * @param {string} type - 卡片類型
+         * @param {number} pileIdx - 所在堆疊索引
+         * @param {number} cardIdx - 卡片在堆疊中的索引
+         */
         const drawCard = (card, x, y, type, pileIdx, cardIdx) => {
             const div = document.createElement('div');
             div.className = `card ${card.faceUp ? '' : 'back'}`;
@@ -1138,10 +1333,12 @@
                     </div>
                 `;
                 
+                // 添加拖曳事件監聽器
                 div.addEventListener('mousedown', (e) => startDrag(e, type, pileIdx, cardIdx));
                 div.addEventListener('touchstart', (e) => startDrag(e, type, pileIdx, cardIdx), {passive: false});
                 
             } else {
+                // 背面朝上的卡片添加點擊事件
                 if (type === 'stock') {
                     div.addEventListener('click', drawStock);
                 } else if (type === 'tableau') {
@@ -1154,10 +1351,12 @@
             layer.appendChild(div);
         };
 
+        // 繪製牌堆
         const sPos = slotPositions['slot-stock'];
         if (state.stock.length > 0) {
             drawCard(state.stock[state.stock.length-1], sPos.left, sPos.top, 'stock', 0, 0);
         } else {
+            // 牌堆為空時顯示重新整理按鈕
             const emptyStock = document.createElement('div');
             emptyStock.style.cssText = `position:absolute; left:${sPos.left}px; top:${sPos.top}px; width:${cardSize.width}px; height:${cardSize.height}px;`;
             emptyStock.innerHTML = '<div class="refresh-btn">↺</div>';
@@ -1165,6 +1364,7 @@
             layer.appendChild(emptyStock);
         }
 
+        // 繪製廢牌堆
         const wPos = slotPositions['slot-waste'];
         const wasteLen = state.waste.length;
         if (wasteLen > 0) {
@@ -1172,6 +1372,7 @@
             drawCard(topWasteCard, wPos.left, wPos.top, 'waste', 0, wasteLen - 1);
         }
 
+        // 繪製四個花色區
         for(let i=0; i<4; i++) {
             const pos = slotPositions[`slot-f${i}`];
             const pile = state.foundations[i];
@@ -1180,72 +1381,95 @@
             }
         }
 
+        // 繪製七列表格
         for(let i=0; i<7; i++) {
             const pos = slotPositions[`slot-t${i}`];
             const pile = state.tableau[i];
-            let currentOffset = 0;
+            let currentOffset = 0; // 當前偏移量
             pile.forEach((card, idx) => {
                 if (idx > 0) {
                     const prevCard = pile[idx - 1];
+                    // 計算重疊比例
                     let overlapRatio = prevCard.faceUp ? (card.faceUp ? 0.7 : 0.9) : 0.9;
-                    // 手機上減少重疊比例，讓更多牌可見
+                    // 修改：手機版翻開的牌重疊50%
                     const isMobile = window.innerWidth < 600;
                     if (isMobile && card.faceUp) {
-                        overlapRatio = 0.65; // 從0.6增加到0.65，重疊多一點
+                        overlapRatio = 0.5; // 修改：改為50%重疊 (從0.65減少)
                     }
-                    currentOffset += cardSize.height * (1 - overlapRatio);
+                    currentOffset += cardSize.height * (1 - overlapRatio); // 計算偏移量
                 }
                 drawCard(card, pos.left, pos.top + currentOffset, 'tableau', i, idx);
             });
         }
     }
     
+    /**
+     * 翻開表格中的卡片
+     * @param {number} pileIdx - 表格列索引
+     */
     function flipTableauCard(pileIdx) {
         if (isAnimating) return;
         const pile = state.tableau[pileIdx];
         if (pile.length > 0) {
             const topCard = pile[pile.length - 1];
             if (!topCard.faceUp) {
-                topCard.faceUp = true;
-                state.moves++;
-                saveStateToHistory();
-                render();
-                updateTimer();
+                topCard.faceUp = true; // 翻開卡片
+                state.moves++; // 增加移動次數
+                saveStateToHistory(); // 儲存狀態
+                render(); // 重新渲染
+                updateTimer(); // 更新計時器
                 updateScore(); // 更新分數
             }
         }
     }
 
+    /**
+     * 從牌堆抽牌
+     */
     function drawStock() {
         if (isAnimating) return;
         if (state.stock.length === 0) return;
-        const card = state.stock.pop();
-        card.faceUp = true;
-        state.waste.push(card);
-        state.moves++;
-        saveStateToHistory();
-        render();
-        updateTimer();
+        const card = state.stock.pop(); // 從牌堆取牌
+        card.faceUp = true; // 翻開卡片
+        state.waste.push(card); // 放入廢牌堆
+        state.moves++; // 增加移動次數
+        saveStateToHistory(); // 儲存狀態
+        render(); // 重新渲染
+        updateTimer(); // 更新計時器
         updateScore(); // 更新分數
     }
 
+    /**
+     * 重置牌堆（將廢牌堆放回牌堆）
+     */
     function resetStock() {
         if (isAnimating) return;
         if (state.waste.length === 0) return;
-        state.stock = state.waste.reverse().map(c => { c.faceUp = false; return c; });
-        state.waste = [];
-        state.moves++;
-        saveStateToHistory();
-        render();
-        updateTimer();
+        state.stock = state.waste.reverse().map(c => { 
+            c.faceUp = false; // 將牌面朝下
+            return c; 
+        });
+        state.waste = []; // 清空廢牌堆
+        state.moves++; // 增加移動次數
+        saveStateToHistory(); // 儲存狀態
+        render(); // 重新渲染
+        updateTimer(); // 更新計時器
         updateScore(); // 更新分數
     }
 
-    // --- 自動移動動畫函式 ---
+    // ==================== 自動移動動畫函數 ====================
+    /**
+     * 執行卡片移動動畫
+     * @param {Array} cards - 要移動的卡片陣列
+     * @param {Object} sourceRect - 來源位置矩形
+     * @param {Object} targetRect - 目標位置矩形
+     * @param {Function} onComplete - 動畫完成後的回呼函數
+     */
     function animateMove(cards, sourceRect, targetRect, onComplete) {
-        isAnimating = true;
-        const ghosts = [];
+        isAnimating = true; // 標記動畫開始
+        const ghosts = []; // 幽靈卡片陣列
         
+        // 建立幽靈卡片
         cards.forEach((card, i) => {
             const ghost = document.createElement('div');
             ghost.className = `card flying-card ${card.color}`;
@@ -1262,7 +1486,7 @@
             const overlapHeight = cardSize.height * overlapRatio;
             const offset = i * (cardSize.height - overlapHeight);
 
-            // 初始位置
+            // 設定初始位置
             ghost.style.left = sourceRect.left + 'px';
             ghost.style.top = (sourceRect.top + offset) + 'px';
             ghost.style.width = cardSize.width + 'px';
@@ -1282,45 +1506,49 @@
             const offset = i * (cardSize.height - overlapHeight);
             
             ghost.style.left = targetRect.left + 'px';
-            // Foundation 不需要堆疊偏移，但 Tableau 需要。
-            // 這裡簡單處理：目標通常是堆疊的底部，我們往上疊
-            // 若目標是 Tableau，計算正確的堆疊高度會很複雜，這裡簡化為飛到目標位置
-            // 若要更精確，需要知道目標堆疊當前的 offset。
-            // 為了視覺簡單，我們讓它飛到目標堆疊的「頂部」
             ghost.style.top = (targetRect.top + offset) + 'px';
         });
 
         // 動畫結束後清理
         setTimeout(() => {
-            ghosts.forEach(g => g.remove());
-            isAnimating = false;
-            if (onComplete) onComplete();
+            ghosts.forEach(g => g.remove()); // 移除幽靈卡片
+            isAnimating = false; // 標記動畫結束
+            if (onComplete) onComplete(); // 執行回呼函數
         }, 300); // 配合 CSS transition 0.3s
     }
 
-    // --- 雙擊自動移動邏輯 (包含動畫) ---
+    // ==================== 雙擊自動移動邏輯 ====================
+    /**
+     * 處理雙擊事件
+     * @param {string} type - 卡片類型
+     * @param {number} pileIdx - 堆疊索引
+     * @param {number} cardIdx - 卡片索引
+     * @param {string} cardId - 卡片ID
+     */
     function handleDoubleClick(type, pileIdx, cardIdx, cardId) {
-        if (type === 'foundation') return;
-        if (isAnimating) return;
+        if (type === 'foundation') return; // 花色區的牌不能雙擊移動
+        if (isAnimating) return; // 動畫中禁止操作
         
         let sourcePile;
         let card;
         
+        // 根據卡片類型取得來源堆疊和卡片
         if (type === 'tableau') {
             sourcePile = state.tableau[pileIdx];
             if (cardIdx < 0 || cardIdx >= sourcePile.length) return;
             card = sourcePile[cardIdx];
             
-            if (!card.faceUp) return;
+            if (!card.faceUp) return; // 背面朝上的牌不能移動
+            // 檢查卡片上方是否有未翻開的牌
             for (let i = cardIdx + 1; i < sourcePile.length; i++) {
                 if (!sourcePile[i].faceUp) {
-                    shakeCard(cardId);
+                    shakeCard(cardId); // 震動提示
                     return;
                 }
             }
         } else if (type === 'waste') {
             sourcePile = state.waste;
-            if (cardIdx !== sourcePile.length - 1) return;
+            if (cardIdx !== sourcePile.length - 1) return; // 只能移動最上面的牌
             card = sourcePile[cardIdx];
         } else {
             return;
@@ -1331,7 +1559,7 @@
         if (!cardEl) return;
         const sourceRect = cardEl.getBoundingClientRect();
         
-        // 1. 嘗試移動到 Foundation
+        // 1. 嘗試移動到花色區
         for (let i = 0; i < 4; i++) {
             const foundation = state.foundations[i];
             if (canMoveToFoundation(card, foundation)) {
@@ -1358,13 +1586,13 @@
                     render();
                     updateTimer();
                     updateScore(); // 更新分數
-                    checkWin();
+                    checkWin(); // 檢查是否獲勝
                 });
                 return; 
             }
         }
         
-        // 2. 嘗試移動到 Tableau
+        // 2. 嘗試移動到表格
         for (let targetIdx = 0; targetIdx < 7; targetIdx++) {
             if (type === 'tableau' && targetIdx === pileIdx) continue;
             const targetPile = state.tableau[targetIdx];
@@ -1372,12 +1600,11 @@
             if (card.rank === 13 && targetPile.length === 0 && type === 'tableau' && cardIdx === 0) continue; 
 
             if (canMoveToTableau(card, targetPile)) {
-                // 取得目標位置 (如果有牌，飛到最後一張牌上；如果沒牌，飛到 slot 上)
+                // 取得目標位置
                 let targetRect;
                 if (targetPile.length > 0) {
                     const topCardId = targetPile[targetPile.length-1].id;
                     const topCardEl = document.querySelector(`[data-id="${topCardId}"]`);
-                    // Tableau 的牌是堆疊的，我們希望飛到下一張的位置
                     const rect = topCardEl.getBoundingClientRect();
                     targetRect = { 
                         left: rect.left, 
@@ -1404,7 +1631,7 @@
                     render();
                     updateTimer();
                     updateScore(); // 更新分數
-                    checkWin();
+                    checkWin(); // 檢查是否獲勝
                 });
                 return;
             }
@@ -1414,6 +1641,10 @@
         shakeCard(cardId);
     }
     
+    /**
+     * 震動卡片效果
+     * @param {string} cardId - 卡片ID
+     */
     function shakeCard(cardId) {
         const cardElement = document.querySelector(`[data-id="${cardId}"]`);
         if (cardElement) {
@@ -1424,13 +1655,21 @@
         }
     }
 
-    // --- 拖曳系統 ---
+    // ==================== 拖曳系統函數 ====================
+    /**
+     * 開始拖曳
+     * @param {Event} e - 事件物件
+     * @param {string} type - 卡片類型
+     * @param {number} pileIdx - 堆疊索引
+     * @param {number} cardIdx - 卡片索引
+     */
     function startDrag(e, type, pileIdx, cardIdx) {
         if (isAnimating) return; // 動畫中禁止拖曳
-        e.stopPropagation();
+        e.stopPropagation(); // 停止事件冒泡
         
-        const now = Date.now();
+        const now = Date.now(); // 當前時間
         
+        // 根據類型取得來源堆疊
         let sourcePile = (type === 'tableau') ? state.tableau[pileIdx] : (type === 'waste' ? state.waste : []);
         if (type === 'foundation') sourcePile = state.foundations[pileIdx];
         const clickedCard = sourcePile[cardIdx];
@@ -1447,14 +1686,15 @@
         lastClickCardId = clickedCard.id;
         lastClickTime = now;
 
-        if (drag.isDragging || drag.pending) return;
+        if (drag.isDragging || drag.pending) return; // 已在拖曳中
 
-        if (!clickedCard.faceUp) return;
-        if ((type === 'waste' || type === 'foundation') && cardIdx !== sourcePile.length - 1) return;
+        if (!clickedCard.faceUp) return; // 背面朝上的牌不能拖曳
+        if ((type === 'waste' || type === 'foundation') && cardIdx !== sourcePile.length - 1) return; // 只能拖曳最上面的牌
         
-        drag.pending = true;
+        drag.pending = true; // 標記為等待拖曳
         drag.isDragging = false;
         
+        // 取得觸控/滑鼠座標
         const clientX = e.clientX || (e.touches && e.touches[0].clientX);
         const clientY = e.clientY || (e.touches && e.touches[0].clientY);
         
@@ -1462,18 +1702,23 @@
         drag.startY = clientY;
         drag.origin = { type, pileIdx, cardIdx };
         
+        // 設定要拖曳的卡片
         drag.cards = [];
         if (type === 'tableau') {
+            // 表格中拖曳從點擊位置到最下面的所有牌
             for (let i = cardIdx; i < sourcePile.length; i++) {
                 drag.cards.push(sourcePile[i]);
             }
         } else {
+            // 廢牌堆和花色區只能拖曳一張牌
             drag.cards.push(clickedCard);
         }
 
+        // 取得遊戲區域邊界
         const gameBoard = document.getElementById('game-board');
         drag.gameBoardRect = gameBoard.getBoundingClientRect();
         
+        // 計算偏移量
         const cardEl = document.querySelector(`[data-id="${clickedCard.id}"]`);
         if (cardEl) {
             const rect = cardEl.getBoundingClientRect();
@@ -1481,12 +1726,16 @@
             drag.offset.y = clientY - rect.top;
         }
 
+        // 添加事件監聽器
         document.addEventListener('mousemove', onDragMove);
         document.addEventListener('mouseup', onDragEnd);
         document.addEventListener('touchmove', onDragMove, { passive: false });
         document.addEventListener('touchend', onDragEnd);
     }
 
+    /**
+     * 建立拖曳時的幽靈卡片
+     */
     function createGhosts() {
         if (!drag.cards.length) return;
         
@@ -1494,6 +1743,7 @@
         if (!startCardEl) return;
         const rect = startCardEl.getBoundingClientRect();
 
+        // 為每張拖曳中的卡片建立幽靈卡片
         drag.cards.forEach((card, i) => {
             const ghost = document.createElement('div');
             ghost.className = `card dragging-card ${card.color}`;
@@ -1505,10 +1755,12 @@
                 </div>
             `;
             
+            // 計算堆疊偏移量
             const overlapRatio = 0.7;
             const overlapHeight = cardSize.height * overlapRatio;
             const ghostOffset = i * (cardSize.height - overlapHeight);
             
+            // 設定初始位置
             ghost.style.left = rect.left + 'px';
             ghost.style.top = (rect.top + ghostOffset) + 'px';
             ghost.style.width = rect.width + 'px';
@@ -1518,18 +1770,25 @@
             drag.elGhosts.push(ghost);
         });
 
+        // 將原始卡片設為半透明
         drag.cards.forEach(card => {
             const el = document.querySelector(`[data-id="${card.id}"]`);
             if (el) el.style.opacity = '0.3';
         });
     }
 
+    /**
+     * 拖曳移動處理函數
+     * @param {Event} e - 事件物件
+     */
     function onDragMove(e) {
         if (!drag.pending && !drag.isDragging) return;
         
+        // 取得觸控/滑鼠座標
         const clientX = e.clientX || (e.touches && e.touches[0].clientX);
         const clientY = e.clientY || (e.touches && e.touches[0].clientY);
         
+        // 檢查是否真正開始拖曳（移動距離超過5px）
         if (drag.pending) {
             const moveX = Math.abs(clientX - drag.startX);
             const moveY = Math.abs(clientY - drag.startY);
@@ -1537,14 +1796,15 @@
             if (moveX > 5 || moveY > 5) {
                 drag.pending = false;
                 drag.isDragging = true;
-                createGhosts();
+                createGhosts(); // 建立幽靈卡片
             } else {
                 return;
             }
         }
         
+        // 更新幽靈卡片位置
         if (drag.isDragging) {
-            if (e.cancelable) e.preventDefault();
+            if (e.cancelable) e.preventDefault(); // 防止預設行為
             
             drag.elGhosts.forEach((el, i) => {
                 const overlapRatio = 0.7;
@@ -1556,29 +1816,38 @@
         }
     }
 
+    /**
+     * 拖曳結束處理函數
+     * @param {Event} e - 事件物件
+     */
     function onDragEnd(e) {
+        // 移除事件監聽器
         document.removeEventListener('mousemove', onDragMove);
         document.removeEventListener('mouseup', onDragEnd);
         document.removeEventListener('touchmove', onDragMove);
         document.removeEventListener('touchend', onDragEnd);
 
+        // 處理等待拖曳狀態
         if (drag.pending) {
             drag.pending = false;
             return;
         }
 
-        if (!drag.isDragging) return;
+        if (!drag.isDragging) return; // 未在拖曳中
 
+        // 取得幽靈卡片位置
         const headGhost = drag.elGhosts[0];
         const ghostRect = headGhost.getBoundingClientRect();
         
+        // 計算相對遊戲區域的位置
         const ghostLeftRelative = ghostRect.left - drag.gameBoardRect.left;
         const ghostTopRelative = ghostRect.top - drag.gameBoardRect.top;
         const ghostCenterX = ghostLeftRelative + ghostRect.width / 2;
         const ghostCenterY = ghostTopRelative + ghostRect.height / 2;
 
-        let target = null;
+        let target = null; // 目標位置
         
+        // 檢查是否拖曳到花色區
         for (let i = 0; i < 4; i++) {
             const s = slotPositions[`slot-f${i}`];
             if (!s) continue;
@@ -1589,6 +1858,7 @@
             }
         }
         
+        // 檢查是否拖曳到表格
         if (!target) {
             for (let i = 0; i < 7; i++) {
                 const s = slotPositions[`slot-t${i}`];
@@ -1601,76 +1871,97 @@
             }
         }
 
+        // 嘗試移動卡片
         let success = false;
         if (target) {
             success = tryMove(drag.cards, drag.origin, target);
         }
 
+        // 清理幽靈卡片
         drag.elGhosts.forEach(el => el.remove());
         drag.elGhosts = [];
         drag.isDragging = false;
         
+        // 恢復原始卡片透明度
         drag.cards.forEach(card => {
             const el = document.querySelector(`[data-id="${card.id}"]`);
             if (el) el.style.opacity = '1';
         });
 
+        // 根據移動結果更新遊戲
         if (success) {
             state.moves++;
             saveStateToHistory();
             render();
             updateTimer();
             updateScore(); // 更新分數
-            checkWin();
+            checkWin(); // 檢查是否獲勝
         } else {
-            render();
+            render(); // 移動失敗，重新渲染恢復原狀
         }
     }
 
+    /**
+     * 嘗試移動卡片
+     * @param {Array} cards - 要移動的卡片陣列
+     * @param {Object} source - 來源資訊
+     * @param {Object} target - 目標資訊
+     * @returns {boolean} - 移動是否成功
+     */
     function tryMove(cards, source, target) {
         if (!cards || cards.length === 0) return false;
-        const moveCard = cards[0];
+        const moveCard = cards[0]; // 移動的第一張卡片
         
+        // 移動到花色區
         if (target.type === 'foundation') {
-            if (cards.length > 1) return false;
+            if (cards.length > 1) return false; // 花色區只能移動一張牌
             const foundation = state.foundations[target.idx];
             if (foundation.length === 0) {
-                if (moveCard.rank !== 1) return false;
+                if (moveCard.rank !== 1) return false; // 空的花色區只能放Ace
             } else {
                 const topCard = foundation[foundation.length - 1];
-                if (moveCard.suit !== topCard.suit || moveCard.rank !== topCard.rank + 1) return false;
+                if (moveCard.suit !== topCard.suit || moveCard.rank !== topCard.rank + 1) return false; // 必須同花色且連續
             }
-            performMove(source, target, cards);
+            performMove(source, target, cards); // 執行移動
             return true;
         }
         
+        // 移動到表格
         if (target.type === 'tableau') {
-            if (source.type === 'tableau' && source.pileIdx === target.idx) return false;
+            if (source.type === 'tableau' && source.pileIdx === target.idx) return false; // 不能移動到同一列
             const tableau = state.tableau[target.idx];
             if (tableau.length === 0) {
-                if (moveCard.rank !== 13) return false;
+                if (moveCard.rank !== 13) return false; // 空的表格列只能放King
             } else {
                 const topCard = tableau[tableau.length - 1];
-                if (moveCard.color === topCard.color || moveCard.rank !== topCard.rank - 1) return false;
+                if (moveCard.color === topCard.color || moveCard.rank !== topCard.rank - 1) return false; // 必須不同顏色且連續
             }
-            performMove(source, target, cards);
+            performMove(source, target, cards); // 執行移動
             return true;
         }
         return false;
     }
 
+    /**
+     * 執行移動操作
+     * @param {Object} source - 來源資訊
+     * @param {Object} target - 目標資訊
+     * @param {Array} cards - 要移動的卡片陣列
+     */
     function performMove(source, target, cards) {
+        // 從來源移除卡片
         if (source.type === 'waste') {
             state.waste.splice(source.cardIdx, 1);
         } else if (source.type === 'tableau') {
             state.tableau[source.pileIdx].splice(source.cardIdx, cards.length);
             if (state.tableau[source.pileIdx].length > 0) {
-                state.tableau[source.pileIdx][state.tableau[source.pileIdx].length - 1].faceUp = true;
+                state.tableau[source.pileIdx][state.tableau[source.pileIdx].length - 1].faceUp = true; // 翻開下一張牌
             }
         } else if (source.type === 'foundation') {
             state.foundations[source.pileIdx].splice(source.cardIdx, 1);
         }
         
+        // 添加到目標
         if (target.type === 'foundation') {
             state.foundations[target.idx].push(...cards);
         } else if (target.type === 'tableau') {
@@ -1678,22 +1969,26 @@
         }
     }
 
+    // ==================== 遊戲結束檢查 ====================
+    /**
+     * 檢查是否獲勝
+     */
     function checkWin() {
         let totalCards = 0;
-        state.foundations.forEach(pile => totalCards += pile.length);
-        if (totalCards === 52) {
-            stopTimer();
-            // 計算最終分數
-            updateScore();
+        state.foundations.forEach(pile => totalCards += pile.length); // 計算花色區總牌數
+        if (totalCards === 52) { // 所有牌都在花色區
+            stopTimer(); // 停止計時器
+            updateScore(); // 計算最終分數
             setTimeout(() => {
                 alert(`🎉 恭喜破關！ 🎉\n移動次數：${state.moves}\n最終分數：${state.score}`);
             }, 200);
         }
     }
 
+    // ==================== 頁面載入和事件監聽 ====================
     window.addEventListener('load', () => {
-        initGame('guaranteed');
-        window.addEventListener('resize', layoutSlots);
+        initGame('guaranteed'); // 初始化遊戲
+        window.addEventListener('resize', layoutSlots); // 監聽視窗大小變化
     });
     
     // 防止手機雙指縮放
