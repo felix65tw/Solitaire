@@ -1549,6 +1549,7 @@
             card = sourcePile[cardIdx];
             
             if (!card.faceUp) return; // 背面朝上的牌不能移動
+            
             // 檢查卡片上方是否有未翻開的牌
             for (let i = cardIdx + 1; i < sourcePile.length; i++) {
                 if (!sourcePile[i].faceUp) {
@@ -1573,18 +1574,28 @@
         for (let i = 0; i < 4; i++) {
             const foundation = state.foundations[i];
             if (canMoveToFoundation(card, foundation)) {
+                // 花色區只能移動最上面的單張牌
+                let cardsToMove;
+                if (type === 'tableau') {
+                    // 如果是表格中的牌，必須是最上面的牌才能移動到花色區
+                    if (cardIdx !== sourcePile.length - 1) {
+                        shakeCard(cardId); // 震動提示，不是最上面的牌
+                        return;
+                    }
+                    cardsToMove = [card]; // 只移動這一張牌
+                } else if (type === 'waste') {
+                    cardsToMove = [sourcePile[sourcePile.length-1]];
+                }
+
                 // 取得目標位置
                 const targetEl = document.getElementById(`slot-f${i}`);
                 const targetRect = targetEl.getBoundingClientRect();
                 
-                // 準備移動數據
-                const cardsToMove = (type === 'tableau') ? sourcePile.slice(cardIdx) : [sourcePile[sourcePile.length-1]];
-
                 // 播放動畫
                 animateMove(cardsToMove, sourceRect, targetRect, () => {
                     // 動畫結束後執行數據更新
                     if (type === 'tableau') {
-                        sourcePile.splice(cardIdx);
+                        sourcePile.splice(cardIdx, 1); // 只移除這一張牌
                         foundation.push(...cardsToMove);
                         if (sourcePile.length > 0) sourcePile[sourcePile.length - 1].faceUp = true;
                     } else if (type === 'waste') {
@@ -1630,6 +1641,7 @@
                     targetRect = slotEl.getBoundingClientRect();
                 }
 
+                // 對於表格移動，可以移動整疊牌（從點擊的牌到最上面的所有牌）
                 const cardsToMove = (type === 'tableau') ? sourcePile.slice(cardIdx) : [sourcePile[sourcePile.length-1]];
                 
                 animateMove(cardsToMove, sourceRect, targetRect, () => {
