@@ -225,7 +225,7 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 2.0rem;
+            font-size: 2.5rem;
             font-weight: bold;
             color: rgba(255, 255, 255, 0.9);
             text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
@@ -348,10 +348,12 @@
                 line-height: 0.8;
             }
             
-            /* 特殊處理數字"10" - 進一步縮小 */
+            /* 特殊處理數字"10" - 縮小寬度不縮小高度 */
             .card[data-text="10"] .card-num {
-                font-size: 1.8rem; /* 數字10使用更小的字體 (從2.2rem調整) */
-                left: 0.5px; /* 稍微調整位置 */
+                font-size: 1.8rem; /* 調整字體大小 */
+                transform: scaleX(0.8); /* 壓縮寬度為80% */
+                transform-origin: left top; /* 從左上角開始縮放 */
+                left: 0.8px; /* 調整位置 */
             }
             
             .card-suit-top {
@@ -453,8 +455,10 @@
                 
                 /* 特別小的屏幕上數字"10"的處理 */
                 .card[data-text="10"] .card-num {
-                    font-size: 1.8rem; /* 數字10使用更小的字體 (從2.0rem調整) */
-                    left: 0.3px; /* 稍微調整位置 */
+                    font-size: 1.6rem; /* 數字10使用更小的字體 */
+                    transform: scaleX(0.8); /* 壓縮寬度為80% */
+                    transform-origin: left top; /* 從左上角開始縮放 */
+                    left: 0.5px; /* 稍微調整位置 */
                 }
                 
                 .card-suit-top {
@@ -1398,6 +1402,9 @@
                 if (idx > 0) {
                     const prevCard = pile[idx - 1];
                     // 計算重疊比例 - 現在手機版和網頁版使用相同的重疊比例
+                    // 翻開的牌重疊在翻開的牌上：70%
+                    // 翻開的牌重疊在未翻開的牌上：90%
+                    // 未翻開的牌重疊在任何牌上：90%
                     let overlapRatio = prevCard.faceUp ? (card.faceUp ? 0.7 : 0.9) : 0.9;
                     currentOffset += cardSize.height * (1 - overlapRatio); // 計算偏移量
                 }
