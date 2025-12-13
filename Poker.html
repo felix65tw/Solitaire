@@ -175,19 +175,15 @@
             font-weight: 800; 
             line-height: 1;
             position: absolute;
-            /* 修改前：top: 8px; left: 8px; */
-            /* 修改後：縮小文字與牌的邊界 */
             top: 4px; /* 減少上邊距 */
             left: 4px; /* 減少左邊距 */
         }
         
         /* 右上角花色 */
         .card-suit-top { 
-            font-size: 1.5rem; 
+            font-size: 1.8rem; 
             line-height: 1; 
             position: absolute;
-            /* 修改前：top: 8px; right: 8px; */
-            /* 修改後：縮小文字與牌的邊界 */
             top: 4px; /* 減少上邊距 */
             right: 4px; /* 減少右邊距 */
         }
@@ -195,7 +191,7 @@
         /* 卡片中間的大花色 */
         .card-center-suit {
             position: absolute;
-            top: 70%; /* 原本是 50%，改成 62% 往下移 */
+            top: 62%; /* 原本是 50%，改成 62% 往下移 */
             left: 50%;
             transform: translate(-50%, -50%); /* 居中對齊 */
             font-size: 4rem;
@@ -324,31 +320,32 @@
                 --gap: 1vw; /* 縮小牌間距 (從1.5vw減少) */
             }
             
-            /* 手機上卡片字體調整 - 修正右上角花色位置問題 */
+            /* 手機上卡片字體調整 */
             .card-num { 
-                font-size: 2.5rem; /* 修改：調整為2.5rem (從3rem減少) */
+                font-size: 2.5rem; /* 調整為2.5rem (從3rem減少) */
                 font-weight: 800;
                 position: absolute;
-                top: 0px; /* 修改：進一步減少邊距 (從4px減少) */
-                left: 1px; /* 修改：進一步減少邊距 (從4px減少) */
-                line-height: 0;
+                top: 1.3px; /* 修改：改為1.3px (從2px調整) */
+                left: 1.3px; /* 修改：改為1.3px (從2px調整) */
+                line-height: 1;
             }
             
             .card-suit-top {
                 font-size: 1.1rem; /* 維持1.1rem不變 */
                 position: absolute;
-                top: 2px; /* 修改：進一步減少邊距 (從4px減少) */
-                right: 2px; /* 修改：進一步減少邊距 (從4px減少) */
+                top: 1.3px; /* 修改：改為1.3px (從2px調整) */
+                right: 1.3px; /* 修改：改為1.3px (從2px調整) */
                 line-height: 1;
             }
             
-            /* 手機上中間花色調整為2.5rem */
+            /* 手機上中間花色調整 */
             .card-center-suit { 
                 font-size: 2.5rem; /* 從2.2rem增加到2.5rem */
                 position: absolute;
-                top: 65%; /* 調整位置以適應新的大小 */
+                /* 修改：移除top屬性，改用bottom讓花色靠近底部 */
+                bottom: 1.1px; /* 修改：使用bottom屬性，離底端1.1px */
                 left: 50%;
-                transform: translate(-50%, -50%);
+                transform: translateX(-50%); /* 修改：只水平居中，垂直居中由bottom控制 */
                 font-weight: normal;
             }
             
@@ -416,69 +413,23 @@
                 /* 在特別小的屏幕上進一步調整卡片字體 */
                 .card-num { 
                     font-size: 2.2rem; /* 比2.5rem稍小一點 */
-                    top: 2px; /* 保持小邊距 */
-                    left: 2px; /* 保持小邊距 */
+                    top: 1.3px; /* 保持1.3px邊距 */
+                    left: 1.3px; /* 保持1.3px邊距 */
                 }
                 
                 .card-suit-top {
                     font-size: 1rem; /* 比1.1rem稍小一點 */
-                    top: 2px; /* 保持小邊距 */
-                    right: 2px; /* 保持小邊距 */
+                    top: 1.3px; /* 保持1.3px邊距 */
+                    right: 1.3px; /* 保持1.3px邊距 */
                 }
                 
                 .card-center-suit { 
                     font-size: 2.2rem; /* 從2rem增加到2.2rem */
-                    top: 60%; /* 保持位置 */
+                    bottom: 1.1px; /* 保持離底端1.1px */
                 }
             }
         }
-
-        /* 橫屏模式 */
-        @media (max-height: 500px) and (orientation: landscape) {
-            :root {
-                --card-width: 10vw; /* 橫屏時卡片稍小 */
-                --card-height: 14vw; /* 等比例調整 */
-                --gap: 0.8vw; /* 更小的間距 */
-            }
-            
-            #game-board {
-                margin-top: 2px; /* 更小的上邊距 */
-            }
-            
-            .toolbar {
-                height: 40px; /* 橫屏工具欄更矮 */
-            }
-            
-            .toolbar-title {
-                font-size: 11px; /* 橫屏字體更小 */
-            }
-            
-            .score-display {
-                font-size: 11px; /* 橫屏字體更小 */
-            }
-            
-            #game-board {
-                height: calc(100vh - 40px); /* 減去工具欄高度 */
-            }
-            
-            /* 橫屏模式下卡片字體也相應調整 */
-            .card-num { 
-                font-size: 2.2rem; /* 保持可讀性 */
-                top: 2px; /* 小邊距 */
-                left: 2px; /* 小邊距 */
-            }
-            
-            .card-suit-top {
-                font-size: 1rem; /* 保持比例 */
-                top: 2px; /* 小邊距 */
-                right: 2px; /* 小邊距 */
-            }
-            
-            .card-center-suit { 
-                font-size: 2rem; /* 保持比例 */
-                top: 60%; /* 保持位置 */
-            }
-        }
+        /* 注意：已移除所有橫屏模式的媒體查詢，本遊戲只支持豎屏模式 */
     </style>
 </head>
 <body>
