@@ -403,23 +403,68 @@
             box-shadow: 0 0 20px #667eea !important;
         }
         
-        /* 手機版功能鍵容器 */
+        /* 手機版功能鍵容器 - 美化版 */
         .mobile-toolbar-container {
             display: none;
-            position: absolute;
-            top: 601px; /* 從212px改為601px */
-            right: 50%;
-            transform: translateX(50%);
+            position: fixed; /* 改為固定定位 */
+            bottom: 20px; /* 調整位置到頁面底部 */
+            left: 50%;
+            transform: translateX(-50%);
             z-index: 1000;
-            background: rgba(0,0,0,0.7);
-            border-radius: 10px;
-            padding: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            flex-direction: row; /* 從column改為row，豎的改成橫的 */
-            gap: 10px; /* 增加間距 */
-            flex-wrap: wrap;
+            background: rgba(255, 255, 255, 0.95); /* 改為半透明白色背景 */
+            border-radius: 25px; /* 增加圓角 */
+            padding: 12px 20px; /* 增加內邊距 */
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15); /* 增加陰影效果 */
+            flex-direction: row; /* 橫向排列 */
+            gap: 15px; /* 增加間距 */
+            flex-wrap: nowrap; /* 防止換行 */
             justify-content: center;
+            align-items: center;
+            min-width: 280px; /* 最小寬度 */
             max-width: 90%;
+            backdrop-filter: blur(10px); /* 毛玻璃效果 */
+            border: 1px solid rgba(255, 255, 255, 0.2); /* 邊框 */
+        }
+        
+        /* 手機版功能按鈕美化 */
+        .mobile-toolbar-container button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* 漸變背景 */
+            color: white;
+            border: none;
+            border-radius: 50px; /* 橢圓形按鈕 */
+            padding: 12px 18px; /* 增加內邊距 */
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* 陰影效果 */
+            transition: all 0.3s ease;
+            min-width: 70px; /* 最小寬度 */
+            white-space: nowrap;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        /* 手機按鈕懸停效果 */
+        .mobile-toolbar-container button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+        }
+        
+        /* 手機按鈕按下效果 */
+        .mobile-toolbar-container button:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* 手機禁用按鈕樣式 */
+        .mobile-toolbar-container button:disabled {
+            background: linear-gradient(135deg, #cccccc 0%, #999999 100%);
+            color: #666;
+            box-shadow: none;
+            transform: none;
+            cursor: not-allowed;
         }
         
         /* 桌面版樣式 - 維持原始文字和花色大小 */
@@ -637,13 +682,16 @@
                 
                 /* 在特別小的屏幕上調整手機功能區 */
                 .mobile-toolbar-container {
-                    gap: 5px; /* 減少間距 */
-                    padding: 6px; /* 減少padding */
+                    gap: 8px; /* 減少間距 */
+                    padding: 10px 15px; /* 調整padding */
+                    min-width: 250px; /* 調整最小寬度 */
+                    border-radius: 20px; /* 稍微減小圓角 */
                 }
                 
                 .mobile-toolbar-container button {
-                    padding: 4px 6px; /* 更小的按鈕 */
-                    font-size: 9px; /* 更小的字體 */
+                    padding: 10px 12px; /* 調整按鈕大小 */
+                    font-size: 11px; /* 調整字體大小 */
+                    min-width: 60px; /* 調整最小寬度 */
                 }
             }
         }
@@ -684,7 +732,7 @@
 
 <!-- 遊戲主區域 -->
 <div id="game-board">
-    <!-- 手機版功能鍵容器 -->
+    <!-- 手機版功能鍵容器 - 美化版 -->
     <div class="mobile-toolbar-container">
         <button onclick="initGame('guaranteed')" id="mobile-new-game-btn">新牌局</button>
         <button onclick="undoMove()" id="mobile-undo-btn" disabled>撤回</button>
@@ -708,7 +756,7 @@
     <div id="slot-t0" class="slot" data-type="tableau" data-idx="0"></div>
     <div id="slot-t1" class="slot" data-type="tableau" data-idx="1"></div>
     <div id="slot-t2" class="slot" data-type="tableau" data-idx="2"></div>
-<div id="slot-t3" class="slot" data-type="tableau" data-idx="3"></div>
+    <div id="slot-t3" class="slot" data-type="tableau" data-idx="3"></div>
     <div id="slot-t4" class="slot" data-type="tableau" data-idx="4"></div>
     <div id="slot-t5" class="slot" data-type="tableau" data-idx="5"></div>
     <div id="slot-t6" class="slot" data-type="tableau" data-idx="6"></div>
@@ -1593,13 +1641,17 @@
             setPos('slot-stock', stockX, topRowY);
         } else {
             // 左手模式：牌堆在左，廢牌堆在牌堆右邊，花色區在右邊
+            // 關鍵修正：牌堆和廢牌堆的距離應該與右手模式對稱
+            // 在右手模式中，牌堆在右，廢牌堆在牌堆左邊一個gap的位置（但考慮三張牌寬度）
+            // 在左手模式中，牌堆在左，廢牌堆應該在牌堆右邊一個gap的位置（但考慮三張牌寬度）
+            
             // 1. 牌堆（蓋牌區）放在最左邊
             const stockX = gap;
             setPos('slot-stock', stockX, topRowY);
             
-            // 2. 廢牌堆放在牌堆右邊，但要為三張牌留出空間
-            // 廢牌堆的位置應該與右手模式對稱：在右手模式中，廢牌堆在牌堆左邊，距離牌堆左邊緣一個gap
-            // 在左手模式中，廢牌堆應該在牌堆右邊，距離牌堆右邊緣一個gap
+            // 2. 廢牌堆放在牌堆右邊，距離為一個gap（與右手模式對稱）
+            // 注意：這裡不需要為三張牌留出空間，因為牌是向右展開的
+            // 但在計算位置時，我們需要考慮三張牌模式下的視覺對齊
             const wasteX = stockX + cardSize.width + gap;
             setPos('slot-waste', wasteX, topRowY);
             
