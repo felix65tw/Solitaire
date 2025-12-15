@@ -13,7 +13,7 @@
             --max-w: 100px; /* 卡片最大寬度 */
             --max-h: 140px; /* 卡片最大高度 */
             --gap: 2vw; /* 卡片間距 */
-            --animation-draw-speed: 0.2s; /* 參數：翻牌動畫速度 */
+            --animation-draw-speed: 0.1s; /* 參數：翻牌動畫速度 */
             --animation-move-speed: 0.1s; /* 參數：卡片移動動畫速度 */
             --animation-magic-speed: 0.5s; /* 參數：魔法動畫速度 */
             --animation-pulse-speed: 0.8s; /* 參數：脈衝動畫速度 */
@@ -428,7 +428,7 @@
         .mobile-toolbar-container {
             display: none;
             position: fixed; /* 改為固定定位 */
-            bottom: 20px; /* 調整位置到頁面底部 */
+            bottom: 120px; /* 調整位置到頁面底部 */
             left: 50%;
             transform: translateX(-50%);
             z-index: 1000;
@@ -997,7 +997,7 @@
     <h3>新牌局選項</h3>
     <button class="new-game-btn" onclick="startNewGame()">新的遊戲</button>
     <button class="restart-game-btn" onclick="restartCurrentGame()">重玩此局</button>
-    <button class="cancel-btn" onclick="closeNewGameDialog()">取消</button>
+    <button class="cancel-btn" onclick="closeNewGameDialog()">返回遊戲</button>
 </div>
 
 <!-- 設定對話框 -->
@@ -1694,10 +1694,11 @@
      * 更新魔法按鈕狀態
      */
     function updateMagicButton() {
-        // 檢查是否有蓋著的牌
+        // 檢查是否有蓋著的牌（表格中的蓋牌）
         const hasFacedDownCards = state.tableau.some(pile => 
             pile.some(card => !card.faceUp)
         );
+        // 魔法按鈕只要有蓋牌就可以使用，不管廢牌區和蓋牌區有沒有牌
         const isDisabled = !hasFacedDownCards || isAnimating;
         document.getElementById('magic-btn').disabled = isDisabled;
         document.getElementById('mobile-magic-btn').disabled = isDisabled;
@@ -2742,15 +2743,6 @@
         
         const drawCount = Math.min(state.drawMode, state.stock.length); // 實際要翻開的牌數
         
-        // 取得牌堆和廢牌堆的視窗座標
-        const stockSlot = document.getElementById('slot-stock');
-        const wasteSlot = document.getElementById('slot-waste');
-        
-        if (!stockSlot || !wasteSlot) return;
-        
-        const stockRect = stockSlot.getBoundingClientRect();
-        const wasteRect = wasteSlot.getBoundingClientRect();
-        
         // 先從牌堆中取出牌，保持正確的順序
         const cardsToDraw = [];
         for (let i = 0; i < drawCount; i++) {
@@ -2759,13 +2751,27 @@
             cardsToDraw.unshift(state.stock[cardIndex]); // 使用 unshift 確保順序正確
         }
         
-        // 現在 cardsToDraw 的順序是：[最舊的牌, ..., 最新的牌]
-        // 索引0是最舊的牌，索引 drawCount-1 是最新的牌
+        // 從遊戲狀態中移除這些牌（立即更新狀態）
+        for (let i = 0; i < drawCount; i++) {
+            state.stock.pop();
+        }
+        
+        // 立即重新渲染，消除蓋牌區的牌背
+        render();
+        
+        // 取得牌堆和廢牌堆的視窗座標（在重新渲染後獲取）
+        const stockSlot = document.getElementById('slot-stock');
+        const wasteSlot = document.getElementById('slot-waste');
+        
+        if (!stockSlot || !wasteSlot) return;
+        
+        const stockRect = stockSlot.getBoundingClientRect();
+        const wasteRect = wasteSlot.getBoundingClientRect();
         
         // 為每張牌創建動畫卡片
         const animationCards = [];
         
-        // 創建動畫卡片，從最舊的牌開始動畫（這樣視覺上舊牌先飛出，新牌後飛出）
+        // 創建動畫卡片，從最舊的牌開始動畫
         for (let i = 0; i < drawCount; i++) {
             const card = cardsToDraw[i];
             const animCard = document.createElement('div');
@@ -2837,13 +2843,8 @@
             // 移除動畫卡片
             animationCards.forEach(item => item.element.remove());
             
-            // 更新遊戲狀態 - 先從牌堆取出牌
-            const drawnCards = [];
-            for (let i = 0; i < drawCount; i++) {
-                drawnCards.unshift(state.stock.pop()); // unshift 保持順序：[最舊, ..., 最新]
-            }
             // 將取出的牌加入廢牌堆
-            drawnCards.forEach(card => {
+            cardsToDraw.forEach(card => {
                 card.faceUp = true;
                 state.waste.push(card); // push 確保最新的牌在最後（最上面）
             });
@@ -3004,6 +3005,20 @@
         const selected = facedDownCards[randomIndex];
         const { card, pileIdx, cardIdx, pile } = selected;
         
+        // 先從表格中移除卡片
+        pile.splice(cardIdx, 1);
+        
+        // 如果表格列還有牌，確保最上面一張是翻開的
+        if (state.tableau[pileIdx].length > 0) {
+            const newTopCard = state.tableau[pileIdx][state.tableau[pileIdx].length - 1];
+            if (!newTopCard.faceUp) {
+                newTopCard.faceUp = true;
+            }
+        }
+        
+        // 立即渲染一次，讓蓋牌消失，新的牌翻開
+        render();
+        
         isAnimating = true; // 標記動畫開始
         updateMagicButton(); // 更新魔法按鈕狀態
         
@@ -3013,15 +3028,22 @@
         
         const wasteRect = wasteSlot.getBoundingClientRect();
         
-        // 獲取選中卡片的位置
+        // 獲取選中卡片的位置（注意：此時卡片已經從DOM中移除，我們需要之前記錄的位置）
+        // 我們在更新狀態和渲染之前，先獲取卡片的位置
         const cardElement = document.querySelector(`[data-id="${card.id}"]`);
-        if (!cardElement) {
-            // 如果卡片元素不存在（可能尚未渲染），則直接更新狀態
-            performMagicMove(card, pileIdx, cardIdx, pile);
-            return;
+        let sourceRect;
+        if (cardElement) {
+            sourceRect = cardElement.getBoundingClientRect();
+        } else {
+            // 如果卡片元素不存在，則使用該列的slot位置（不精確，但作為備用）
+            const slotEl = document.getElementById(`slot-t${pileIdx}`);
+            if (slotEl) {
+                sourceRect = slotEl.getBoundingClientRect();
+            } else {
+                // 如果都沒有，則使用廢牌堆的位置（這樣動畫就不會移動）
+                sourceRect = wasteRect;
+            }
         }
-        
-        const sourceRect = cardElement.getBoundingClientRect();
         
         // 創建魔法動畫卡片（帶加強版金光閃閃效果）
         const magicCard = document.createElement('div');
@@ -3088,51 +3110,32 @@
             playFlipSound();
         }, 250);
         
-        // 動畫完成後更新遊戲狀態
+        // 動畫完成後更新遊戲狀態：將牌添加到廢牌堆，並更新分數等
         setTimeout(() => {
             // 移除動畫卡片
             magicCard.remove();
             
-            // 執行魔法移動
-            performMagicMove(card, pileIdx, cardIdx, pile);
+            // 翻開卡片
+            card.faceUp = true;
+            
+            // 添加到廢牌堆（最上面）
+            state.waste.push(card);
+            
+            // 更新遊戲狀態
+            state.moves++; // 增加移動次數
+            addScore(-20); // 使用魔法扣20分
+            
+            saveStateToHistory(); // 儲存狀態
+            render(); // 重新渲染，讓廢牌堆顯示這張牌
+            updateTimer(); // 更新計時器
+            
+            isAnimating = false; // 標記動畫結束
+            updateMagicButton(); // 更新魔法按鈕狀態
+            
+            showMessage(`魔法發動！翻開了${card.text}${card.suit}`, 1500);
         }, 500);
     }
     
-    /**
-     * 執行魔法移動（更新遊戲狀態）
-     */
-    function performMagicMove(card, pileIdx, cardIdx, pile) {
-        // 從表格中移除卡片
-        pile.splice(cardIdx, 1);
-        
-        // 翻開卡片
-        card.faceUp = true;
-        
-        // 添加到廢牌堆（最上面）
-        state.waste.push(card);
-        
-        // 更新遊戲狀態
-        state.moves++; // 增加移動次數
-        addScore(-20); // 使用魔法扣20分
-        
-        // 如果表格列還有牌，確保最上面一張是翻開的
-        if (state.tableau[pileIdx].length > 0) {
-            const newTopCard = state.tableau[pileIdx][state.tableau[pileIdx].length - 1];
-            if (!newTopCard.faceUp) {
-                newTopCard.faceUp = true;
-            }
-        }
-        
-        saveStateToHistory(); // 儲存狀態
-        render(); // 重新渲染
-        updateTimer(); // 更新計時器
-        
-        isAnimating = false; // 標記動畫結束
-        updateMagicButton(); // 更新魔法按鈕狀態
-        
-        showMessage(`魔法發動！翻開了${card.text}${card.suit}`, 1500);
-    }
-
     // ==================== 雙擊自動移動邏輯 ====================
     /**
      * 處理雙擊事件
@@ -3669,6 +3672,8 @@
             stopTimer(); // 停止計時器
             setTimeout(() => {
                 alert(`🎉 恭喜破關！ 🎉\n移動次數：${state.moves}\n最終分數：${state.score}`);
+                // 關閉alert後自動開始新遊戲
+                startNewGame();
             }, 200);
         }
     }
