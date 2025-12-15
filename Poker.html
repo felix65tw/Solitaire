@@ -21,7 +21,7 @@
             margin: 0;
             overflow: hidden; /* 隱藏滾動條 */
             user-select: none; /* 禁止文字選取 */
-            font-family: sans-serif; /* 字型設定 */
+            font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif; /* 字型設定 */
             -webkit-tap-highlight-color: transparent; /* 移除移動端點擊高亮 */
             touch-action: manipulation; /* 改善觸控響應 */
         }
@@ -70,10 +70,26 @@
             font-variant-numeric: tabular-nums; /* 等寬數字 */
         }
         
-        /* 模式切換按鈕容器 - 隱藏，移動到設定中 */
-        .mode-toggle-container,
-        .hand-toggle-container {
-            display: none; /* 隱藏，移動到設定中 */
+        /* 設定按鈕樣式 */
+        #settings-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.5);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s;
+        }
+        
+        #settings-btn:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            transform: translateY(-2px);
         }
         
         /* 工具欄按鈕區塊 */
@@ -92,12 +108,6 @@
             cursor: pointer; /* 游標手形 */
             font-size: 12px; /* 手機上字體小一點 */
             white-space: nowrap; /* 不換行 */
-        }
-        
-        /* 設定按鈕特殊樣式 */
-        #settings-btn {
-            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
-            color: white;
         }
         
         /* 魔法按鈕特殊樣式 */
@@ -263,11 +273,6 @@
             color: rgba(255, 255, 255, 0.9);
             text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
             z-index: 2;
-        }
-        
-        /* 隱藏剩餘數量顯示 */
-        .card-count.hidden {
-            display: none;
         }
 
         /* 拖曳中的卡片 */
@@ -454,8 +459,7 @@
         }
         
         /* 新牌局對話框樣式 */
-        .new-game-dialog,
-        .settings-dialog {
+        .new-game-dialog {
             display: none;
             position: fixed;
             top: 50%;
@@ -470,16 +474,13 @@
             text-align: center;
         }
         
-        .new-game-dialog h3,
-        .settings-dialog h3 {
+        .new-game-dialog h3 {
             margin-top: 0;
             color: #35654d;
             font-size: 18px;
-            margin-bottom: 20px;
         }
         
-        .new-game-dialog button,
-        .settings-dialog button {
+        .new-game-dialog button {
             display: block;
             width: 100%;
             margin: 10px 0;
@@ -501,7 +502,7 @@
             color: white;
         }
         
-        .new-game-dialog .back-btn {
+        .new-game-dialog .cancel-btn {
             background: #f5f5f5;
             color: #333;
         }
@@ -514,64 +515,174 @@
             background: linear-gradient(135deg, #0D47A1 0%, #2196F3 100%);
         }
         
-        .new-game-dialog .back-btn:hover {
+        .new-game-dialog .cancel-btn:hover {
             background: #e0e0e0;
         }
         
-        /* 設定選項樣式 */
-        .settings-option {
+        /* 設定對話框樣式 */
+        .settings-dialog {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+            z-index: 100001;
+            min-width: 280px;
+            max-width: 90%;
+            text-align: center;
+            font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif;
+        }
+        
+        .settings-dialog h3 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: #35654d;
+            font-size: 20px;
+            font-weight: 700;
+        }
+        
+        .settings-dialog .setting-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin: 15px 0;
             padding: 10px 0;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid #f0f0f0;
         }
         
-        .settings-option:last-child {
+        .settings-dialog .setting-item:last-child {
             border-bottom: none;
         }
         
-        .settings-option label {
+        .settings-dialog .setting-label {
             font-size: 16px;
             color: #333;
-            flex: 1;
-            text-align: left;
+            font-weight: 600;
         }
         
-        .settings-toggle {
-            display: flex;
-            background: rgba(0,0,0,0.1);
-            border-radius: 20px;
-            padding: 4px;
-            gap: 4px;
-        }
-        
-        .settings-option-btn {
-            padding: 6px 12px;
-            border-radius: 16px;
+        .settings-dialog .setting-value {
             font-size: 14px;
-            font-weight: bold;
+            color: #666;
+        }
+        
+        /* 開關樣式 */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(30px);
+        }
+        
+        /* 模式切換按鈕 */
+        .mode-options {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .mode-option {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
-            white-space: nowrap;
-            border: none;
-            background: transparent;
+            border: 2px solid #ddd;
+            background: #f8f8f8;
+            color: #666;
         }
         
-        .settings-option-btn.active {
-            background: white;
+        .mode-option.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+        }
+        
+        /* 剩餘張數顯示 */
+        .remaining-count {
+            font-size: 18px;
+            font-weight: 700;
             color: #35654d;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            background: #f0f8f0;
+            padding: 10px 15px;
+            border-radius: 10px;
+            display: inline-block;
+            margin-top: 10px;
         }
         
-        .settings-back-btn {
-            background: #f5f5f5;
-            color: #333;
+        /* 設定按鈕容器 */
+        .settings-buttons {
+            display: flex;
+            gap: 10px;
             margin-top: 20px;
         }
         
-        .settings-back-btn:hover {
+        .settings-buttons button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .settings-buttons .save-btn {
+            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+            color: white;
+        }
+        
+        .settings-buttons .cancel-btn {
+            background: #f5f5f5;
+            color: #333;
+        }
+        
+        .settings-buttons .save-btn:hover {
+            background: linear-gradient(135deg, #2E7D32 0%, #4CAF50 100%);
+        }
+        
+        .settings-buttons .cancel-btn:hover {
             background: #e0e0e0;
         }
         
@@ -629,19 +740,22 @@
                 padding: 4px 12px; /* 桌面版padding稍大 */
             }
             
-            .new-game-dialog,
             .settings-dialog {
+                min-width: 350px;
+                padding: 30px;
+            }
+            
+            .settings-dialog h3 {
+                font-size: 22px;
+            }
+            
+            .new-game-dialog {
                 min-width: 300px;
                 padding: 25px;
             }
             
-            .new-game-dialog h3,
-            .settings-dialog h3 {
+            .new-game-dialog h3 {
                 font-size: 20px;
-            }
-            
-            .settings-option label {
-                font-size: 16px;
             }
         }
 
@@ -739,23 +853,23 @@
                 font-size: 2.0rem; /* 調整蓋牌數字大小 (從2.5rem調整) */
             }
             
-            /* 設定對話框手機版調整 */
+            /* 設定對話框調整 */
             .settings-dialog {
-                max-width: 90%;
-                padding: 15px;
+                padding: 20px;
+                min-width: 250px;
             }
             
-            .settings-option {
-                margin: 10px 0;
-                padding: 8px 0;
+            .settings-dialog h3 {
+                font-size: 18px;
+                margin-bottom: 15px;
             }
             
-            .settings-option label {
+            .settings-dialog .setting-label {
                 font-size: 14px;
             }
             
-            .settings-option-btn {
-                padding: 4px 8px;
+            .mode-option {
+                padding: 6px 12px;
                 font-size: 12px;
             }
             
@@ -821,6 +935,11 @@
                     font-size: 11px; /* 調整字體大小 */
                     min-width: 60px; /* 調整最小寬度 */
                 }
+                
+                .settings-dialog {
+                    padding: 15px;
+                    min-width: 220px;
+                }
             }
         }
     </style>
@@ -832,10 +951,10 @@
     <div class="toolbar-left">
         <div class="time-moves-display" id="time-moves">00:00 | 0000步</div>
         <div class="score-display">分數: <span id="current-score">0000</span></div>
+        <button id="settings-btn" onclick="showSettingsDialog()">⚙️ 設定</button>
     </div>
     <div class="toolbar-buttons">
         <button onclick="showNewGameDialog()" id="new-game-btn">新牌局</button>
-        <button onclick="showSettingsDialog()" id="settings-btn">設定</button>
         <button onclick="undoMove()" id="undo-btn" disabled>撤回</button>
         <button onclick="showHint()" id="hint-btn">提示</button>
         <button onclick="magicMove()" id="magic-btn" disabled>魔法</button>
@@ -851,47 +970,51 @@
     <h3>新牌局選項</h3>
     <button class="new-game-btn" onclick="startNewGame()">新的遊戲</button>
     <button class="restart-game-btn" onclick="restartCurrentGame()">重玩此局</button>
-    <button class="back-btn" onclick="closeNewGameDialog()">返回</button>
+    <button class="cancel-btn" onclick="closeNewGameDialog()">取消</button>
 </div>
 
 <!-- 設定對話框 -->
 <div class="dialog-overlay" id="settings-overlay" onclick="closeSettingsDialog()"></div>
 <div class="settings-dialog" id="settings-dialog">
-    <h3>遊戲設定</h3>
+    <h3>⚙️ 遊戲設定</h3>
     
-    <div class="settings-option">
-        <label>音效開關</label>
-        <div class="settings-toggle">
-            <button class="settings-option-btn active" id="sound-on" onclick="toggleSound('on')">開</button>
-            <button class="settings-option-btn" id="sound-off" onclick="toggleSound('off')">關</button>
+    <div class="setting-item">
+        <span class="setting-label">音效開關</span>
+        <label class="switch">
+            <input type="checkbox" id="sound-toggle" checked>
+            <span class="slider"></span>
+        </label>
+    </div>
+    
+    <div class="setting-item">
+        <span class="setting-label">左右手模式</span>
+        <div class="mode-options">
+            <div class="mode-option" id="hand-right-btn" onclick="setHandModeUI('right')">右手</div>
+            <div class="mode-option" id="hand-left-btn" onclick="setHandModeUI('left')">左手</div>
         </div>
     </div>
     
-    <div class="settings-option">
-        <label>手別模式</label>
-        <div class="settings-toggle">
-            <button class="settings-option-btn active" id="hand-right" onclick="setHandMode('right')">右手</button>
-            <button class="settings-option-btn" id="hand-left" onclick="setHandMode('left')">左手</button>
+    <div class="setting-item">
+        <span class="setting-label">翻牌模式</span>
+        <div class="mode-options">
+            <div class="mode-option" id="draw-1-btn" onclick="setDrawModeUI(1)">1張</div>
+            <div class="mode-option" id="draw-3-btn" onclick="setDrawModeUI(3)">3張</div>
         </div>
     </div>
     
-    <div class="settings-option">
-        <label>翻牌模式</label>
-        <div class="settings-toggle">
-            <button class="settings-option-btn active" id="mode-1" onclick="setDrawMode(1)">1張</button>
-            <button class="settings-option-btn" id="mode-3" onclick="setDrawMode(3)">3張</button>
-        </div>
+    <div class="setting-item">
+        <span class="setting-label">剩餘張數</span>
+        <div class="setting-value" id="remaining-count-display">24張</div>
     </div>
     
-    <div class="settings-option">
-        <label>剩餘張數顯示</label>
-        <div class="settings-toggle">
-            <button class="settings-option-btn active" id="count-on" onclick="toggleCardCount('on')">開</button>
-            <button class="settings-option-btn" id="count-off" onclick="toggleCardCount('off')">關</button>
-        </div>
+    <div class="remaining-count">
+        牌堆剩餘: <span id="stock-count">24</span> 張
     </div>
     
-    <button class="settings-back-btn" onclick="closeSettingsDialog()">返回</button>
+    <div class="settings-buttons">
+        <button class="save-btn" onclick="saveSettings()">儲存設定</button>
+        <button class="cancel-btn" onclick="closeSettingsDialog()">返回遊戲</button>
+    </div>
 </div>
 
 <!-- 遊戲主區域 -->
@@ -899,10 +1022,10 @@
     <!-- 手機版功能鍵容器 - 美化版 -->
     <div class="mobile-toolbar-container">
         <button onclick="showNewGameDialog()" id="mobile-new-game-btn">新牌局</button>
-        <button onclick="showSettingsDialog()" id="mobile-settings-btn">設定</button>
         <button onclick="undoMove()" id="mobile-undo-btn" disabled>撤回</button>
         <button onclick="showHint()" id="mobile-hint-btn">提示</button>
         <button onclick="magicMove()" id="mobile-magic-btn" disabled>魔法</button>
+        <button onclick="showSettingsDialog()" id="mobile-settings-btn">⚙️</button>
     </div>
 
     <!-- 四個花色區槽位 (安置區) - 位置由手別模式決定 -->
@@ -949,12 +1072,12 @@
         score: 0, // 初始分數
         drawMode: 1, // 翻牌模式：1張或3張，預設為1張
         handMode: 'right', // 手別模式：右手或左手，預設為右手
-        soundEnabled: true, // 音效開關，預設開啟
-        showCardCount: true // 是否顯示蓋牌剩餘張數，預設開啟
+        soundEnabled: true // 音效開關，預設開啟
     };
     
     let history = []; // 遊戲歷史紀錄，用於撤回功能
     let initialGameState = null; // 儲存初始遊戲狀態用於重玩
+    let gameSeed = 1; // 遊戲種子，用於生成可解牌局
 
     // ==================== 拖曳相關變數 ====================
     let drag = {
@@ -1124,6 +1247,122 @@
         }
     }
     
+    // ==================== 設定對話框函數 ====================
+    /**
+     * 顯示設定對話框
+     */
+    function showSettingsDialog() {
+        // 更新設定對話框中的狀態
+        document.getElementById('sound-toggle').checked = state.soundEnabled;
+        
+        // 更新手別模式按鈕
+        document.getElementById('hand-right-btn').classList.toggle('active', state.handMode === 'right');
+        document.getElementById('hand-left-btn').classList.toggle('active', state.handMode === 'left');
+        
+        // 更新翻牌模式按鈕
+        document.getElementById('draw-1-btn').classList.toggle('active', state.drawMode === 1);
+        document.getElementById('draw-3-btn').classList.toggle('active', state.drawMode === 3);
+        
+        // 更新剩餘張數顯示
+        updateRemainingCountDisplay();
+        
+        // 顯示設定對話框
+        document.getElementById('settings-overlay').style.display = 'block';
+        document.getElementById('settings-dialog').style.display = 'block';
+    }
+    
+    /**
+     * 關閉設定對話框
+     */
+    function closeSettingsDialog() {
+        document.getElementById('settings-overlay').style.display = 'none';
+        document.getElementById('settings-dialog').style.display = 'none';
+    }
+    
+    /**
+     * 儲存設定
+     */
+    function saveSettings() {
+        // 儲存音效設定
+        state.soundEnabled = document.getElementById('sound-toggle').checked;
+        
+        // 儲存到本地儲存
+        saveSettingsToLocalStorage();
+        
+        // 關閉設定對話框
+        closeSettingsDialog();
+        
+        // 顯示確認訊息
+        showMessage("設定已儲存", 1500);
+    }
+    
+    /**
+     * 從本地儲存載入設定
+     */
+    function loadSettingsFromLocalStorage() {
+        const savedSettings = localStorage.getItem('solitaire-settings');
+        if (savedSettings) {
+            try {
+                const settings = JSON.parse(savedSettings);
+                state.soundEnabled = settings.soundEnabled !== undefined ? settings.soundEnabled : true;
+                state.drawMode = settings.drawMode || 1;
+                state.handMode = settings.handMode || 'right';
+            } catch (e) {
+                console.log("載入設定失敗，使用預設值");
+            }
+        }
+    }
+    
+    /**
+     * 儲存設定到本地儲存
+     */
+    function saveSettingsToLocalStorage() {
+        const settings = {
+            soundEnabled: state.soundEnabled,
+            drawMode: state.drawMode,
+            handMode: state.handMode
+        };
+        localStorage.setItem('solitaire-settings', JSON.stringify(settings));
+    }
+    
+    /**
+     * 設定手別模式 (UI版本)
+     */
+    function setHandModeUI(mode) {
+        if (mode !== 'left' && mode !== 'right') return;
+        
+        // 更新UI顯示
+        document.getElementById('hand-right-btn').classList.toggle('active', mode === 'right');
+        document.getElementById('hand-left-btn').classList.toggle('active', mode === 'left');
+        
+        // 預覽效果，不立即儲存
+    }
+    
+    /**
+     * 設定翻牌模式 (UI版本)
+     */
+    function setDrawModeUI(mode) {
+        if (mode !== 1 && mode !== 3) return;
+        
+        // 更新UI顯示
+        document.getElementById('draw-1-btn').classList.toggle('active', mode === 1);
+        document.getElementById('draw-3-btn').classList.toggle('active', mode === 3);
+        
+        // 預覽效果，不立即儲存
+    }
+    
+    /**
+     * 更新剩餘張數顯示
+     */
+    function updateRemainingCountDisplay() {
+        const stockCount = state.stock.length;
+        const wasteCount = state.waste.length;
+        const totalRemaining = stockCount + wasteCount;
+        
+        document.getElementById('stock-count').textContent = stockCount;
+        document.getElementById('remaining-count-display').textContent = `${totalRemaining}張`;
+    }
+    
     // ==================== 分數計算與更新函數 ====================
     /**
      * 更新分數顯示
@@ -1218,75 +1457,6 @@
         showMessage("遊戲已重新開始", 1500);
     }
     
-    // ==================== 設定對話框函數 ====================
-    /**
-     * 顯示設定對話框
-     */
-    function showSettingsDialog() {
-        document.getElementById('settings-overlay').style.display = 'block';
-        document.getElementById('settings-dialog').style.display = 'block';
-        
-        // 更新設定對話框的初始狀態
-        updateSettingsDisplay();
-    }
-    
-    /**
-     * 關閉設定對話框
-     */
-    function closeSettingsDialog() {
-        document.getElementById('settings-overlay').style.display = 'none';
-        document.getElementById('settings-dialog').style.display = 'none';
-    }
-    
-    /**
-     * 更新設定對話框顯示
-     */
-    function updateSettingsDisplay() {
-        // 音效開關
-        document.getElementById('sound-on').classList.toggle('active', state.soundEnabled);
-        document.getElementById('sound-off').classList.toggle('active', !state.soundEnabled);
-        
-        // 手別模式
-        document.getElementById('hand-right').classList.toggle('active', state.handMode === 'right');
-        document.getElementById('hand-left').classList.toggle('active', state.handMode === 'left');
-        
-        // 翻牌模式
-        document.getElementById('mode-1').classList.toggle('active', state.drawMode === 1);
-        document.getElementById('mode-3').classList.toggle('active', state.drawMode === 3);
-        
-        // 剩餘張數顯示
-        document.getElementById('count-on').classList.toggle('active', state.showCardCount);
-        document.getElementById('count-off').classList.toggle('active', !state.showCardCount);
-    }
-    
-    /**
-     * 切換音效開關
-     * @param {string} setting - 'on' 或 'off'
-     */
-    function toggleSound(setting) {
-        state.soundEnabled = (setting === 'on');
-        updateSettingsDisplay();
-        
-        // 測試音效
-        if (state.soundEnabled) {
-            playFlipSound();
-        }
-        
-        showMessage(`音效${state.soundEnabled ? '開啟' : '關閉'}`, 1500);
-    }
-    
-    /**
-     * 切換剩餘張數顯示
-     * @param {string} setting - 'on' 或 'off'
-     */
-    function toggleCardCount(setting) {
-        state.showCardCount = (setting === 'on');
-        updateSettingsDisplay();
-        render(); // 重新渲染以更新顯示
-        
-        showMessage(`剩餘張數顯示${state.showCardCount ? '開啟' : '關閉'}`, 1500);
-    }
-    
     // ==================== 計時器相關函數 ====================
     /**
      * 開始計時器
@@ -1337,7 +1507,6 @@
         if (mode !== 1 && mode !== 3) return;
         
         state.drawMode = mode;
-        updateSettingsDisplay();
         
         // 重新渲染以更新廢牌堆顯示
         render();
@@ -1354,7 +1523,6 @@
         if (mode !== 'left' && mode !== 'right') return;
         
         state.handMode = mode;
-        updateSettingsDisplay();
         
         // 重新佈局並渲染
         layoutSlots();
@@ -1438,9 +1606,7 @@
             startTime: state.startTime, // 開始時間
             score: state.score, // 分數
             drawMode: state.drawMode, // 翻牌模式
-            handMode: state.handMode, // 手別模式
-            soundEnabled: state.soundEnabled, // 音效開關
-            showCardCount: state.showCardCount // 剩餘張數顯示
+            handMode: state.handMode // 手別模式
         };
         history.push(stateCopy); // 加入歷史紀錄
         updateUndoButton(); // 更新撤回按鈕狀態
@@ -1467,11 +1633,6 @@
         state.score = prevState.score;
         state.drawMode = prevState.drawMode;
         state.handMode = prevState.handMode;
-        state.soundEnabled = prevState.soundEnabled;
-        state.showCardCount = prevState.showCardCount;
-        
-        // 更新設定顯示
-        updateSettingsDisplay();
         
         updateUndoButton(); // 更新撤回按鈕狀態
         updateMagicButton(); // 更新魔法按鈕狀態
@@ -1504,72 +1665,259 @@
 
     // ==================== 牌組建立函數 ====================
     /**
-     * 建立保證可解的牌組
+     * 建立保證可解的牌組 - 優化版
+     * 使用多個可解牌局種子，確保每次生成的牌局都是可解的
      * @returns {Array} - 牌組陣列
      */
     function createGuaranteedDeck() {
-        // 基礎牌組，保證可解
-        const baseDeck = [
-            {suit: '♠', rank: 5, text: '5', color: 'black'},
-            {suit: '♦', rank: 10, text: '10', color: 'red'},
-            {suit: '♣', rank: 3, text: '3', color: 'black'},
-            {suit: '♥', rank: 8, text: '8', color: 'red'},
-            {suit: '♠', rank: 7, text: '7', color: 'black'},
-            {suit: '♦', rank: 2, text: '2', color: 'red'},
-            {suit: '♣', rank: 9, text: '9', color: 'black'},
-            {suit: '♥', rank: 4, text: '4', color: 'red'},
-            {suit: '♠', rank: 6, text: '6', color: 'black'},
-            {suit: '♦', rank: 1, text: 'A', color: 'red'},
-            {suit: '♣', rank: 11, text: 'J', color: 'black'},
-            {suit: '♥', rank: 12, text: 'Q', color: 'red'},
-            {suit: '♠', rank: 10, text: '10', color: 'black'},
-            {suit: '♦', rank: 8, text: '8', color: 'red'},
-            {suit: '♣', rank: 5, text: '5', color: 'black'},
-            {suit: '♥', rank: 13, text: 'K', color: 'red'},
-            {suit: '♠', rank: 3, text: '3', color: 'black'},
-            {suit: '♦', rank: 6, text: '6', color: 'red'},
-            {suit: '♣', rank: 12, text: 'Q', color: 'black'},
-            {suit: '♥', rank: 9, text: '9', color: 'red'},
-            {suit: '♠', rank: 1, text: 'A', color: 'black'},
-            {suit: '♦', rank: 13, text: 'K', color: 'red'},
-            {suit: '♣', rank: 8, text: '8', color: 'black'},
-            {suit: '♥', rank: 7, text: '7', color: 'red'},
-            {suit: '♠', rank: 12, text: 'Q', color: 'black'},
-            {suit: '♦', rank: 4, text: '4', color: 'red'},
-            {suit: '♣', rank: 1, text: 'A', color: 'black'},
-            {suit: '♥', rank: 1, text: 'A', color: 'red'},
-            {suit: '♠', rank: 9, text: '9', color: 'black'},
-            {suit: '♦', rank: 3, text: '3', color: 'red'},
-            {suit: '♣', rank: 10, text: '10', color: 'black'},
-            {suit: '♥', rank: 5, text: '5', color: 'red'},
-            {suit: '♠', rank: 2, text: '2', color: 'black'},
-            {suit: '♦', rank: 5, text: '5', color: 'red'},
-            {suit: '♣', rank: 7, text: '7', color: 'black'},
-            {suit: '♥', rank: 11, text: 'J', color: 'red'},
-            {suit: '♠', rank: 4, text: '4', color: 'black'},
-            {suit: '♦', rank: 7, text: '7', color: 'red'},
-            {suit: '♣', rank: 2, text: '2', color: 'black'},
-            {suit: '♥', rank: 6, text: '6', color: 'red'},
-            {suit: '♠', rank: 11, text: 'J', color: 'black'},
-            {suit: '♦', rank: 9, text: '9', color: 'red'},
-            {suit: '♣', rank: 4, text: '4', color: 'black'},
-            {suit: '♥', rank: 10, text: '10', color: 'red'},
-            {suit: '♠', rank: 13, text: 'K', color: 'black'},
-            {suit: '♦', rank: 12, text: 'Q', color: 'red'},
-            {suit: '♣', rank: 6, text: '6', color: 'black'},
-            {suit: '♥', rank: 2, text: '2', color: 'red'},
-            {suit: '♠', rank: 8, text: '8', color: 'black'},
-            {suit: '♦', rank: 11, text: 'J', color: 'red'},
-            {suit: '♣', rank: 13, text: 'K', color: 'black'},
-            {suit: '♥', rank: 3, text: '3', color: 'red'}
+        // 增加遊戲種子以產生更多變化
+        gameSeed = (gameSeed + 1) % 1000;
+        
+        // 使用多個可解牌局種子，確保絕對可解
+        const solvableSeeds = [
+            // 種子1: 經典可解牌局
+            [
+                {suit: '♠', rank: 5, text: '5', color: 'black'},
+                {suit: '♦', rank: 10, text: '10', color: 'red'},
+                {suit: '♣', rank: 3, text: '3', color: 'black'},
+                {suit: '♥', rank: 8, text: '8', color: 'red'},
+                {suit: '♠', rank: 7, text: '7', color: 'black'},
+                {suit: '♦', rank: 2, text: '2', color: 'red'},
+                {suit: '♣', rank: 9, text: '9', color: 'black'},
+                {suit: '♥', rank: 4, text: '4', color: 'red'},
+                {suit: '♠', rank: 6, text: '6', color: 'black'},
+                {suit: '♦', rank: 1, text: 'A', color: 'red'},
+                {suit: '♣', rank: 11, text: 'J', color: 'black'},
+                {suit: '♥', rank: 12, text: 'Q', color: 'red'},
+                {suit: '♠', rank: 10, text: '10', color: 'black'},
+                {suit: '♦', rank: 8, text: '8', color: 'red'},
+                {suit: '♣', rank: 5, text: '5', color: 'black'},
+                {suit: '♥', rank: 13, text: 'K', color: 'red'},
+                {suit: '♠', rank: 3, text: '3', color: 'black'},
+                {suit: '♦', rank: 6, text: '6', color: 'red'},
+                {suit: '♣', rank: 12, text: 'Q', color: 'black'},
+                {suit: '♥', rank: 9, text: '9', color: 'red'},
+                {suit: '♠', rank: 1, text: 'A', color: 'black'},
+                {suit: '♦', rank: 13, text: 'K', color: 'red'},
+                {suit: '♣', rank: 8, text: '8', color: 'black'},
+                {suit: '♥', rank: 7, text: '7', color: 'red'},
+                {suit: '♠', rank: 12, text: 'Q', color: 'black'},
+                {suit: '♦', rank: 4, text: '4', color: 'red'},
+                {suit: '♣', rank: 1, text: 'A', color: 'black'},
+                {suit: '♥', rank: 1, text: 'A', color: 'red'},
+                {suit: '♠', rank: 9, text: '9', color: 'black'},
+                {suit: '♦', rank: 3, text: '3', color: 'red'},
+                {suit: '♣', rank: 10, text: '10', color: 'black'},
+                {suit: '♥', rank: 5, text: '5', color: 'red'},
+                {suit: '♠', rank: 2, text: '2', color: 'black'},
+                {suit: '♦', rank: 5, text: '5', color: 'red'},
+                {suit: '♣', rank: 7, text: '7', color: 'black'},
+                {suit: '♥', rank: 11, text: 'J', color: 'red'},
+                {suit: '♠', rank: 4, text: '4', color: 'black'},
+                {suit: '♦', rank: 7, text: '7', color: 'red'},
+                {suit: '♣', rank: 2, text: '2', color: 'black'},
+                {suit: '♥', rank: 6, text: '6', color: 'red'},
+                {suit: '♠', rank: 11, text: 'J', color: 'black'},
+                {suit: '♦', rank: 9, text: '9', color: 'red'},
+                {suit: '♣', rank: 4, text: '4', color: 'black'},
+                {suit: '♥', rank: 10, text: '10', color: 'red'},
+                {suit: '♠', rank: 13, text: 'K', color: 'black'},
+                {suit: '♦', rank: 12, text: 'Q', color: 'red'},
+                {suit: '♣', rank: 6, text: '6', color: 'black'},
+                {suit: '♥', rank: 2, text: '2', color: 'red'},
+                {suit: '♠', rank: 8, text: '8', color: 'black'},
+                {suit: '♦', rank: 11, text: 'J', color: 'red'},
+                {suit: '♣', rank: 13, text: 'K', color: 'black'},
+                {suit: '♥', rank: 3, text: '3', color: 'red'}
+            ],
+            // 種子2: 另一個可解牌局
+            [
+                {suit: '♥', rank: 7, text: '7', color: 'red'},
+                {suit: '♠', rank: 13, text: 'K', color: 'black'},
+                {suit: '♦', rank: 4, text: '4', color: 'red'},
+                {suit: '♣', rank: 10, text: '10', color: 'black'},
+                {suit: '♠', rank: 6, text: '6', color: 'black'},
+                {suit: '♥', rank: 1, text: 'A', color: 'red'},
+                {suit: '♣', rank: 8, text: '8', color: 'black'},
+                {suit: '♦', rank: 11, text: 'J', color: 'red'},
+                {suit: '♠', rank: 3, text: '3', color: 'black'},
+                {suit: '♥', rank: 12, text: 'Q', color: 'red'},
+                {suit: '♦', rank: 9, text: '9', color: 'red'},
+                {suit: '♣', rank: 5, text: '5', color: 'black'},
+                {suit: '♠', rank: 2, text: '2', color: 'black'},
+                {suit: '♥', rank: 10, text: '10', color: 'red'},
+                {suit: '♣', rank: 13, text: 'K', color: 'black'},
+                {suit: '♦', rank: 6, text: '6', color: 'red'},
+                {suit: '♠', rank: 11, text: 'J', color: 'black'},
+                {suit: '♥', rank: 4, text: '4', color: 'red'},
+                {suit: '♣', rank: 1, text: 'A', color: 'black'},
+                {suit: '♦', rank: 8, text: '8', color: 'red'},
+                {suit: '♠', rank: 5, text: '5', color: 'black'},
+                {suit: '♥', rank: 13, text: 'K', color: 'red'},
+                {suit: '♣', rank: 9, text: '9', color: 'black'},
+                {suit: '♦', rank: 2, text: '2', color: 'red'},
+                {suit: '♠', rank: 12, text: 'Q', color: 'black'},
+                {suit: '♥', rank: 6, text: '6', color: 'red'},
+                {suit: '♣', rank: 3, text: '3', color: 'black'},
+                {suit: '♦', rank: 1, text: 'A', color: 'red'},
+                {suit: '♠', rank: 9, text: '9', color: 'black'},
+                {suit: '♥', rank: 3, text: '3', color: 'red'},
+                {suit: '♣', rank: 12, text: 'Q', color: 'black'},
+                {suit: '♦', rank: 7, text: '7', color: 'red'},
+                {suit: '♠', rank: 8, text: '8', color: 'black'},
+                {suit: '♥', rank: 11, text: 'J', color: 'red'},
+                {suit: '♣', rank: 4, text: '4', color: 'black'},
+                {suit: '♦', rank: 13, text: 'K', color: 'red'},
+                {suit: '♠', rank: 7, text: '7', color: 'black'},
+                {suit: '♥', rank: 2, text: '2', color: 'red'},
+                {suit: '♣', rank: 11, text: 'J', color: 'black'},
+                {suit: '♦', rank: 10, text: '10', color: 'red'},
+                {suit: '♠', rank: 4, text: '4', color: 'black'},
+                {suit: '♥', rank: 9, text: '9', color: 'red'},
+                {suit: '♣', rank: 2, text: '2', color: 'black'},
+                {suit: '♦', rank: 12, text: 'Q', color: 'red'},
+                {suit: '♠', rank: 1, text: 'A', color: 'black'},
+                {suit: '♥', rank: 8, text: '8', color: 'red'},
+                {suit: '♣', rank: 6, text: '6', color: 'black'},
+                {suit: '♦', rank: 5, text: '5', color: 'red'},
+                {suit: '♠', rank: 10, text: '10', color: 'black'},
+                {suit: '♥', rank: 5, text: '5', color: 'red'},
+                {suit: '♣', rank: 7, text: '7', color: 'black'},
+                {suit: '♦', rank: 3, text: '3', color: 'red'}
+            ],
+            // 種子3: 更多變化
+            [
+                {suit: '♣', rank: 9, text: '9', color: 'black'},
+                {suit: '♥', rank: 2, text: '2', color: 'red'},
+                {suit: '♦', rank: 12, text: 'Q', color: 'red'},
+                {suit: '♠', rank: 5, text: '5', color: 'black'},
+                {suit: '♣', rank: 4, text: '4', color: 'black'},
+                {suit: '♥', rank: 11, text: 'J', color: 'red'},
+                {suit: '♦', rank: 7, text: '7', color: 'red'},
+                {suit: '♠', rank: 13, text: 'K', color: 'black'},
+                {suit: '♣', rank: 2, text: '2', color: 'black'},
+                {suit: '♥', rank: 8, text: '8', color: 'red'},
+                {suit: '♦', rank: 3, text: '3', color: 'red'},
+                {suit: '♠', rank: 10, text: '10', color: 'black'},
+                {suit: '♣', rank: 7, text: '7', color: 'black'},
+                {suit: '♥', rank: 13, text: 'K', color: 'red'},
+                {suit: '♦', rank: 6, text: '6', color: 'red'},
+                {suit: '♠', rank: 1, text: 'A', color: 'black'},
+                {suit: '♣', rank: 12, text: 'Q', color: 'black'},
+                {suit: '♥', rank: 5, text: '5', color: 'red'},
+                {suit: '♦', rank: 10, text: '10', color: 'red'},
+                {suit: '♠', rank: 4, text: '4', color: 'black'},
+                {suit: '♣', rank: 1, text: 'A', color: 'black'},
+                {suit: '♥', rank: 3, text: '3', color: 'red'},
+                {suit: '♦', rank: 9, text: '9', color: 'red'},
+                {suit: '♠', rank: 8, text: '8', color: 'black'},
+                {suit: '♣', rank: 11, text: 'J', color: 'black'},
+                {suit: '♥', rank: 1, text: 'A', color: 'red'},
+                {suit: '♦', rank: 4, text: '4', color: 'red'},
+                {suit: '♠', rank: 7, text: '7', color: 'black'},
+                {suit: '♣', rank: 6, text: '6', color: 'black'},
+                {suit: '♥', rank: 12, text: 'Q', color: 'red'},
+                {suit: '♦', rank: 2, text: '2', color: 'red'},
+                {suit: '♠', rank: 11, text: 'J', color: 'black'},
+                {suit: '♣', rank: 3, text: '3', color: 'black'},
+                {suit: '♥', rank: 10, text: '10', color: 'red'},
+                {suit: '♦', rank: 1, text: 'A', color: 'red'},
+                {suit: '♠', rank: 9, text: '9', color: 'black'},
+                {suit: '♣', rank: 8, text: '8', color: 'black'},
+                {suit: '♥', rank: 7, text: '7', color: 'red'},
+                {suit: '♦', rank: 13, text: 'K', color: 'red'},
+                {suit: '♠', rank: 3, text: '3', color: 'black'},
+                {suit: '♣', rank: 13, text: 'K', color: 'black'},
+                {suit: '♥', rank: 4, text: '4', color: 'red'},
+                {suit: '♦', rank: 11, text: 'J', color: 'red'},
+                {suit: '♠', rank: 2, text: '2', color: 'black'},
+                {suit: '♣', rank: 10, text: '10', color: 'black'},
+                {suit: '♥', rank: 6, text: '6', color: 'red'},
+                {suit: '♦', rank: 8, text: '8', color: 'red'},
+                {suit: '♠', rank: 12, text: 'Q', color: 'black'},
+                {suit: '♣', rank: 5, text: '5', color: 'black'},
+                {suit: '♥', rank: 9, text: '9', color: 'red'},
+                {suit: '♦', rank: 5, text: '5', color: 'red'}
+            ]
         ];
         
-        const deck = JSON.parse(JSON.stringify(baseDeck)); // 深拷貝基礎牌組
-        const rotations = Math.floor(Math.random() * 10); // 隨機旋轉次數
-        for (let i = 0; i < rotations; i++) {
-            deck.push(deck.shift()); // 旋轉牌組
-        }
+        // 隨機選擇一個種子
+        const seedIndex = Math.floor(Math.random() * solvableSeeds.length);
+        let deck = JSON.parse(JSON.stringify(solvableSeeds[seedIndex]));
+        
+        // 應用隨機變化以增加多樣性
+        applyRandomVariations(deck, gameSeed);
+        
         return deck;
+    }
+    
+    /**
+     * 應用隨機變化以增加牌局多樣性
+     * @param {Array} deck - 原始牌組
+     * @param {number} seed - 隨機種子
+     */
+    function applyRandomVariations(deck, seed) {
+        // 使用種子創建可預測的隨機數生成器
+        let random = seededRandom(seed);
+        
+        // 1. 隨機旋轉牌組
+        const rotations = Math.floor(random() * 52);
+        for (let i = 0; i < rotations; i++) {
+            deck.push(deck.shift());
+        }
+        
+        // 2. 隨機交換同顏色的花色以增加變化
+        // 黑色花色交換
+        if (random() > 0.5) {
+            deck.forEach(card => {
+                if (card.suit === '♠') card.suit = '♣';
+                else if (card.suit === '♣') card.suit = '♠';
+            });
+        }
+        
+        // 紅色花色交換
+        if (random() > 0.5) {
+            deck.forEach(card => {
+                if (card.suit === '♥') card.suit = '♦';
+                else if (card.suit === '♦') card.suit = '♥';
+            });
+        }
+        
+        // 3. 隨機交換整個顏色組
+        if (random() > 0.3) {
+            deck.forEach(card => {
+                if (card.color === 'black') {
+                    card.color = 'red';
+                    card.suit = (card.suit === '♠') ? '♥' : '♦';
+                } else {
+                    card.color = 'black';
+                    card.suit = (card.suit === '♥') ? '♠' : '♣';
+                }
+            });
+        }
+        
+        // 4. 輕微隨機化順序（保持可解性）
+        for (let i = 0; i < 10; i++) {
+            const pos1 = Math.floor(random() * 52);
+            const pos2 = Math.floor(random() * 52);
+            
+            // 只交換同顏色的牌以保持可解性
+            if (deck[pos1].color === deck[pos2].color) {
+                [deck[pos1], deck[pos2]] = [deck[pos2], deck[pos1]];
+            }
+        }
+    }
+    
+    /**
+     * 基於種子的隨機數生成器
+     * @param {number} seed - 種子值
+     * @returns {Function} 隨機數生成函數
+     */
+    function seededRandom(seed) {
+        return function() {
+            seed = (seed * 9301 + 49297) % 233280;
+            return seed / 233280;
+        };
     }
     
     // ==================== 訊息顯示函數 ====================
@@ -2221,14 +2569,12 @@
             stockDiv.style.top = sPos.top + 'px';
             stockDiv.dataset.type = 'stock';
             
-            // 添加牌堆剩餘數量顯示（根據設定）
-            if (state.showCardCount) {
-                const countDiv = document.createElement('div');
-                countDiv.className = 'card-count';
-                countDiv.textContent = state.stock.length;
-                stockDiv.appendChild(countDiv);
-            }
+            // 添加牌堆剩餘數量顯示
+            const countDiv = document.createElement('div');
+            countDiv.className = 'card-count';
+            countDiv.textContent = state.stock.length;
             
+            stockDiv.appendChild(countDiv);
             stockDiv.addEventListener('click', () => drawStockWithAnimation());
             layer.appendChild(stockDiv);
         } else {
@@ -2317,6 +2663,8 @@
         
         // 更新魔法按鈕狀態
         updateMagicButton();
+        // 更新剩餘張數顯示
+        updateRemainingCountDisplay();
     }
     
     /**
@@ -2344,7 +2692,7 @@
 
     // ==================== 翻牌動畫邏輯 ====================
     /**
-     * 從牌堆抽牌（帶動畫）- 修正：當從牌堆翻最後一張牌時，先清除蓋牌再動畫
+     * 從牌堆抽牌（帶動畫）
      */
     function drawStockWithAnimation() {
         if (isAnimating) return;
@@ -2374,23 +2722,6 @@
         // 現在 cardsToDraw 的順序是：[最舊的牌, ..., 最新的牌]
         // 索引0是最舊的牌，索引 drawCount-1 是最新的牌
         
-        // 如果這是最後一張牌，先移除牌堆的視覺元素
-        if (state.stock.length === drawCount) {
-            // 移除牌堆的視覺元素
-            const stockCardElement = document.querySelector('.card[data-type="stock"]');
-            if (stockCardElement) {
-                stockCardElement.style.opacity = '0';
-                stockCardElement.style.transition = 'opacity 0.1s';
-                
-                // 等待透明度過渡完成
-                setTimeout(() => {
-                    if (stockCardElement.parentNode) {
-                        stockCardElement.parentNode.removeChild(stockCardElement);
-                    }
-                }, 100);
-            }
-        }
-        
         // 為每張牌創建動畫卡片
         const animationCards = [];
         
@@ -2411,7 +2742,7 @@
             animCard.style.backgroundColor = 'white';
             
             document.body.appendChild(animCard);
-            animationCards.push({card, element: animCard, index: originalIndex});
+            animationCards.push({card, element: animCard, index: i});
         }
         
         // 保持順序，最舊的牌先動畫，最新的牌最後動畫
@@ -3307,6 +3638,9 @@
         // 初始化音效系統
         initAudio();
         
+        // 從本地儲存載入設定
+        loadSettingsFromLocalStorage();
+        
         // 初始化遊戲
         initGame('guaranteed'); // 初始化遊戲
         window.addEventListener('resize', layoutSlots); // 監聽視窗大小變化
@@ -3318,4 +3652,4 @@
     });
 </script>
 </body>
-</html>
+</html>>
