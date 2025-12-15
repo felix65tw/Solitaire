@@ -13,6 +13,11 @@
             --max-w: 100px; /* 卡片最大寬度 */
             --max-h: 140px; /* 卡片最大高度 */
             --gap: 2vw; /* 卡片間距 */
+            --animation-draw-speed: 0.2s; /* 參數：翻牌動畫速度 */
+            --animation-move-speed: 0.1s; /* 參數：卡片移動動畫速度 */
+            --animation-magic-speed: 0.5s; /* 參數：魔法動畫速度 */
+            --animation-pulse-speed: 0.8s; /* 參數：脈衝動畫速度 */
+            --animation-shake-speed: 0.4s; /* 參數：抖動動畫速度 */
         }
 
         /* 全域樣式設定 */
@@ -92,52 +97,70 @@
             transform: translateY(-2px);
         }
         
-        /* 工具欄按鈕區塊 */
+        /* 工具欄按鈕區塊 - 美化版 */
         .toolbar-buttons {
             display: flex;
-            gap: 5px; /* 手機上按鈕間距小一點 */
+            gap: 10px; /* 增加間距使按鈕更明顯 */
         }
         
-        /* 按鈕基礎樣式 */
-        button {
-            background: white;
+        /* 按鈕基礎樣式 - 美化版 */
+        .toolbar-buttons button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
             border: none;
-            padding: 6px 10px; /* 手機上按鈕小一點 */
-            border-radius: 4px; /* 圓角 */
+            padding: 8px 16px;
+            border-radius: 25px; /* 增加圓角 */
             font-weight: bold;
-            cursor: pointer; /* 游標手形 */
-            font-size: 12px; /* 手機上字體小一點 */
-            white-space: nowrap; /* 不換行 */
+            cursor: pointer;
+            font-size: 14px;
+            white-space: nowrap;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2); /* 添加陰影 */
+            transition: all 0.3s ease;
+            min-width: 80px; /* 設置最小寬度 */
+            text-align: center;
+        }
+        
+        /* 按鈕懸停效果 - 美化版 */
+        .toolbar-buttons button:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.25);
+        }
+        
+        /* 按鈕按下效果 - 美化版 */
+        .toolbar-buttons button:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
         
         /* 魔法按鈕特殊樣式 */
         #magic-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: 2px solid #fff;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #333;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
         }
         
         #magic-btn:hover {
-            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            background: linear-gradient(135deg, #FFA500 0%, #FFD700 100%);
+            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
         }
         
         #magic-btn:disabled {
-            background: #cccccc;
+            background: linear-gradient(135deg, #cccccc 0%, #999999 100%);
             color: #666;
             border: 2px solid #999;
             box-shadow: none;
-        }
-        
-        /* 按鈕懸停效果 */
-        button:hover {
-            background: #f0f0f0;
+            transform: none;
         }
         
         /* 禁用按鈕樣式 */
-        button:disabled {
-            background: #cccccc;
-            cursor: not-allowed; /* 禁用游標 */
+        .toolbar-buttons button:disabled {
+            background: linear-gradient(135deg, #cccccc 0%, #999999 100%);
+            color: #666;
+            box-shadow: none;
+            transform: none;
+            cursor: not-allowed;
         }
         
         /* 訊息提示框 */
@@ -205,7 +228,7 @@
             position: fixed; /* 固定定位 */
             z-index: 99999; /* 最高圖層 */
             pointer-events: none; /* 禁止觸發事件 */
-            transition: all 0.3s ease-in-out; /* 過渡動畫 */
+            transition: all var(--animation-move-speed) ease-in-out; /* 參數：使用卡片移動動畫速度 */
         }
 
         /* 卡片面 */
@@ -273,6 +296,13 @@
             color: rgba(255, 255, 255, 0.9);
             text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
             z-index: 2;
+            transition: opacity 0.3s;
+        }
+        
+        /* 隱藏牌堆數字顯示 */
+        .card-count.hidden {
+            opacity: 0;
+            pointer-events: none;
         }
 
         /* 拖曳中的卡片 */
@@ -294,7 +324,7 @@
 
         /* 高光效果：增加 pointer-events: none 防止擋住點擊 */
         .highlight {
-            animation: yellowPulse 0.8s infinite alternate; /* 動畫效果 */
+            animation: yellowPulse var(--animation-pulse-speed) infinite alternate; /* 參數：使用脈衝動畫速度 */
             box-shadow: 0 0 0 4px #FFEB3B, 0 0 20px 8px #FFEB3B !important;
             border: 2px solid #FFEB3B !important;
             z-index: 1000;
@@ -303,7 +333,7 @@
 
         /* 目標高光效果 */
         .target-highlight {
-            animation: targetPulse 0.8s infinite alternate;
+            animation: targetPulse var(--animation-pulse-speed) infinite alternate; /* 參數：使用脈衝動畫速度 */
             box-shadow: 0 0 0 4px #4CAF50, 0 0 20px 8px #4CAF50 !important;
             border: 2px solid #4CAF50 !important;
             z-index: 999;
@@ -359,7 +389,7 @@
 
         /* 抖動動畫 */
         .shake {
-            animation: shake 0.4s ease-in-out;
+            animation: shake var(--animation-shake-speed) ease-in-out; /* 參數：使用抖動動畫速度 */
         }
 
         /* 抖動動畫關鍵影格 */
@@ -377,7 +407,7 @@
             position: fixed;
             z-index: 99998;
             pointer-events: none;
-            transition: all 0.4s ease-in-out;
+            transition: all var(--animation-draw-speed) ease-in-out; /* 參數：使用翻牌動畫速度 */
             transform-origin: center;
             background-color: white !important; /* 確保動畫卡片背景為白色 */
         }
@@ -387,7 +417,7 @@
             position: fixed;
             z-index: 99997;
             pointer-events: none;
-            transition: all 0.5s ease-in-out;
+            transition: all var(--animation-magic-speed) ease-in-out; /* 參數：使用魔法動畫速度 */
             transform-origin: center;
             background-color: white !important;
             border: 2px solid #667eea;
@@ -562,6 +592,8 @@
             font-size: 16px;
             color: #333;
             font-weight: 600;
+            text-align: left;
+            flex: 1;
         }
         
         .settings-dialog .setting-value {
@@ -639,18 +671,6 @@
             border-color: #667eea;
         }
         
-        /* 剩餘張數顯示 */
-        .remaining-count {
-            font-size: 18px;
-            font-weight: 700;
-            color: #35654d;
-            background: #f0f8f0;
-            padding: 10px 15px;
-            border-radius: 10px;
-            display: inline-block;
-            margin-top: 10px;
-        }
-        
         /* 設定按鈕容器 */
         .settings-buttons {
             display: flex;
@@ -668,18 +688,10 @@
             transition: all 0.3s;
         }
         
-        .settings-buttons .save-btn {
-            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
-            color: white;
-        }
-        
         .settings-buttons .cancel-btn {
             background: #f5f5f5;
             color: #333;
-        }
-        
-        .settings-buttons .save-btn:hover {
-            background: linear-gradient(135deg, #2E7D32 0%, #4CAF50 100%);
+            width: 100%;
         }
         
         .settings-buttons .cancel-btn:hover {
@@ -727,12 +739,27 @@
             }
             
             .toolbar-buttons {
-                gap: 10px; /* 桌面版按鈕間距稍大 */
+                gap: 12px; /* 桌面版按鈕間距稍大 */
             }
             
-            button {
-                padding: 8px 16px; /* 桌面版按鈕稍大 */
-                font-size: 14px; /* 桌面版字體稍大 */
+            /* 桌面版按鈕美化 */
+            .toolbar-buttons button {
+                padding: 10px 20px; /* 桌面版按鈕稍大 */
+                font-size: 15px; /* 桌面版字體稍大 */
+                min-width: 90px; /* 增加最小寬度 */
+                border-radius: 30px; /* 增加圓角 */
+                box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+                font-weight: 700;
+            }
+            
+            .toolbar-buttons button:hover {
+                box-shadow: 0 7px 20px rgba(0,0,0,0.25);
+                transform: translateY(-3px);
+            }
+            
+            .toolbar-buttons button:active {
+                transform: translateY(1px);
+                box-shadow: 0 3px 10px rgba(0,0,0,0.2);
             }
             
             .score-display {
@@ -981,7 +1008,15 @@
     <div class="setting-item">
         <span class="setting-label">音效開關</span>
         <label class="switch">
-            <input type="checkbox" id="sound-toggle" checked>
+            <input type="checkbox" id="sound-toggle">
+            <span class="slider"></span>
+        </label>
+    </div>
+    
+    <div class="setting-item">
+        <span class="setting-label">顯示蓋牌剩餘牌數</span>
+        <label class="switch">
+            <input type="checkbox" id="show-card-count-toggle">
             <span class="slider"></span>
         </label>
     </div>
@@ -1002,17 +1037,7 @@
         </div>
     </div>
     
-    <div class="setting-item">
-        <span class="setting-label">剩餘張數</span>
-        <div class="setting-value" id="remaining-count-display">24張</div>
-    </div>
-    
-    <div class="remaining-count">
-        牌堆剩餘: <span id="stock-count">24</span> 張
-    </div>
-    
     <div class="settings-buttons">
-        <button class="save-btn" onclick="saveSettings()">儲存設定</button>
         <button class="cancel-btn" onclick="closeSettingsDialog()">返回遊戲</button>
     </div>
 </div>
@@ -1072,7 +1097,8 @@
         score: 0, // 初始分數
         drawMode: 1, // 翻牌模式：1張或3張，預設為1張
         handMode: 'right', // 手別模式：右手或左手，預設為右手
-        soundEnabled: true // 音效開關，預設開啟
+        soundEnabled: true, // 音效開關，預設開啟
+        showCardCount: true // 顯示蓋牌剩餘牌數，預設開啟
     };
     
     let history = []; // 遊戲歷史紀錄，用於撤回功能
@@ -1254,6 +1280,7 @@
     function showSettingsDialog() {
         // 更新設定對話框中的狀態
         document.getElementById('sound-toggle').checked = state.soundEnabled;
+        document.getElementById('show-card-count-toggle').checked = state.showCardCount;
         
         // 更新手別模式按鈕
         document.getElementById('hand-right-btn').classList.toggle('active', state.handMode === 'right');
@@ -1262,9 +1289,6 @@
         // 更新翻牌模式按鈕
         document.getElementById('draw-1-btn').classList.toggle('active', state.drawMode === 1);
         document.getElementById('draw-3-btn').classList.toggle('active', state.drawMode === 3);
-        
-        // 更新剩餘張數顯示
-        updateRemainingCountDisplay();
         
         // 顯示設定對話框
         document.getElementById('settings-overlay').style.display = 'block';
@@ -1275,25 +1299,34 @@
      * 關閉設定對話框
      */
     function closeSettingsDialog() {
+        // 關閉前保存所有設定更改
+        saveAllSettings();
+        
+        // 關閉設定對話框
         document.getElementById('settings-overlay').style.display = 'none';
         document.getElementById('settings-dialog').style.display = 'none';
     }
     
     /**
-     * 儲存設定
+     * 保存所有設定
      */
-    function saveSettings() {
-        // 儲存音效設定
+    function saveAllSettings() {
+        // 保存音效設定
         state.soundEnabled = document.getElementById('sound-toggle').checked;
         
-        // 儲存到本地儲存
+        // 保存蓋牌顯示設定
+        const showCardCount = document.getElementById('show-card-count-toggle').checked;
+        if (state.showCardCount !== showCardCount) {
+            state.showCardCount = showCardCount;
+            // 重新渲染以更新蓋牌顯示
+            render();
+        }
+        
+        // 保存到本地儲存
         saveSettingsToLocalStorage();
         
-        // 關閉設定對話框
-        closeSettingsDialog();
-        
         // 顯示確認訊息
-        showMessage("設定已儲存", 1500);
+        showMessage("設定已更新", 1000);
     }
     
     /**
@@ -1307,6 +1340,7 @@
                 state.soundEnabled = settings.soundEnabled !== undefined ? settings.soundEnabled : true;
                 state.drawMode = settings.drawMode || 1;
                 state.handMode = settings.handMode || 'right';
+                state.showCardCount = settings.showCardCount !== undefined ? settings.showCardCount : true;
             } catch (e) {
                 console.log("載入設定失敗，使用預設值");
             }
@@ -1320,7 +1354,8 @@
         const settings = {
             soundEnabled: state.soundEnabled,
             drawMode: state.drawMode,
-            handMode: state.handMode
+            handMode: state.handMode,
+            showCardCount: state.showCardCount
         };
         localStorage.setItem('solitaire-settings', JSON.stringify(settings));
     }
@@ -1331,11 +1366,20 @@
     function setHandModeUI(mode) {
         if (mode !== 'left' && mode !== 'right') return;
         
+        // 立即更新設定
+        state.handMode = mode;
+        
         // 更新UI顯示
         document.getElementById('hand-right-btn').classList.toggle('active', mode === 'right');
         document.getElementById('hand-left-btn').classList.toggle('active', mode === 'left');
         
-        // 預覽效果，不立即儲存
+        // 立即應用設定
+        saveSettingsToLocalStorage();
+        layoutSlots();
+        render();
+        
+        // 顯示確認訊息
+        showMessage(`已切換為${mode === 'right' ? '右手' : '左手'}模式`, 1000);
     }
     
     /**
@@ -1344,23 +1388,19 @@
     function setDrawModeUI(mode) {
         if (mode !== 1 && mode !== 3) return;
         
+        // 立即更新設定
+        state.drawMode = mode;
+        
         // 更新UI顯示
         document.getElementById('draw-1-btn').classList.toggle('active', mode === 1);
         document.getElementById('draw-3-btn').classList.toggle('active', mode === 3);
         
-        // 預覽效果，不立即儲存
-    }
-    
-    /**
-     * 更新剩餘張數顯示
-     */
-    function updateRemainingCountDisplay() {
-        const stockCount = state.stock.length;
-        const wasteCount = state.waste.length;
-        const totalRemaining = stockCount + wasteCount;
+        // 立即應用設定
+        saveSettingsToLocalStorage();
+        render();
         
-        document.getElementById('stock-count').textContent = stockCount;
-        document.getElementById('remaining-count-display').textContent = `${totalRemaining}張`;
+        // 顯示確認訊息
+        showMessage(`已切換為一次翻${mode}張牌模式`, 1000);
     }
     
     // ==================== 分數計算與更新函數 ====================
@@ -2569,12 +2609,14 @@
             stockDiv.style.top = sPos.top + 'px';
             stockDiv.dataset.type = 'stock';
             
-            // 添加牌堆剩餘數量顯示
-            const countDiv = document.createElement('div');
-            countDiv.className = 'card-count';
-            countDiv.textContent = state.stock.length;
+            // 添加牌堆剩餘數量顯示（根據設定決定是否顯示）
+            if (state.showCardCount) {
+                const countDiv = document.createElement('div');
+                countDiv.className = 'card-count';
+                countDiv.textContent = state.stock.length;
+                stockDiv.appendChild(countDiv);
+            }
             
-            stockDiv.appendChild(countDiv);
             stockDiv.addEventListener('click', () => drawStockWithAnimation());
             layer.appendChild(stockDiv);
         } else {
@@ -2663,8 +2705,6 @@
         
         // 更新魔法按鈕狀態
         updateMagicButton();
-        // 更新剩餘張數顯示
-        updateRemainingCountDisplay();
     }
     
     /**
@@ -3652,4 +3692,4 @@
     });
 </script>
 </body>
-</html>>
+</html>
