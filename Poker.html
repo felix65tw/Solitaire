@@ -1,8 +1,7 @@
-
-//	1.啟動遊戲的時候有時候會沒有任何牌顯示
+//	1.經過實測掀牌飛牌在網頁版的動畫是錯的，是要掩蓋70%
 //	2.掀開牌飛到定點的動畫區分網頁版及手機手機版兩種，掀開的牌飛到定點的動畫，網頁版直接覆蓋70%手機版則直接覆蓋50%
 //	3.當下方七列表格中若有位翻開的牌的情況下隨時可以使用魔法鍵
-//	4.修改過程中不需要顯示修改過程及代碼，直接在最後顯示完整代碼
+//	4.思考及修改過程中不需要顯示修改過程及代碼，直接在最後顯示完整代碼
 //	6.這個遊戲的牌產生的方式是固定式生成，會讓牌型的數量以及變化有限，不過卻可以達到"保證"可以過關，因此請開發一個無限的牌型產生函數並且要"保證"可以過關，不可以隨便使用隨機，僅需要優化卡牌產生即可其他的無關代碼不需要動
 
 <!DOCTYPE html>
@@ -3201,7 +3200,7 @@
                     const rect = topCardEl.getBoundingClientRect();
                     targetRect = { 
                         left: rect.left, 
-                        top: rect.top + (cardSize.height * (window.innerWidth < 600 ? 0.5 : 0.7)) // 使用正確的重疊比例
+                        top: rect.top + (cardSize.height * (window.innerWidth < 600 ? 0.5 : 0.3)) // 使用正確的重疊比例
                     };
                 } else {
                     const slotEl = document.getElementById(`slot-t${targetIdx}`);
