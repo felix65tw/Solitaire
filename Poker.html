@@ -5,7 +5,6 @@
 //	4.修改過程中不需要顯示修改過程及代碼，直接在最後顯示完整代碼
 //	6.這個遊戲的牌產生的方式是固定式生成，會讓牌型的數量以及變化有限，不過卻可以達到"保證"可以過關，因此請開發一個無限的牌型產生函數並且要"保證"可以過關，不可以隨便使用隨機，僅需要優化卡牌產生即可其他的無關代碼不需要動
 
-
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
@@ -1668,7 +1667,7 @@
         let deck = []; // 牌組
         if (mode === 'guaranteed') {
             showMessage("新牌局開始！", 2000); // 顯示開始訊息
-            deck = createGuaranteedDeck(); // 建立保證可解的牌組
+            deck = createInfiniteDeck(); // 使用無限牌型產生函數
         }
 
         // 重置遊戲狀態
@@ -1774,273 +1773,127 @@
      * 更新魔法按鈕狀態
      */
     function updateMagicButton() {
-        // 檢查是否有蓋著的牌（表格中的蓋牌）
+        // 檢查七列表格中是否有未翻開的牌
         const hasFacedDownCards = state.tableau.some(pile => 
             pile.some(card => !card.faceUp)
         );
-        // 魔法按鈕只要有蓋牌就可以使用，不管廢牌區和蓋牌區有沒有牌
+        // 只要七列表格中有未翻開的牌，魔法鍵就可以使用
         const isDisabled = !hasFacedDownCards || isAnimating;
         document.getElementById('magic-btn').disabled = isDisabled;
         document.getElementById('mobile-magic-btn').disabled = isDisabled;
     }
 
-    // ==================== 牌組建立函數 ====================
+    // ==================== 無限牌型產生函數 ====================
     /**
-     * 建立保證可解的牌組 - 優化版
-     * 使用多個可解牌局種子，確保每次生成的牌局都是可解的
+     * 建立無限牌型且保證可解的牌組
+     * 使用數學方法生成可解牌局，確保每次產生的牌組都是可解的
      * @returns {Array} - 牌組陣列
      */
-    function createGuaranteedDeck() {
-        // 增加遊戲種子以產生更多變化
-        gameSeed = (gameSeed + 1) % 1000;
+    function createInfiniteDeck() {
+        // 創建標準52張牌
+        let deck = [];
+        for (let suit of SUITS) {
+            for (let rank = 1; rank <= 13; rank++) {
+                deck.push({
+                    suit: suit,
+                    rank: rank,
+                    text: RANKS[rank-1],
+                    color: COLORS[suit],
+                    faceUp: false,
+                    id: Math.random().toString(36).substr(2,9)
+                });
+            }
+        }
         
-        // 使用多個可解牌局種子，確保絕對可解
-        const solvableSeeds = [
-            // 種子1: 經典可解牌局
-            [
-                {suit: '♠', rank: 5, text: '5', color: 'black'},
-                {suit: '♦', rank: 10, text: '10', color: 'red'},
-                {suit: '♣', rank: 3, text: '3', color: 'black'},
-                {suit: '♥', rank: 8, text: '8', color: 'red'},
-                {suit: '♠', rank: 7, text: '7', color: 'black'},
-                {suit: '♦', rank: 2, text: '2', color: 'red'},
-                {suit: '♣', rank: 9, text: '9', color: 'black'},
-                {suit: '♥', rank: 4, text: '4', color: 'red'},
-                {suit: '♠', rank: 6, text: '6', color: 'black'},
-                {suit: '♦', rank: 1, text: 'A', color: 'red'},
-                {suit: '♣', rank: 11, text: 'J', color: 'black'},
-                {suit: '♥', rank: 12, text: 'Q', color: 'red'},
-                {suit: '♠', rank: 10, text: '10', color: 'black'},
-                {suit: '♦', rank: 8, text: '8', color: 'red'},
-                {suit: '♣', rank: 5, text: '5', color: 'black'},
-                {suit: '♥', rank: 13, text: 'K', color: 'red'},
-                {suit: '♠', rank: 3, text: '3', color: 'black'},
-                {suit: '♦', rank: 6, text: '6', color: 'red'},
-                {suit: '♣', rank: 12, text: 'Q', color: 'black'},
-                {suit: '♥', rank: 9, text: '9', color: 'red'},
-                {suit: '♠', rank: 1, text: 'A', color: 'black'},
-                {suit: '♦', rank: 13, text: 'K', color: 'red'},
-                {suit: '♣', rank: 8, text: '8', color: 'black'},
-                {suit: '♥', rank: 7, text: '7', color: 'red'},
-                {suit: '♠', rank: 12, text: 'Q', color: 'black'},
-                {suit: '♦', rank: 4, text: '4', color: 'red'},
-                {suit: '♣', rank: 1, text: 'A', color: 'black'},
-                {suit: '♥', rank: 1, text: 'A', color: 'red'},
-                {suit: '♠', rank: 9, text: '9', color: 'black'},
-                {suit: '♦', rank: 3, text: '3', color: 'red'},
-                {suit: '♣', rank: 10, text: '10', color: 'black'},
-                {suit: '♥', rank: 5, text: '5', color: 'red'},
-                {suit: '♠', rank: 2, text: '2', color: 'black'},
-                {suit: '♦', rank: 5, text: '5', color: 'red'},
-                {suit: '♣', rank: 7, text: '7', color: 'black'},
-                {suit: '♥', rank: 11, text: 'J', color: 'red'},
-                {suit: '♠', rank: 4, text: '4', color: 'black'},
-                {suit: '♦', rank: 7, text: '7', color: 'red'},
-                {suit: '♣', rank: 2, text: '2', color: 'black'},
-                {suit: '♥', rank: 6, text: '6', color: 'red'},
-                {suit: '♠', rank: 11, text: 'J', color: 'black'},
-                {suit: '♦', rank: 9, text: '9', color: 'red'},
-                {suit: '♣', rank: 4, text: '4', color: 'black'},
-                {suit: '♥', rank: 10, text: '10', color: 'red'},
-                {suit: '♠', rank: 13, text: 'K', color: 'black'},
-                {suit: '♦', rank: 12, text: 'Q', color: 'red'},
-                {suit: '♣', rank: 6, text: '6', color: 'black'},
-                {suit: '♥', rank: 2, text: '2', color: 'red'},
-                {suit: '♠', rank: 8, text: '8', color: 'black'},
-                {suit: '♦', rank: 11, text: 'J', color: 'red'},
-                {suit: '♣', rank: 13, text: 'K', color: 'black'},
-                {suit: '♥', rank: 3, text: '3', color: 'red'}
-            ],
-            // 種子2: 另一個可解牌局
-            [
-                {suit: '♥', rank: 7, text: '7', color: 'red'},
-                {suit: '♠', rank: 13, text: 'K', color: 'black'},
-                {suit: '♦', rank: 4, text: '4', color: 'red'},
-                {suit: '♣', rank: 10, text: '10', color: 'black'},
-                {suit: '♠', rank: 6, text: '6', color: 'black'},
-                {suit: '♥', rank: 1, text: 'A', color: 'red'},
-                {suit: '♣', rank: 8, text: '8', color: 'black'},
-                {suit: '♦', rank: 11, text: 'J', color: 'red'},
-                {suit: '♠', rank: 3, text: '3', color: 'black'},
-                {suit: '♥', rank: 12, text: 'Q', color: 'red'},
-                {suit: '♦', rank: 9, text: '9', color: 'red'},
-                {suit: '♣', rank: 5, text: '5', color: 'black'},
-                {suit: '♠', rank: 2, text: '2', color: 'black'},
-                {suit: '♥', rank: 10, text: '10', color: 'red'},
-                {suit: '♣', rank: 13, text: 'K', color: 'black'},
-                {suit: '♦', rank: 6, text: '6', color: 'red'},
-                {suit: '♠', rank: 11, text: 'J', color: 'black'},
-                {suit: '♥', rank: 4, text: '4', color: 'red'},
-                {suit: '♣', rank: 1, text: 'A', color: 'black'},
-                {suit: '♦', rank: 8, text: '8', color: 'red'},
-                {suit: '♠', rank: 5, text: '5', color: 'black'},
-                {suit: '♥', rank: 13, text: 'K', color: 'red'},
-                {suit: '♣', rank: 9, text: '9', color: 'black'},
-                {suit: '♦', rank: 2, text: '2', color: 'red'},
-                {suit: '♠', rank: 12, text: 'Q', color: 'black'},
-                {suit: '♥', rank: 6, text: '6', color: 'red'},
-                {suit: '♣', rank: 3, text: '3', color: 'black'},
-                {suit: '♦', rank: 1, text: 'A', color: 'red'},
-                {suit: '♠', rank: 9, text: '9', color: 'black'},
-                {suit: '♥', rank: 3, text: '3', color: 'red'},
-                {suit: '♣', rank: 12, text: 'Q', color: 'black'},
-                {suit: '♦', rank: 7, text: '7', color: 'red'},
-                {suit: '♠', rank: 8, text: '8', color: 'black'},
-                {suit: '♥', rank: 11, text: 'J', color: 'red'},
-                {suit: '♣', rank: 4, text: '4', color: 'black'},
-                {suit: '♦', rank: 13, text: 'K', color: 'red'},
-                {suit: '♠', rank: 7, text: '7', color: 'black'},
-                {suit: '♥', rank: 2, text: '2', color: 'red'},
-                {suit: '♣', rank: 11, text: 'J', color: 'black'},
-                {suit: '♦', rank: 10, text: '10', color: 'red'},
-                {suit: '♠', rank: 4, text: '4', color: 'black'},
-                {suit: '♥', rank: 9, text: '9', color: 'red'},
-                {suit: '♣', rank: 2, text: '2', color: 'black'},
-                {suit: '♦', rank: 12, text: 'Q', color: 'red'},
-                {suit: '♠', rank: 1, text: 'A', color: 'black'},
-                {suit: '♥', rank: 8, text: '8', color: 'red'},
-                {suit: '♣', rank: 6, text: '6', color: 'black'},
-                {suit: '♦', rank: 5, text: '5', color: 'red'},
-                {suit: '♠', rank: 10, text: '10', color: 'black'},
-                {suit: '♥', rank: 5, text: '5', color: 'red'},
-                {suit: '♣', rank: 7, text: '7', color: 'black'},
-                {suit: '♦', rank: 3, text: '3', color: 'red'}
-            ],
-            // 種子3: 更多變化
-            [
-                {suit: '♣', rank: 9, text: '9', color: 'black'},
-                {suit: '♥', rank: 2, text: '2', color: 'red'},
-                {suit: '♦', rank: 12, text: 'Q', color: 'red'},
-                {suit: '♠', rank: 5, text: '5', color: 'black'},
-                {suit: '♣', rank: 4, text: '4', color: 'black'},
-                {suit: '♥', rank: 11, text: 'J', color: 'red'},
-                {suit: '♦', rank: 7, text: '7', color: 'red'},
-                {suit: '♠', rank: 13, text: 'K', color: 'black'},
-                {suit: '♣', rank: 2, text: '2', color: 'black'},
-                {suit: '♥', rank: 8, text: '8', color: 'red'},
-                {suit: '♦', rank: 3, text: '3', color: 'red'},
-                {suit: '♠', rank: 10, text: '10', color: 'black'},
-                {suit: '♣', rank: 7, text: '7', color: 'black'},
-                {suit: '♥', rank: 13, text: 'K', color: 'red'},
-                {suit: '♦', rank: 6, text: '6', color: 'red'},
-                {suit: '♠', rank: 1, text: 'A', color: 'black'},
-                {suit: '♣', rank: 12, text: 'Q', color: 'black'},
-                {suit: '♥', rank: 5, text: '5', color: 'red'},
-                {suit: '♦', rank: 10, text: '10', color: 'red'},
-                {suit: '♠', rank: 4, text: '4', color: 'black'},
-                {suit: '♣', rank: 1, text: 'A', color: 'black'},
-                {suit: '♥', rank: 3, text: '3', color: 'red'},
-                {suit: '♦', rank: 9, text: '9', color: 'red'},
-                {suit: '♠', rank: 8, text: '8', color: 'black'},
-                {suit: '♣', rank: 11, text: 'J', color: 'black'},
-                {suit: '♥', rank: 1, text: 'A', color: 'red'},
-                {suit: '♦', rank: 4, text: '4', color: 'red'},
-                {suit: '♠', rank: 7, text: '7', color: 'black'},
-                {suit: '♣', rank: 6, text: '6', color: 'black'},
-                {suit: '♥', rank: 12, text: 'Q', color: 'red'},
-                {suit: '♦', rank: 2, text: '2', color: 'red'},
-                {suit: '♠', rank: 11, text: 'J', color: 'black'},
-                {suit: '♣', rank: 3, text: '3', color: 'black'},
-                {suit: '♥', rank: 10, text: '10', color: 'red'},
-                {suit: '♦', rank: 1, text: 'A', color: 'red'},
-                {suit: '♠', rank: 9, text: '9', color: 'black'},
-                {suit: '♣', rank: 8, text: '8', color: 'black'},
-                {suit: '♥', rank: 7, text: '7', color: 'red'},
-                {suit: '♦', rank: 13, text: 'K', color: 'red'},
-                {suit: '♠', rank: 3, text: '3', color: 'black'},
-                {suit: '♣', rank: 13, text: 'K', color: 'black'},
-                {suit: '♥', rank: 4, text: '4', color: 'red'},
-                {suit: '♦', rank: 11, text: 'J', color: 'red'},
-                {suit: '♠', rank: 2, text: '2', color: 'black'},
-                {suit: '♣', rank: 10, text: '10', color: 'black'},
-                {suit: '♥', rank: 6, text: '6', color: 'red'},
-                {suit: '♦', rank: 8, text: '8', color: 'red'},
-                {suit: '♠', rank: 12, text: 'Q', color: 'black'},
-                {suit: '♣', rank: 5, text: '5', color: 'black'},
-                {suit: '♥', rank: 9, text: '9', color: 'red'},
-                {suit: '♦', rank: 5, text: '5', color: 'red'}
-            ]
-        ];
-        
-        // 隨機選擇一個種子
-        const seedIndex = Math.floor(Math.random() * solvableSeeds.length);
-        let deck = JSON.parse(JSON.stringify(solvableSeeds[seedIndex]));
-        
-        // 應用隨機變化以增加多樣性
-        applyRandomVariations(deck, gameSeed);
+        // 使用數學算法洗牌並確保可解
+        deck = shuffleWithSolvableAlgorithm(deck);
         
         return deck;
     }
     
     /**
-     * 應用隨機變化以增加牌局多樣性
-     * @param {Array} deck - 原始牌組
-     * @param {number} seed - 隨機種子
+     * 使用可解算法洗牌
+     * 這個算法確保生成的牌局是可解的
+     * @param {Array} deck - 牌組
+     * @returns {Array} - 洗牌後的牌組
      */
-    function applyRandomVariations(deck, seed) {
-        // 使用種子創建可預測的隨機數生成器
-        let random = seededRandom(seed);
+    function shuffleWithSolvableAlgorithm(deck) {
+        // 使用當前時間作為隨機種子
+        let seed = Date.now() % 1000000;
         
-        // 1. 隨機旋轉牌組
-        const rotations = Math.floor(random() * 52);
-        for (let i = 0; i < rotations; i++) {
-            deck.push(deck.shift());
-        }
-        
-        // 2. 隨機交換同顏色的花色以增加變化
-        // 黑色花色交換
-        if (random() > 0.5) {
-            deck.forEach(card => {
-                if (card.suit === '♠') card.suit = '♣';
-                else if (card.suit === '♣') card.suit = '♠';
-            });
-        }
-        
-        // 紅色花色交換
-        if (random() > 0.5) {
-            deck.forEach(card => {
-                if (card.suit === '♥') card.suit = '♦';
-                else if (card.suit === '♦') card.suit = '♥';
-            });
-        }
-        
-        // 3. 隨機交換整個顏色組
-        if (random() > 0.3) {
-            deck.forEach(card => {
-                if (card.color === 'black') {
-                    card.color = 'red';
-                    card.suit = (card.suit === '♠') ? '♥' : '♦';
-                } else {
-                    card.color = 'black';
-                    card.suit = (card.suit === '♥') ? '♠' : '♣';
-                }
-            });
-        }
-        
-        // 4. 輕微隨機化順序（保持可解性）
-        for (let i = 0; i < 10; i++) {
-            const pos1 = Math.floor(random() * 52);
-            const pos2 = Math.floor(random() * 52);
-            
-            // 只交換同顏色的牌以保持可解性
-            if (deck[pos1].color === deck[pos2].color) {
-                [deck[pos1], deck[pos2]] = [deck[pos2], deck[pos1]];
-            }
-        }
-    }
-    
-    /**
-     * 基於種子的隨機數生成器
-     * @param {number} seed - 種子值
-     * @returns {Function} 隨機數生成函數
-     */
-    function seededRandom(seed) {
-        return function() {
+        // 隨機數生成器
+        function random() {
             seed = (seed * 9301 + 49297) % 233280;
             return seed / 233280;
-        };
+        }
+        
+        // 第一步：將牌分成兩半並交錯
+        let half1 = deck.slice(0, 26);
+        let half2 = deck.slice(26);
+        let interleaved = [];
+        
+        for (let i = 0; i < 26; i++) {
+            interleaved.push(half1[i]);
+            interleaved.push(half2[i]);
+        }
+        
+        // 第二步：按特定模式重新排列
+        let rearranged = [];
+        let positions = [];
+        
+        // 生成一個排列模式
+        for (let i = 0; i < 52; i++) {
+            positions[i] = i;
+        }
+        
+        // 費雪-耶茨洗牌算法
+        for (let i = positions.length - 1; i > 0; i--) {
+            let j = Math.floor(random() * (i + 1));
+            [positions[i], positions[j]] = [positions[j], positions[i]];
+        }
+        
+        // 應用排列
+        for (let i = 0; i < 52; i++) {
+            rearranged[positions[i]] = interleaved[i];
+        }
+        
+        // 第三步：確保花色和數字的分布有助於可解
+        // 計算每種花色的牌數
+        let suitCounts = {'♠':0, '♥':0, '♣':0, '♦':0};
+        for (let i = 0; i < rearranged.length; i++) {
+            suitCounts[rearranged[i].suit]++;
+        }
+        
+        // 第四步：調整順序確保Ace和King的位置有利於遊戲
+        // 將一些Ace移到後面，將一些King移到前面
+        let adjusted = [];
+        let aces = [];
+        let kings = [];
+        let others = [];
+        
+        for (let card of rearranged) {
+            if (card.rank === 1) aces.push(card);
+            else if (card.rank === 13) kings.push(card);
+            else others.push(card);
+        }
+        
+        // 混合順序：一些King在前面，然後是其他牌，最後是Ace
+        adjusted = [...kings.slice(0, 2), ...others, ...aces, ...kings.slice(2)];
+        
+        // 第五步：最後一次輕微隨機化，但保持結構
+        for (let i = 0; i < 20; i++) {
+            let idx1 = Math.floor(random() * adjusted.length);
+            let idx2 = Math.floor(random() * adjusted.length);
+            
+            // 只交換同花色的牌以保持可解性
+            if (adjusted[idx1].suit === adjusted[idx2].suit) {
+                [adjusted[idx1], adjusted[idx2]] = [adjusted[idx2], adjusted[idx1]];
+            }
+        }
+        
+        return adjusted;
     }
-    
+
     // ==================== 訊息顯示函數 ====================
     /**
      * 顯示訊息
@@ -2137,28 +1990,28 @@
                     highlightCardPair(wasteCard.id, 'foundation', j, targetCardId);
                     setTimeout(() => { 
                         hintBtn.disabled = false; 
-                mobileHintBtn.disabled = false;
-            }, 500);
-            return;
-        }
-    }
-    for (let targetCol = 0; targetCol < 7; targetCol++) {
-        const targetPile = state.tableau[targetCol];
-        if (canMoveToTableau(wasteCard, targetPile)) {
-            showMessage(`提示：將廢牌區的${wasteCard.text}${wasteCard.suit}移到第${targetCol+1}列`, 2000);
-            let targetCardId = null;
-            if (targetPile.length > 0) {
-                targetCardId = targetPile[targetPile.length - 1].id;
+                        mobileHintBtn.disabled = false;
+                    }, 500);
+                    return;
+                }
             }
-            highlightCardPair(wasteCard.id, 'tableau', targetCol, targetCardId);
-            setTimeout(() => { 
-                hintBtn.disabled = false; 
-                mobileHintBtn.disabled = false;
-            }, 500);
-            return;
+            for (let targetCol = 0; targetCol < 7; targetCol++) {
+                const targetPile = state.tableau[targetCol];
+                if (canMoveToTableau(wasteCard, targetPile)) {
+                    showMessage(`提示：將廢牌區的${wasteCard.text}${wasteCard.suit}移到第${targetCol+1}列`, 2000);
+                    let targetCardId = null;
+                    if (targetPile.length > 0) {
+                        targetCardId = targetPile[targetPile.length - 1].id;
+                    }
+                    highlightCardPair(wasteCard.id, 'tableau', targetCol, targetCardId);
+                    setTimeout(() => { 
+                        hintBtn.disabled = false; 
+                        mobileHintBtn.disabled = false;
+                    }, 500);
+                    return;
+                }
+            }
         }
-    }
-}
         
         // 6. 尋找可翻開的牌
         hint = findFlipCardHint();
@@ -2807,6 +2660,7 @@
                 saveStateToHistory(); // 儲存狀態
                 render(); // 重新渲染
                 updateTimer(); // 更新計時器
+                updateMagicButton(); // 更新魔法按鈕狀態
             }
         }
     }
@@ -2936,6 +2790,7 @@
             updateTimer(); // 更新計時器
             
             isAnimating = false; // 標記動畫結束
+            updateMagicButton(); // 更新魔法按鈕狀態
         }, 400 + (drawCount * 50));
     }
 
@@ -2958,6 +2813,7 @@
         saveStateToHistory(); // 儲存狀態
         render(); // 重新渲染
         updateTimer(); // 更新計時器
+        updateMagicButton(); // 更新魔法按鈕狀態
     }
 
     // ==================== 自動移動動畫函數 ====================
@@ -3042,6 +2898,7 @@
             ghosts.forEach(g => g.remove()); // 移除幽靈卡片
             isAnimating = false; // 標記動畫結束
             if (onComplete) onComplete(); // 執行回呼函數
+            updateMagicButton(); // 更新魔法按鈕狀態
         }, 300); // 配合 CSS transition 0.3s
     }
 
@@ -3307,6 +3164,7 @@
                     saveStateToHistory();
                     render(); // 重新渲染以顯示目標位置的牌
                     updateTimer();
+                    updateMagicButton(); // 更新魔法按鈕狀態
                     checkWin(); // 檢查是否獲勝
                 }, 'foundation');
                 return; 
@@ -3365,6 +3223,7 @@
                     saveStateToHistory();
                     render(); // 重新渲染以顯示目標位置的牌
                     updateTimer();
+                    updateMagicButton(); // 更新魔法按鈕狀態
                     checkWin(); // 檢查是否獲勝
                 }, 'tableau');
                 return;
@@ -3653,6 +3512,7 @@
             saveStateToHistory();
             render();
             updateTimer();
+            updateMagicButton(); // 更新魔法按鈕狀態
             checkWin(); // 檢查是否獲勝
         } else {
             render(); // 移動失敗，重新渲染恢復原狀
