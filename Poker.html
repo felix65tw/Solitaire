@@ -1,9 +1,10 @@
 
+//	1.啟動遊戲的時候有時候會沒有任何牌顯示
+//	2.掀開牌飛到定點的動畫區分網頁版及手機手機版兩種，掀開的牌飛到定點的動畫，網頁版直接覆蓋70%手機版則直接覆蓋50%
+//	3.當下方七列表格中若有位翻開的牌的情況下隨時可以使用魔法鍵
+//	4.修改過程中不需要顯示修改過程及代碼，直接在最後顯示完整代碼
+//	6.這個遊戲的牌產生的方式是固定式生成，會讓牌型的數量以及變化有限，不過卻可以達到"保證"可以過關，因此請開發一個無限的牌型產生函數並且要"保證"可以過關，不可以隨便使用隨機，僅需要優化卡牌產生即可其他的無關代碼不需要動
 
-/* 	1.設定中，音效及剩餘牌數的開關也使用相同音效
-		2.剛啟動遊戲的時候有時候會無法進入遊戲，需要從新牌局裡選擇新的遊戲才有辦法玩有時候
-		4.修改過程中不需要顯示修改過程及代碼，直接在最後顯示完整代碼
-*/
 
 <!DOCTYPE html>
 <html lang="zh-Hant">
@@ -1018,7 +1019,7 @@
     <div class="setting-item">
         <span class="setting-label">音效開關</span>
         <label class="switch">
-            <input type="checkbox" id="sound-toggle">
+            <input type="checkbox" id="sound-toggle" onclick="playButtonSound()">
             <span class="slider"></span>
         </label>
     </div>
@@ -1026,7 +1027,7 @@
     <div class="setting-item">
         <span class="setting-label">顯示蓋牌剩餘牌數</span>
         <label class="switch">
-            <input type="checkbox" id="show-card-count-toggle">
+            <input type="checkbox" id="show-card-count-toggle" onclick="playButtonSound()">
             <span class="slider"></span>
         </label>
     </div>
@@ -1310,6 +1311,38 @@
                 oscillator.start(startTime);
                 oscillator.stop(startTime + 0.06);
             });
+        } catch (e) {
+            // 音效播放失敗，忽略
+        }
+    }
+    
+    /**
+     * 播放錯誤音效 - 用於搖晃卡片時
+     */
+    function playErrorSound() {
+        if (!audioContext || !state.soundEnabled) return;
+        
+        try {
+            const now = audioContext.currentTime;
+            
+            // 主音調 - 低沉的錯誤音效
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 400; // 低頻率，表示錯誤
+            oscillator.type = 'sine';
+            
+            // 短促的包絡：快速上升，快速衰減
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(0.2, now + 0.01);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+            
+            // 開始播放
+            oscillator.start(now);
+            oscillator.stop(now + 0.12);
         } catch (e) {
             // 音效播放失敗，忽略
         }
@@ -1619,7 +1652,12 @@
      * @param {string} mode - 遊戲模式
      */
     function initGame(mode = 'guaranteed') {
-        stopTimer(); // 停止計時器
+        // 先停止可能存在的計時器
+        if (state.timerInterval) {
+            clearInterval(state.timerInterval);
+            state.timerInterval = null;
+        }
+        
         state.gameMode = mode; // 設定遊戲模式
         state.moves = 0; // 重置移動次數
         state.score = 0; // 重置分數為0
@@ -3305,7 +3343,7 @@
                     const rect = topCardEl.getBoundingClientRect();
                     targetRect = { 
                         left: rect.left, 
-                        top: rect.top + (cardSize.height * 0.3) // 估算偏移量
+                        top: rect.top + (cardSize.height * (window.innerWidth < 600 ? 0.5 : 0.7)) // 使用正確的重疊比例
                     };
                 } else {
                     const slotEl = document.getElementById(`slot-t${targetIdx}`);
@@ -3347,6 +3385,8 @@
             cardElement.classList.remove('shake');
             void cardElement.offsetWidth; // 強制重繪
             cardElement.classList.add('shake');
+            // 播放錯誤音效
+            playErrorSound();
             setTimeout(() => { cardElement.classList.remove('shake'); }, 400);
         }
     }
