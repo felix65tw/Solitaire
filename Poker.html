@@ -142,15 +142,40 @@
         
         /* 魔法按鈕特殊樣式 */
         #magic-btn {
-            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-            color: #333;
+            background: linear-gradient(135deg, 
+                #FF0000 0%, 
+                #FF9900 15%, 
+                #FFFF00 30%, 
+                #00FF00 45%, 
+                #00FFFF 60%, 
+                #0000FF 75%, 
+                #FF00FF 90%, 
+                #FF0000 100%);
+            color: white;
             border: 2px solid rgba(255, 255, 255, 0.8);
-            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+            background-size: 200% 200%;
+            animation: rainbowBackground 3s infinite linear;
+        }
+        
+        @keyframes rainbowBackground {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
         
         #magic-btn:hover {
-            background: linear-gradient(135deg, #FFA500 0%, #FFD700 100%);
-            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+            background: linear-gradient(135deg, 
+                #FF0000 0%, 
+                #FF9900 15%, 
+                #FFFF00 30%, 
+                #00FF00 45%, 
+                #00FFFF 60%, 
+                #0000FF 75%, 
+                #FF00FF 90%, 
+                #FF0000 100%);
+            background-size: 200% 200%;
+            animation: rainbowBackground 3s infinite linear;
+            box-shadow: 0 6px 20px rgba(0, 0, 255, 0.4);
         }
         
         #magic-btn:disabled {
@@ -159,6 +184,7 @@
             border: 2px solid #999;
             box-shadow: none;
             transform: none;
+            animation: none;
         }
         
         /* 禁用按鈕樣式 */
@@ -439,9 +465,9 @@
             left: 50%;
             transform: translateX(-50%);
             z-index: 1000;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(245, 245, 245, 0.95) 100%); /* 漸變背景 */
+            background: rgba(0, 0, 0, 0.3); /* 改為與上方分數區相同的深綠色半透明背景 */
             border-radius: 20px; /* 圓角 */
-            padding: 12px 20px; /* 內邊距 */
+            padding: 12px 15px; /* 減少內邊距 */
             box-shadow: 0 10px 30px rgba(0,0,0,0.2); /* 陰影效果 */
             flex-direction: row; /* 橫向排列 */
             gap: 8px; /* 按鈕間距 */
@@ -449,10 +475,11 @@
             justify-content: center;
             align-items: center;
             min-width: 300px; /* 最小寬度 */
-            max-width: 90%;
+            max-width: calc(100vw - 30px); /* 確保不超出螢幕寬度 */
             backdrop-filter: blur(15px); /* 毛玻璃效果 */
             border: 1px solid rgba(255, 255, 255, 0.3); /* 邊框 */
             margin: 0 15px; /* 左右留空 */
+            box-sizing: border-box; /* 包含內邊距和邊框在寬度內 */
         }
         
         /* 手機版功能按鈕美化 */
@@ -461,7 +488,7 @@
             color: white;
             border: none;
             border-radius: 15px; /* 圓角 */
-            padding: 10px 14px; /* 內邊距 */
+            padding: 10px 12px; /* 減少內邊距 */
             font-weight: bold;
             font-size: 14px; /* 字體大小 */
             cursor: pointer;
@@ -476,15 +503,15 @@
             flex: 1; /* 等寬按鈕 */
         }
         
-        /* 手機版魔法按鈕七彩顏色 */
+        /* 手機版魔法按鈕七彩顏色 - 調整為藍色放中間 */
         .mobile-toolbar-container #mobile-magic-btn {
             background: linear-gradient(135deg, 
                 #FF0000 0%, 
                 #FF9900 15%, 
                 #FFFF00 30%, 
                 #00FF00 45%, 
-                #00FFFF 60%, 
-                #0000FF 75%, 
+                #0000FF 60%,  /* 藍色調整到中間位置 */
+                #00FFFF 75%, 
                 #FF00FF 90%, 
                 #FF0000 100%);
             color: white;
@@ -524,9 +551,9 @@
         .new-game-dialog {
             display: none;
             position: fixed;
-            top: 50%;
+            top: 25%; /* 向上調整四分之一的距離 */
             left: 50%;
-            transform: translate(-50%, -50%);
+            transform: translate(-50%, -25%); /* 對應調整 */
             background: white;
             border-radius: 15px;
             padding: 20px;
@@ -585,9 +612,9 @@
         .settings-dialog {
             display: none;
             position: fixed;
-            top: 50%;
+            top: 25%; /* 向上調整四分之一的距離 */
             left: 50%;
-            transform: translate(-50%, -50%);
+            transform: translate(-50%, -25%); /* 對應調整 */
             background: white;
             border-radius: 15px;
             padding: 25px;
@@ -746,9 +773,9 @@
         .victory-dialog {
             display: none;
             position: fixed;
-            top: 50%;
+            top: 25%; /* 向上調整四分之一的距離 */
             left: 50%;
-            transform: translate(-50%, -50%);
+            transform: translate(-50%, -25%); /* 對應調整 */
             background: rgba(0, 0, 0, 0.85);
             border-radius: 20px;
             padding: 30px;
@@ -1165,7 +1192,7 @@
                 /* 在特別小的屏幕上調整手機功能區 */
                 .mobile-toolbar-container {
                     gap: 6px; /* 減少間距 */
-                    padding: 10px 15px; /* 調整padding */
+                    padding: 10px 12px; /* 調整padding */
                     min-width: 280px; /* 調整最小寬度 */
                     border-radius: 15px; /* 稍微減小圓角 */
                     margin: 0 10px; /* 左右留空 */
