@@ -140,15 +140,15 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
         
-        /* 魔法按鈕特殊樣式 */
+        /* 魔法按鈕特殊樣式 - 修改為與手機版相同的七彩顏色 */
         #magic-btn {
             background: linear-gradient(135deg, 
                 #FF0000 0%, 
                 #FF9900 15%, 
                 #FFFF00 30%, 
                 #00FF00 45%, 
-                #00FFFF 60%, 
-                #0000FF 75%, 
+                #0000FF 60%,  /* 藍色調整到中間位置 */
+                #00FFFF 75%, 
                 #FF00FF 90%, 
                 #FF0000 100%);
             color: white;
@@ -169,8 +169,8 @@
                 #FF9900 15%, 
                 #FFFF00 30%, 
                 #00FF00 45%, 
-                #00FFFF 60%, 
-                #0000FF 75%, 
+                #0000FF 60%, 
+                #00FFFF 75%, 
                 #FF00FF 90%, 
                 #FF0000 100%);
             background-size: 200% 200%;
@@ -457,28 +457,27 @@
             box-shadow: 0 0 20px #667eea !important;
         }
         
-        /* 手機版功能鍵容器 - 美化版 */
+        /* 手機版功能鍵容器 - 美化版 - 修正：居中對齊 */
         .mobile-toolbar-container {
             display: none;
             position: fixed; /* 改為固定定位 */
-            bottom: 100px; /* 調整位置到頁面底部 */
+            bottom: 80px; /* 調整位置到頁面底部 */
             left: 50%;
             transform: translateX(-50%);
             z-index: 1000;
-            background: rgba(0, 0, 0, 0.3); /* 改為與上方分數區相同的深綠色半透明背景 */
+            background: rgba(0, 0, 0, 0.6); /* 改為深色半透明背景 */
             border-radius: 20px; /* 圓角 */
-            padding: 12px 15px; /* 減少內邊距 */
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2); /* 陰影效果 */
+            padding: 10px 12px; /* 調整內邊距 */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4); /* 陰影效果 */
             flex-direction: row; /* 橫向排列 */
-            gap: 8px; /* 按鈕間距 */
+            gap: 6px; /* 按鈕間距 */
             flex-wrap: nowrap; /* 防止換行 */
             justify-content: center;
             align-items: center;
-            min-width: 300px; /* 最小寬度 */
-            max-width: calc(100vw - 30px); /* 確保不超出螢幕寬度 */
+            min-width: 280px; /* 最小寬度 */
+            max-width: 90vw; /* 確保不超出螢幕寬度 */
             backdrop-filter: blur(15px); /* 毛玻璃效果 */
             border: 1px solid rgba(255, 255, 255, 0.3); /* 邊框 */
-            margin: 0 15px; /* 左右留空 */
             box-sizing: border-box; /* 包含內邊距和邊框在寬度內 */
         }
         
@@ -488,13 +487,13 @@
             color: white;
             border: none;
             border-radius: 15px; /* 圓角 */
-            padding: 10px 12px; /* 減少內邊距 */
+            padding: 8px 10px; /* 調整內邊距 */
             font-weight: bold;
-            font-size: 14px; /* 字體大小 */
+            font-size: 13px; /* 字體大小 */
             cursor: pointer;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* 陰影效果 */
             transition: all 0.3s ease;
-            min-width: 60px; /* 最小寬度 */
+            min-width: 55px; /* 最小寬度 */
             white-space: nowrap;
             text-align: center;
             display: flex;
@@ -1189,20 +1188,20 @@
                     font-size: 1.8rem; /* 調整蓋牌數字大小 (從2.0rem調整) */
                 }
                 
-                /* 在特別小的屏幕上調整手機功能區 */
+                /* 在特別小的屏幕上調整手機功能區 - 居中對齊 */
                 .mobile-toolbar-container {
-                    gap: 6px; /* 減少間距 */
-                    padding: 10px 12px; /* 調整padding */
-                    min-width: 280px; /* 調整最小寬度 */
+                    gap: 5px; /* 減少間距 */
+                    padding: 8px 10px; /* 調整padding */
+                    min-width: 260px; /* 調整最小寬度 */
                     border-radius: 15px; /* 稍微減小圓角 */
-                    margin: 0 10px; /* 左右留空 */
+                    bottom: 70px; /* 調整位置 */
                 }
                 
                 .mobile-toolbar-container button {
-                    padding: 8px 10px; /* 調整按鈕大小 */
-                    font-size: 12px; /* 調整字體大小 */
-                    min-width: 55px; /* 調整最小寬度 */
-                    border-radius: 12px; /* 減少圓角 */
+                    padding: 6px 8px; /* 調整按鈕大小 */
+                    font-size: 11px; /* 調整字體大小 */
+                    min-width: 50px; /* 調整最小寬度 */
+                    border-radius: 10px; /* 減少圓角 */
                 }
                 
                 /* 特別小的手機上對話框調整 */
@@ -2335,7 +2334,7 @@
         document.getElementById('mobile-magic-btn').disabled = isDisabled;
     }
 
-    // ==================== 無限牌型產生函數 ====================
+    // ==================== 改良的無限牌型產生函數 ====================
     /**
      * 建立無限牌型且保證可解的牌組
      * 使用改良的數學方法生成可解牌局，確保每次產生的牌組都是可解的
@@ -2455,8 +2454,8 @@
             return shuffleWithSolvableAlgorithm(deck);
         }
         
-        // 步驟7：輕微調整以增加變化性
-        resultDeck = applyFinalAdjustments(resultDeck, randomSeed);
+        // 步驟7：加強可解性檢查和調整
+        resultDeck = applyEnhancedAdjustments(resultDeck, randomSeed);
         
         return resultDeck;
     }
@@ -2512,16 +2511,16 @@
     }
     
     /**
-     * 應用最終調整以確保可解性
+     * 加強版的最終調整以確保可解性
      * @param {Array} deck - 牌組
      * @param {number} seed - 隨機種子
      * @returns {Array} - 調整後的牌組
      */
-    function applyFinalAdjustments(deck, seed) {
+    function applyEnhancedAdjustments(deck, seed) {
         const result = [...deck];
         const prng = new PRNG(seed);
         
-        // 調整1：確保每個花色的Ace不在同一列的最底部
+        // 加強調整1：確保每個花色的Ace不在牌組的後半部分
         const acePositions = [];
         for (let i = 0; i < result.length; i++) {
             if (result[i].rank === 1) {
@@ -2529,16 +2528,39 @@
             }
         }
         
-        // 如果所有Ace都在牌組後半部分（可能被埋住），移動一些到前面
-        const lateAces = acePositions.filter(pos => pos > 35); // 35是牌組中間偏後
-        if (lateAces.length >= 3) {
-            // 移動一個Ace到前面
-            const aceToMove = lateAces[0];
-            const targetPos = Math.floor(prng.next() * 20);
-            [result[aceToMove], result[targetPos]] = [result[targetPos], result[aceToMove]];
+        // 如果Ace在後半部分，移動到前半部分
+        acePositions.forEach((acePos, index) => {
+            if (acePos > 35) { // 35是牌組中間偏後
+                // 嘗試在前半部分找一個合適的位置
+                let targetPos = Math.floor(prng.next() * 20) + (index * 5);
+                if (targetPos >= 26) targetPos = 25; // 確保在前半部分
+                
+                // 交換位置
+                [result[acePos], result[targetPos]] = [result[targetPos], result[acePos]];
+            }
+        });
+        
+        // 加強調整2：確保每個花色的2也在可訪問位置
+        const twoPositions = [];
+        for (let i = 0; i < result.length; i++) {
+            if (result[i].rank === 2) {
+                twoPositions.push(i);
+            }
         }
         
-        // 調整2：避免太多King在牌組最前面
+        // 如果2在最後15張牌中，移動到前面
+        twoPositions.forEach((twoPos, index) => {
+            if (twoPos > 36) { // 最後15張牌
+                // 嘗試在前半部分找一個合適的位置
+                let targetPos = Math.floor(prng.next() * 25) + 5;
+                if (targetPos >= 30) targetPos = 29;
+                
+                // 交換位置
+                [result[twoPos], result[targetPos]] = [result[targetPos], result[twoPos]];
+            }
+        });
+        
+        // 加強調整3：避免太多King在牌組最前面
         const kingPositions = [];
         for (let i = 0; i < result.length; i++) {
             if (result[i].rank === 13) {
@@ -2546,6 +2568,7 @@
             }
         }
         
+        // 如果King在前10張牌中，移動一些到後面
         const earlyKings = kingPositions.filter(pos => pos < 10);
         if (earlyKings.length >= 2) {
             // 移動一個King到後面
@@ -2554,7 +2577,7 @@
             [result[kingToMove], result[targetPos]] = [result[targetPos], result[kingToMove]];
         }
         
-        // 調整3：確保每種花色都有牌在可訪問位置（前28張）
+        // 加強調整4：確保每種花色都有牌在可訪問位置（前28張）
         const suitsInFirst28 = new Set();
         for (let i = 0; i < 28; i++) {
             suitsInFirst28.add(result[i].suit);
@@ -2576,14 +2599,36 @@
             }
         }
         
-        // 調整4：最後一次輕度隨機化，但保持結構
-        for (let i = 0; i < 10; i++) {
+        // 加強調整5：檢查並避免死局情況
+        // 檢查是否有太多同花色的牌堆在一起
+        for (let i = 0; i < result.length - 5; i++) {
+            const slice = result.slice(i, i + 5);
+            const sameSuitCount = slice.filter(card => card.suit === slice[0].suit).length;
+            if (sameSuitCount >= 4) {
+                // 交換一張牌來打破連續同花色
+                const swapIndex = i + Math.floor(prng.next() * 5);
+                const targetIndex = (i + 15) % result.length;
+                [result[swapIndex], result[targetIndex]] = [result[targetIndex], result[swapIndex]];
+            }
+        }
+        
+        // 加強調整6：最後一次輕度隨機化，但保持結構
+        for (let i = 0; i < 15; i++) {
             const idx1 = Math.floor(prng.next() * result.length);
             const idx2 = Math.floor(prng.next() * result.length);
             
             // 只交換同花色的牌以保持可解性
             if (result[idx1].suit === result[idx2].suit) {
                 [result[idx1], result[idx2]] = [result[idx2], result[idx1]];
+            }
+        }
+        
+        // 加強調整7：最終檢查 - 確保沒有Ace在最後10張牌中
+        for (let i = result.length - 10; i < result.length; i++) {
+            if (result[i].rank === 1) {
+                // 與前半部分的牌交換
+                const targetPos = Math.floor(prng.next() * 20);
+                [result[i], result[targetPos]] = [result[targetPos], result[i]];
             }
         }
         
