@@ -60,6 +60,13 @@
             min-width: 120px; /* 固定寬度，容納4位數 */
             text-align: center;
             font-variant-numeric: tabular-nums; /* 等寬數字 */
+            cursor: pointer; /* 添加手形游標，表示可點擊 */
+            transition: transform 0.2s, background 0.2s; /* 添加過渡效果 */
+        }
+        
+        /* 時間與步數顯示點擊效果 */
+        .time-moves-display:active {
+            transform: scale(0.95); /* 點擊時縮小 */
         }
         
         /* 分數顯示 - 修改為固定寬度 */
@@ -1404,6 +1411,9 @@
     let scoreClickCount = 0; // 分數框點擊計數器
     let lastScoreClickTime = 0; // 上次點擊分數框的時間
     const SCORE_CLICK_TIMEOUT = 2000; // 點擊超時時間（2秒）
+    
+    // ==================== 單擊自動移動模式變數 ====================
+    let autoMoveOnClick = false; // 單擊自動移動模式開關，預設為關閉
 
     // ==================== 煙花效果變數 ====================
     let fireworks = {
@@ -3994,6 +4004,12 @@
         const clickedCard = sourcePile[cardIdx];
         if (!clickedCard) return;
 
+        // 如果單擊自動移動模式開啟，則嘗試單擊自動移動
+        if (autoMoveOnClick) {
+            handleDoubleClick(type, pileIdx, cardIdx, clickedCard.id);
+            return;
+        }
+        
         // 雙擊檢測
         if (clickedCard.id === lastClickCardId && now - lastClickTime < 350) {
             handleDoubleClick(type, pileIdx, cardIdx, clickedCard.id);
@@ -4188,41 +4204,51 @@
         const ghostCenterY = ghostTopRelative + ghostRect.height / 2;
 
         let target = null; // 目標位置
+        let minDist = Infinity;
         
-        // 檢查是否拖曳到花色區 - 擴大吸附區域
+        // 大大增加吸附區域閾值 - 提高靈敏度
+        const threshold = cardSize.width * 2.5; // 從卡片寬度的1倍增加到2.5倍
+        
+        // 檢查所有可能的目標槽位（花色區和表格列）
+        const allSlots = [];
+        
+        // 花色區
         for (let i = 0; i < 4; i++) {
-            const s = slotPositions[`slot-f${i}`];
-            if (!s) continue;
-            
-            // 擴大吸附區域：左右各擴大半張牌寬度，上下各擴大半張牌高度
-            const expandedLeft = s.left - cardSize.width * 0.5;
-            const expandedRight = s.right + cardSize.width * 0.5;
-            const expandedTop = s.top - cardSize.height * 0.5;
-            const expandedBottom = s.bottom + cardSize.height * 0.5;
-            
-            if (ghostCenterX >= expandedLeft && ghostCenterX <= expandedRight && 
-                ghostCenterY >= expandedTop && ghostCenterY <= expandedBottom) {
-                target = { type: 'foundation', idx: i };
-                break;
+            const slotId = `slot-f${i}`;
+            if (slotPositions[slotId]) {
+                allSlots.push({
+                    type: 'foundation',
+                    idx: i,
+                    cx: slotPositions[slotId].cx,
+                    cy: slotPositions[slotId].cy
+                });
             }
         }
         
-        // 檢查是否拖曳到表格 - 擴大吸附區域
-        if (!target) {
-            for (let i = 0; i < 7; i++) {
-                const s = slotPositions[`slot-t${i}`];
-                if (!s) continue;
-                
-                // 擴大吸附區域：左右各擴大一張牌寬度，上方擴大半張牌高度
-                const expandedLeft = s.left - cardSize.width;
-                const expandedRight = s.right + cardSize.width;
-                const expandedTop = s.top - cardSize.height * 0.5;
-                const expandedBottom = s.bottom + cardSize.height * 2; // 下方擴展更多
-                
-                if (ghostCenterX >= expandedLeft && ghostCenterX <= expandedRight && 
-                    ghostCenterY >= expandedTop && ghostCenterY <= expandedBottom) {
-                    target = { type: 'tableau', idx: i };
-                    break;
+        // 表格列
+        for (let i = 0; i < 7; i++) {
+            const slotId = `slot-t${i}`;
+            if (slotPositions[slotId]) {
+                allSlots.push({
+                    type: 'tableau',
+                    idx: i,
+                    cx: slotPositions[slotId].cx,
+                    cy: slotPositions[slotId].cy
+                });
+            }
+        }
+        
+        // 尋找最近的槽位
+        for (let i = 0; i < allSlots.length; i++) {
+            const slot = allSlots[i];
+            const distX = ghostCenterX - slot.cx;
+            const distY = ghostCenterY - slot.cy;
+            const dist = Math.sqrt(distX * distX + distY * distY);
+            
+            if (dist < minDist) {
+                minDist = dist;
+                if (dist < threshold) {
+                    target = { type: slot.type, idx: slot.idx };
                 }
             }
         }
@@ -4375,6 +4401,20 @@
         
         // 添加分數框點擊事件監聽器（測試功能）
         document.getElementById('score-display').addEventListener('click', handleScoreClick);
+        
+        // 添加步數顯示雙擊事件監聽器（切換單擊自動移動模式）
+        const timeMovesElement = document.getElementById('time-moves');
+        let lastTimeMovesClick = 0;
+        timeMovesElement.addEventListener('click', function() {
+            const now = Date.now();
+            if (now - lastTimeMovesClick < 500) { // 500ms內雙擊
+                autoMoveOnClick = !autoMoveOnClick;
+                showMessage(autoMoveOnClick ? "已切換到單擊自動移動模式" : "已切換到雙擊自動移動模式", 1500);
+                lastTimeMovesClick = 0;
+            } else {
+                lastTimeMovesClick = now;
+            }
+        });
     });
     
     // 防止手機雙指縮放
