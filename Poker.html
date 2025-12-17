@@ -435,24 +435,24 @@
         .mobile-toolbar-container {
             display: none;
             position: fixed; /* 改為固定定位 */
-            bottom: 120px; /* 調整位置到頁面底部 */
+            bottom: 100px; /* 調整位置到頁面底部 */
             left: 50%;
             transform: translateX(-50%);
             z-index: 1000;
-            background: rgba(255, 255, 255, 0.95); /* 改為半透明白色背景 */
-            border-radius: 15px; /* 減少圓角，從25px調整為15px */
-            padding: 12px 15px; /* 減少左右padding，從20px調整為15px */
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15); /* 增加陰影效果 */
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(245, 245, 245, 0.95) 100%); /* 漸變背景 */
+            border-radius: 20px; /* 圓角 */
+            padding: 12px 20px; /* 內邊距 */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2); /* 陰影效果 */
             flex-direction: row; /* 橫向排列 */
-            gap: 10px; /* 減少間距，從15px調整為10px */
+            gap: 8px; /* 按鈕間距 */
             flex-wrap: nowrap; /* 防止換行 */
             justify-content: center;
             align-items: center;
-            min-width: 280px; /* 最小寬度 */
+            min-width: 300px; /* 最小寬度 */
             max-width: 90%;
-            backdrop-filter: blur(10px); /* 毛玻璃效果 */
-            border: 1px solid rgba(255, 255, 255, 0.2); /* 邊框 */
-            margin: 0 10px; /* 左右留空 */
+            backdrop-filter: blur(15px); /* 毛玻璃效果 */
+            border: 1px solid rgba(255, 255, 255, 0.3); /* 邊框 */
+            margin: 0 15px; /* 左右留空 */
         }
         
         /* 手機版功能按鈕美化 */
@@ -460,31 +460,55 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* 漸變背景 */
             color: white;
             border: none;
-            border-radius: 20px; /* 減少圓角，從50px調整為20px */
-            padding: 10px 14px; /* 減少內邊距，從12px 18px調整為10px 14px */
+            border-radius: 15px; /* 圓角 */
+            padding: 10px 14px; /* 內邊距 */
             font-weight: bold;
-            font-size: 13px; /* 稍微減小字體 */
+            font-size: 14px; /* 字體大小 */
             cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* 陰影效果 */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* 陰影效果 */
             transition: all 0.3s ease;
-            min-width: 65px; /* 調整最小寬度，從70px調整為65px */
+            min-width: 60px; /* 最小寬度 */
             white-space: nowrap;
             text-align: center;
             display: flex;
             justify-content: center;
             align-items: center;
+            flex: 1; /* 等寬按鈕 */
+        }
+        
+        /* 手機版魔法按鈕七彩顏色 */
+        .mobile-toolbar-container #mobile-magic-btn {
+            background: linear-gradient(135deg, 
+                #FF0000 0%, 
+                #FF9900 15%, 
+                #FFFF00 30%, 
+                #00FF00 45%, 
+                #00FFFF 60%, 
+                #0000FF 75%, 
+                #FF00FF 90%, 
+                #FF0000 100%);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            background-size: 200% 200%;
+            animation: rainbowBackground 3s infinite linear;
+        }
+        
+        @keyframes rainbowBackground {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
         
         /* 手機按鈕懸停效果 */
         .mobile-toolbar-container button:hover {
             transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
         }
         
         /* 手機按鈕按下效果 */
         .mobile-toolbar-container button:active {
             transform: translateY(1px);
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
         
         /* 手機禁用按鈕樣式 */
@@ -821,11 +845,12 @@
         .victory-new-game-btn {
             background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
             color: white;
+            width: 100%; /* 改為滿寬度 */
         }
         
+        /* 移除繼續慶祝按鈕 */
         .victory-close-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            display: none; /* 隱藏繼續慶祝按鈕 */
         }
         
         .victory-buttons button:hover {
@@ -949,6 +974,11 @@
                 display: none;
             }
             
+            /* 隱藏手機版上方的設定按鍵 */
+            #settings-btn {
+                display: none !important;
+            }
+            
             /* 手機上卡片字體調整 */
             .card-num { 
                 font-size: 2.5rem; /* 調整為2.5rem (從3rem減少) */
@@ -1025,38 +1055,62 @@
                 font-size: 2.0rem; /* 調整蓋牌數字大小 (從2.5rem調整) */
             }
             
-            /* 設定對話框調整 */
+            /* 設定對話框調整 - 增大文字 */
             .settings-dialog {
-                padding: 20px;
-                min-width: 250px;
+                padding: 25px;
+                min-width: 280px;
             }
             
             .settings-dialog h3 {
-                font-size: 18px;
-                margin-bottom: 15px;
+                font-size: 22px; /* 增大標題字體 */
+                margin-bottom: 20px;
             }
             
             .settings-dialog .setting-label {
-                font-size: 14px;
+                font-size: 16px; /* 增大設定項目標籤字體 */
+            }
+            
+            .settings-dialog .setting-value {
+                font-size: 16px; /* 增大設定數值字體 */
             }
             
             .mode-option {
-                padding: 6px 12px;
-                font-size: 12px;
+                padding: 8px 16px;
+                font-size: 14px; /* 增大模式選項字體 */
             }
             
-            /* 勝利畫面手機版調整 */
-            .victory-dialog {
+            /* 新牌局對話框調整 - 增大文字 */
+            .new-game-dialog {
+                padding: 25px;
                 min-width: 280px;
-                padding: 20px;
+            }
+            
+            .new-game-dialog h3 {
+                font-size: 22px; /* 增大標題字體 */
+            }
+            
+            .new-game-dialog button {
+                font-size: 16px; /* 增大按鈕文字 */
+                padding: 14px;
+            }
+            
+            /* 勝利畫面手機版調整 - 增大文字 */
+            .victory-dialog {
+                min-width: 300px;
+                padding: 30px;
             }
             
             .victory-dialog h2 {
-                font-size: 2rem;
+                font-size: 2.5rem; /* 增大標題字體 */
             }
             
             .victory-stat {
-                font-size: 1rem;
+                font-size: 1.2rem; /* 增大統計文字 */
+            }
+            
+            .victory-buttons button {
+                font-size: 1.1rem; /* 增大按鈕文字 */
+                padding: 14px;
             }
             
             /* 特別小的手機 */
@@ -1110,37 +1164,51 @@
                 
                 /* 在特別小的屏幕上調整手機功能區 */
                 .mobile-toolbar-container {
-                    gap: 8px; /* 減少間距 */
-                    padding: 10px 12px; /* 調整padding，左右減少 */
-                    min-width: 250px; /* 調整最小寬度 */
-                    border-radius: 12px; /* 稍微減小圓角 */
-                    margin: 0 5px; /* 左右留空 */
+                    gap: 6px; /* 減少間距 */
+                    padding: 10px 15px; /* 調整padding */
+                    min-width: 280px; /* 調整最小寬度 */
+                    border-radius: 15px; /* 稍微減小圓角 */
+                    margin: 0 10px; /* 左右留空 */
                 }
                 
                 .mobile-toolbar-container button {
                     padding: 8px 10px; /* 調整按鈕大小 */
-                    font-size: 11px; /* 調整字體大小 */
+                    font-size: 12px; /* 調整字體大小 */
                     min-width: 55px; /* 調整最小寬度 */
-                    border-radius: 15px; /* 減少圓角 */
+                    border-radius: 12px; /* 減少圓角 */
                 }
                 
+                /* 特別小的手機上對話框調整 */
                 .settings-dialog {
-                    padding: 15px;
-                    min-width: 220px;
+                    padding: 20px;
+                    min-width: 260px;
+                }
+                
+                .settings-dialog h3 {
+                    font-size: 20px;
+                }
+                
+                .new-game-dialog {
+                    padding: 20px;
+                    min-width: 260px;
+                }
+                
+                .new-game-dialog h3 {
+                    font-size: 20px;
                 }
                 
                 /* 特別小的手機上勝利畫面調整 */
                 .victory-dialog {
-                    min-width: 240px;
-                    padding: 15px;
+                    min-width: 280px;
+                    padding: 25px;
                 }
                 
                 .victory-dialog h2 {
-                    font-size: 1.8rem;
+                    font-size: 2.2rem;
                 }
                 
                 .victory-stat {
-                    font-size: 0.9rem;
+                    font-size: 1.1rem;
                 }
             }
         }
@@ -1237,7 +1305,6 @@
     </div>
     <div class="victory-buttons">
         <button class="victory-new-game-btn" onclick="playButtonSound(); closeVictoryDialog(); startNewGame()">新遊戲</button>
-        <button class="victory-close-btn" onclick="playButtonSound(); closeVictoryDialog()">繼續慶祝</button>
     </div>
 </div>
 
@@ -2228,15 +2295,15 @@
     }
     
     /**
-     * 更新魔法按鈕狀態
+     * 更新魔法按鈕狀態 - 修改為動畫期間不禁用
      */
     function updateMagicButton() {
         // 檢查七列表格中是否有未翻開的牌
         const hasFacedDownCards = state.tableau.some(pile => 
             pile.some(card => !card.faceUp)
         );
-        // 只要七列表格中有未翻開的牌，魔法鍵就可以使用
-        const isDisabled = !hasFacedDownCards || isAnimating;
+        // 修改：只在沒有蓋牌時禁用，動畫期間不禁用
+        const isDisabled = !hasFacedDownCards;
         document.getElementById('magic-btn').disabled = isDisabled;
         document.getElementById('mobile-magic-btn').disabled = isDisabled;
     }
@@ -3592,7 +3659,7 @@
      * 魔法移動：隨機翻開一張蓋牌並移動到廢牌堆
      */
     function magicMove() {
-        if (isAnimating) return;
+        if (isAnimating) return; // 動畫中禁止操作
         
         // 收集所有蓋著的牌（只收集每列最上面一張蓋牌）
         const facedDownCards = [];
