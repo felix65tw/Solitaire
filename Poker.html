@@ -3248,6 +3248,7 @@
                 
                 // 添加拖曳事件監聽器
                 // 在三張模式下，廢牌堆只有最上面的牌可以拖曳
+                // 花色區的牌也可以拖曳
                 if (type !== 'waste' || cardIdx === state.waste.length - 1) {
                     div.addEventListener('mousedown', (e) => startDrag(e, type, pileIdx, cardIdx));
                     div.addEventListener('touchstart', (e) => startDrag(e, type, pileIdx, cardIdx), {passive: false});
@@ -4028,7 +4029,8 @@
         // 在三張模式下，廢牌堆只能拖曳最上面的牌
         if (type === 'waste' && cardIdx !== sourcePile.length - 1) return;
         
-        if ((type === 'waste' || type === 'foundation') && cardIdx !== sourcePile.length - 1) return; // 只能拖曳最上面的牌
+        // 花色區的牌只能拖曳最上面的牌
+        if ((type === 'waste' || type === 'foundation') && cardIdx !== sourcePile.length - 1) return;
         
         drag.pending = true; // 標記為等待拖曳
         drag.isDragging = false;
@@ -4049,7 +4051,7 @@
                 drag.cards.push(sourcePile[i]);
             }
         } else {
-            // 廢牌堆和花色區只能拖曳一張牌
+            // 廢牌堆、花色區只能拖曳一張牌
             drag.cards.push(clickedCard);
         }
 
@@ -4206,7 +4208,7 @@
         let target = null; // 目標位置
         let minDist = Infinity;
         
-        // 大大增加吸附區域閾值 - 提高靈敏度
+        // 增加吸附區域閾值 - 提高靈敏度
         const threshold = cardSize.width * 2.5; // 從卡片寬度的1倍增加到2.5倍
         
         // 檢查所有可能的目標槽位（花色區和表格列）
@@ -4297,6 +4299,10 @@
         // 移動到花色區
         if (target.type === 'foundation') {
             if (cards.length > 1) return false; // 花色區只能移動一張牌
+            
+            // 如果是從花色區移動到花色區，不允許
+            if (source.type === 'foundation') return false;
+            
             const foundation = state.foundations[target.idx];
             if (foundation.length === 0) {
                 if (moveCard.rank !== 1) return false; // 空的花色區只能放Ace
@@ -4311,6 +4317,7 @@
         // 移動到表格
         if (target.type === 'tableau') {
             if (source.type === 'tableau' && source.pileIdx === target.idx) return false; // 不能移動到同一列
+            
             const tableau = state.tableau[target.idx];
             if (tableau.length === 0) {
                 if (moveCard.rank !== 13) return false; // 空的表格列只能放King
@@ -4361,6 +4368,8 @@
                 addScore(5); // 從廢牌堆移動到表格列得5分
             } else if (source.type === 'tableau') {
                 addScore(5 * cards.length); // 從表格列移動到表格列，每張牌得5分
+            } else if (source.type === 'foundation') {
+                addScore(-15); // 從花色區移動到表格列扣15分
             }
             // 播放移動音效
             playMoveSound();
