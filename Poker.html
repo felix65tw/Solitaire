@@ -2466,97 +2466,91 @@
             return shuffled;
         }
         
-        // 改進的牌局生成算法
-        function generateSolvableLayout() {
-            // 創建一個空的牌局結構
-            const layout = {
-                foundations: [[], [], [], []],
-                tableau: [[], [], [], [], [], [], []],
-                stock: []
-            };
-            
-            // 第一步：確保每個花色區都能從A開始
-            const suits = [...SUITS];
-            
-            // 隨機放置Ace到表格列
-            const aces = suits.map(suit => ({
-                suit: suit,
-                rank: 1,
-                text: 'A',
-                color: COLORS[suit],
-                faceUp: true
-            }));
-            
-            // 深層洗牌Ace
-            const shuffledAces = deepShuffle(aces);
-            
-            // 將Ace放入不同的表格列中
-            for (let i = 0; i < Math.min(4, 7); i++) {
-                layout.tableau[i].push({
-                    ...shuffledAces[i],
-                    id: Math.random().toString(36).substr(2,9)
-                });
-            }
-            
-            // 第二步：生成剩餘的牌，確保每種花色的連續性
-            const remainingCards = [];
-            for (let suit of suits) {
-                for (let rank = 2; rank <= 13; rank++) {
-                    remainingCards.push({
-                        suit: suit,
-                        rank: rank,
-                        text: RANKS[rank-1],
-                        color: COLORS[suit],
-                        faceUp: false
-                    });
-                }
-            }
-            
-            // 深層洗牌剩餘的牌
-            const shuffledRemaining = deepShuffle(remainingCards);
-            
-            // 第三步：按照可解規則分配牌到表格列
-            // 確保每個表格列的最後一張牌是不同花色的K或Q
-            const tableuTops = [];
-            for (let i = 0; i < 7; i++) {
-                if (layout.tableau[i].length > 0) {
-                    tableuTops.push(layout.tableau[i][0]);
-                }
-            }
-            
-            // 分配牌到表格列，確保可解性
-            let cardIndex = 0;
-            const tableauCardCounts = [1, 2, 3, 4, 5, 6, 7];
-            
-            for (let col = 0; col < 7; col++) {
-                const neededCards = tableauCardCounts[col] - layout.tableau[col].length;
-                
-                for (let i = 0; i < neededCards; i++) {
-                    if (cardIndex < shuffledRemaining.length) {
-                        const card = shuffledRemaining[cardIndex];
-                        card.id = Math.random().toString(36).substr(2,9);
-                        
-                        // 如果是該列的最後一張牌，翻開它
-                        if (i === neededCards - 1) {
-                            card.faceUp = true;
-                        }
-                        
-                        layout.tableau[col].push(card);
-                        cardIndex++;
-                    }
-                }
-            }
-            
-            // 第四步：剩餘的牌放入牌堆
-            for (let i = cardIndex; i < shuffledRemaining.length; i++) {
-                const card = shuffledRemaining[i];
-                card.id = Math.random().toString(36).substr(2,9);
-                layout.stock.push(card);
-            }
-            
-            // 第五步：驗證並調整牌局確保可解
-            return validateAndAdjustLayout(layout);
+/* ##################################################################################  */
+        
+// ==================== 修正後的圖案顯示函數 ====================
+
+/**
+ * 修正後的佈局生成函數
+ * 使用與 Poker.html 一致的符號與顏色
+ */
+function generateSolvableLayout() {
+    // 1. 使用您網頁中定義的全局常量
+    // SUITS = ['♥️', '♦️', '♣️', '♠️']
+    // RANKS = ['A', '2', ..., 'K']
+    // COLORS = {'♥️':'red', '♦️':'red', '♣️':'black', '♠️':'black'}
+    
+    let pool = [];
+    SUITS.forEach(suit => {
+        for (let r = 1; r <= 13; r++) {
+            pool.push({
+                id: Math.random().toString(36).substr(2, 9),
+                suit: suit,             // 必須是符號，如 '♥️'
+                rank: r,                // 數字 1-13
+                text: RANKS[r - 1],     // 顯示文字，如 'A', '10', 'K'
+                color: COLORS[suit],    // 'red' 或 'black'
+                faceUp: false
+            });
         }
+    });
+
+    // 2. 準備佈局結構
+    let layout = {
+        foundations: [[], [], [], []],
+        tableau: [[], [], [], [], [], [], []],
+        stock: []
+    };
+
+    // 3. 逆向生成表格區 (Tableau)
+    // 確保每一列內部是紅黑交替且連續的，增加通關機率
+    for (let i = 0; i < 7; i++) {
+        let currentRank = Math.floor(Math.random() * 8) + 5; // 隨機 5-12 之間起始
+        let currentColor = Math.random() > 0.5 ? 'red' : 'black';
+
+        for (let j = 0; j <= i; j++) {
+            // 尋找符合規則的牌 (顏色不同且數字遞增)
+            let cardIdx = pool.findIndex(c => c.rank === currentRank && c.color === currentColor);
+            
+            if (cardIdx === -1) cardIdx = Math.floor(Math.random() * pool.length);
+            
+            let card = pool.splice(cardIdx, 1)[0];
+            layout.tableau[i].push(card);
+
+            // 更新下一張規律
+            currentRank = (currentRank % 13) + 1;
+            currentColor = (currentColor === 'red' ? 'black' : 'red');
+        }
+    }
+
+    // 4. 剩下的牌進入牌堆並洗牌
+    layout.stock = pool.sort(() => Math.random() - 0.5);
+
+    return layout;
+}
+
+/**
+ * 如果您的 initGame 呼叫的是 generateSolvableDeck
+ * 此函數會將佈局拍扁成一個 52 張牌的陣列，並確保 pop() 順序正確
+ */
+function generateSolvableDeck() {
+    const layout = generateSolvableLayout();
+    const finalDeck = [];
+
+    // 先放牌堆 (Stock)
+    finalDeck.push(...layout.stock);
+
+    // 再放表格牌 (Tableau)
+    // 由於遊戲是用 pop() 從後面拿牌，我們必須反向放入
+    for (let i = 6; i >= 0; i--) {
+        for (let j = layout.tableau[i].length - 1; j >= 0; j--) {
+            finalDeck.push(layout.tableau[i][j]);
+        }
+    }
+
+    return finalDeck;
+}
+
+/* ##################################################################################  */
         
         /**
          * 驗證並調整牌局確保可解
@@ -3977,7 +3971,7 @@
                     const rect = topCardEl.getBoundingClientRect();
                     targetRect = { 
                         left: rect.left, 
-                        top: rect.top + (cardSize.height * (window.innerWidth < 600 ? 0.5 : 0.7)) // 使用正確的重疊比例
+                        top: rect.top + (cardSize.height * (window.innerWidth < 600 ? 0.5 : 0.3)) // 使用正確的重疊比例
                     };
                 } else {
                     const slotEl = document.getElementById(`slot-t${targetIdx}`);
