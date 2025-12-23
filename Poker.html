@@ -2316,179 +2316,203 @@
         return deck;
     }
 
-    /**
-     * 改進的發牌算法，確保牌局可解但更自然
-     */
-    function dealCardsWithSolvability(deck) {
-        // 複製牌組
-        let tempDeck = [...deck];
-        let state = {
-            foundations: [[], [], [], []],
-            tableau: [[], [], [], [], [], [], []],
-            stock: [],
-            waste: []
-        };
-        
-        // 階段1：隨機發牌到七列表格，但確保每列至少有一張低點數牌（A-3）
-        // 這增加了牌局的可解性，但不明顯
-        for (let i = 0; i < 7; i++) {
-            // 為每列尋找一張低點數牌（A-3）
-            let lowCardIndex = -1;
-            for (let j = 0; j < tempDeck.length; j++) {
-                if (tempDeck[j].rank <= 3) {
-                    lowCardIndex = j;
-                    break;
-                }
+/**
+ * 改進的發牌算法，確保牌局可解但更自然
+ */
+function dealCardsWithSolvability(deck) {
+    // 複製牌組
+    let tempDeck = [...deck];
+    let state = {
+        foundations: [[], [], [], []],
+        tableau: [[], [], [], [], [], [], []],
+        stock: [],
+        waste: []
+    };
+    
+    // 正確的Klondike發牌算法：
+    // 第1列：發1張牌，最後一張翻開
+    // 第2列：發2張牌，最後一張翻開
+    // 第3列：發3張牌，最後一張翻開
+    // 第4列：發4張牌，最後一張翻開
+    // 第5列：發5張牌，最後一張翻開
+    // 第6列：發6張牌，最後一張翻開
+    // 第7列：發7張牌，最後一張翻開
+    // 總共發28張牌到表格列
+    
+    for (let col = 0; col < 7; col++) {
+        // 為每列發(col+1)張牌
+        for (let row = 0; row <= col; row++) {
+            if (tempDeck.length === 0) {
+                console.error("牌組已空，無法繼續發牌");
+                break;
             }
             
-            if (lowCardIndex !== -1) {
-                // 將低點數牌放到該列底部
-                let lowCard = tempDeck.splice(lowCardIndex, 1)[0];
-                state.tableau[i].push(lowCard);
-            }
-            
-            // 發其餘的牌到該列
-            for (let j = i + 1; j < 7; j++) {
-                if (tempDeck.length === 0) break;
-                if (i === j) continue; // 跳過對角線
-                
-                let card = tempDeck.pop();
-                state.tableau[j].push(card);
-            }
+            let card = tempDeck.pop(); // 從牌組取牌
+            card.faceUp = (row === col); // 只有每列最後一張牌面朝上
+            state.tableau[col].push(card); // 放入表格列
         }
-        
-        // 階段2：確保每列至少有一張翻開的牌
-        for (let i = 0; i < 7; i++) {
-            if (state.tableau[i].length > 0) {
-                // 確保最後一張牌是翻開的
-                state.tableau[i][state.tableau[i].length - 1].faceUp = true;
-            }
-        }
-        
-        // 階段3：剩餘的牌放入牌堆
-        state.stock = tempDeck;
-        
-        // 階段4：執行輕微優化，確保牌局可解但不完美
-        return optimizeForSolvability(state);
     }
-
-    /**
-     * 輕微優化牌局以確保可解性
-     */
-    function optimizeForSolvability(state) {
-        // 隨機執行一些正向移動，使牌局看起來更自然
-        const OPTIMIZATION_STEPS = 20;
-        
-        for (let step = 0; step < OPTIMIZATION_STEPS; step++) {
-            // 尋找可移動的牌
-            let movableCards = [];
-            
-            // 檢查表格列
-            for (let col = 0; col < 7; col++) {
-                let pile = state.tableau[col];
-                if (pile.length === 0) continue;
-                
-                // 只能移動最上面的牌
-                let topCard = pile[pile.length - 1];
-                if (!topCard.faceUp) continue;
-                
-                // 檢查是否可以移動到花色區
-                for (let f = 0; f < 4; f++) {
-                    if (canMoveToFoundation(topCard, state.foundations[f])) {
-                        movableCards.push({
-                            type: 'tableau',
-                            col: col,
-                            card: topCard,
-                            targetType: 'foundation',
-                            targetIdx: f
-                        });
-                    }
-                }
-                
-                // 檢查是否可以移動到其他表格列
-                for (let targetCol = 0; targetCol < 7; targetCol++) {
-                    if (col === targetCol) continue;
-                    if (canMoveToTableau(topCard, state.tableau[targetCol])) {
-                        movableCards.push({
-                            type: 'tableau',
-                            col: col,
-                            card: topCard,
-                            targetType: 'tableau',
-                            targetIdx: targetCol
-                        });
-                    }
-                }
-            }
-            
-            // 如果沒有可移動的牌，結束優化
-            if (movableCards.length === 0) break;
-            
-            // 隨機選擇一個移動
-            let move = movableCards[Math.floor(Math.random() * movableCards.length)];
-            
-            // 執行移動
-            if (move.targetType === 'foundation') {
-                // 從表格列移除牌
-                state.tableau[move.col].pop();
-                // 添加到花色區
-                state.foundations[move.targetIdx].push(move.card);
-                
-                // 如果表格列還有牌，翻開最上面一張
-                if (state.tableau[move.col].length > 0) {
-                    state.tableau[move.col][state.tableau[move.col].length - 1].faceUp = true;
-                }
-            } else if (move.targetType === 'tableau') {
-                // 從表格列移除牌
-                state.tableau[move.col].pop();
-                // 添加到目標表格列
-                state.tableau[move.targetIdx].push(move.card);
-                
-                // 如果表格列還有牌，翻開最上面一張
-                if (state.tableau[move.col].length > 0) {
-                    state.tableau[move.col][state.tableau[move.col].length - 1].faceUp = true;
-                }
-            }
-        }
-        
-        return state;
-    }
-
-    /**
-     * 將狀態轉換為自然發牌順序
-     */
-    function convertStateToDeckNatural(state) {
-        let deck = [];
-        
-        // 1. 收集表格列中的牌（保持Klondike發牌順序）
-        // 從最深的列開始收集，模擬實際發牌
-        for (let row = 6; row >= 0; row--) {
-            for (let col = 6; col >= 0; col--) {
-                if (col < row) continue; // 只收集對角線及以上的牌
-                
-                let pile = state.tableau[col];
-                let cardIndex = row;
-                
-                if (cardIndex < pile.length) {
-                    // 將牌面朝下放入牌組（除了每列最後一張）
-                    let card = {...pile[cardIndex]};
-                    card.faceUp = false;
-                    deck.push(card);
-                }
-            }
-        }
-        
-        // 2. 添加剩餘的牌（花色區的牌）
-        // 這裡我們將花色區的牌也放回牌堆，但實際上它們應該保持在花色區
-        // 為了簡化，我們不添加花色區的牌，因為它們已經在正確的位置
-        
-        // 3. 添加牌堆的牌
-        state.stock.forEach(card => {
-            deck.push({...card, faceUp: false});
+    
+    // 剩餘的牌放入牌堆 (應為52-28=24張)
+    state.stock = tempDeck.reverse(); // 反轉順序，使發牌時從最後一張開始
+    
+    // 確保所有卡片都有ID
+    for (let col = 0; col < 7; col++) {
+        state.tableau[col].forEach(card => {
+            if (!card.id) card.id = Math.random().toString(36).substr(2,9);
         });
-        
-        // 反轉牌組，使得發牌時從最後一張開始
-        return deck.reverse();
     }
+    
+    state.stock.forEach(card => {
+        if (!card.id) card.id = Math.random().toString(36).substr(2,9);
+        card.faceUp = false; // 牌堆中的牌面朝下
+    });
+    
+    // 檢查總牌數是否正確
+    let totalCards = 0;
+    for (let col = 0; col < 7; col++) {
+        totalCards += state.tableau[col].length;
+    }
+    totalCards += state.stock.length;
+    
+    console.log(`發牌完成：表格列 ${totalCards-state.stock.length} 張，牌堆 ${state.stock.length} 張，總計 ${totalCards} 張`);
+    
+    if (totalCards !== 52) {
+        console.error(`牌數錯誤：應為52張，實際為${totalCards}張`);
+        // 如果牌數不對，使用標準發牌算法
+        return fallbackDeal(deck);
+    }
+    
+    return state;
+}
+
+/**
+ * 備用標準發牌算法
+ */
+function fallbackDeal(deck) {
+    let tempDeck = [...deck];
+    let state = {
+        foundations: [[], [], [], []],
+        tableau: [[], [], [], [], [], [], []],
+        stock: [],
+        waste: []
+    };
+    
+    // 標準Klondike發牌
+    for (let i = 0; i < 7; i++) {
+        for (let j = i; j < 7; j++) {
+            if (tempDeck.length === 0) break;
+            let card = tempDeck.pop();
+            card.id = Math.random().toString(36).substr(2,9);
+            card.faceUp = (i === j);
+            state.tableau[j].push(card);
+        }
+    }
+    
+    // 剩餘牌放入牌堆
+    state.stock = tempDeck.reverse();
+    state.stock.forEach(card => {
+        card.id = Math.random().toString(36).substr(2,9);
+        card.faceUp = false;
+    });
+    
+    return state;
+}
+
+/**
+ * 輕微優化牌局以確保可解性
+ */
+function optimizeForSolvability(state) {
+    // 只優化表格列之間的移動，不移動到花色區
+    const OPTIMIZATION_STEPS = 15; // 減少步驟，避免過度優化
+    
+    for (let step = 0; step < OPTIMIZATION_STEPS; step++) {
+        // 尋找可移動的牌（只找表格列間的移動）
+        let movableCards = [];
+        
+        // 檢查表格列
+        for (let sourceCol = 0; sourceCol < 7; sourceCol++) {
+            let sourcePile = state.tableau[sourceCol];
+            if (sourcePile.length === 0) continue;
+            
+            // 只能移動最上面的牌（翻開的牌）
+            let topCard = sourcePile[sourcePile.length - 1];
+            if (!topCard.faceUp) continue;
+            
+            // 檢查是否可以移動到其他表格列
+            for (let targetCol = 0; targetCol < 7; targetCol++) {
+                if (sourceCol === targetCol) continue;
+                if (canMoveToTableau(topCard, state.tableau[targetCol])) {
+                    movableCards.push({
+                        sourceCol: sourceCol,
+                        card: topCard,
+                        targetCol: targetCol
+                    });
+                }
+            }
+        }
+        
+        // 如果沒有可移動的牌，結束優化
+        if (movableCards.length === 0) break;
+        
+        // 隨機選擇一個移動
+        let move = movableCards[Math.floor(Math.random() * movableCards.length)];
+        
+        // 執行移動：從來源列移除牌
+        state.tableau[move.sourceCol].pop();
+        // 添加到目標列
+        state.tableau[move.targetCol].push(move.card);
+        
+        // 如果來源列還有牌，翻開最上面一張
+        if (state.tableau[move.sourceCol].length > 0) {
+            state.tableau[move.sourceCol][state.tableau[move.sourceCol].length - 1].faceUp = true;
+        }
+    }
+    
+    return state;
+}
+
+
+/**
+ * 將狀態轉換為自然發牌順序
+ */
+function convertStateToDeckNatural(state) {
+    let deck = [];
+    
+    // 1. 收集表格列中的牌（保持Klondike發牌順序）
+    // 從最深的列開始收集，模擬實際發牌
+    for (let row = 6; row >= 0; row--) {
+        for (let col = 6; col >= 0; col--) {
+            if (col < row) continue; // 只收集對角線及以上的牌
+            
+            let pile = state.tableau[col];
+            let cardIndex = row;
+            
+            if (cardIndex < pile.length) {
+                // 將牌面朝下放入牌組（除了每列最後一張）
+                let card = {...pile[cardIndex]};
+                card.faceUp = false;
+                deck.push(card);
+            }
+        }
+    }
+    
+    // 2. 添加牌堆的牌
+    state.stock.forEach(card => {
+        deck.push({...card, faceUp: false});
+    });
+    
+    // 反轉牌組，使得發牌時從最後一張開始
+    let reversedDeck = deck.reverse();
+    
+    // 確保所有牌都有ID
+    reversedDeck.forEach(card => {
+        if (!card.id) card.id = Math.random().toString(36).substr(2,9);
+    });
+    
+    console.log(`轉換後牌組：${reversedDeck.length} 張`);
+    return reversedDeck;
+}
 
     // ==================== 遊戲初始化函數 ====================
     /**
