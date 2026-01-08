@@ -914,7 +914,7 @@
             width: 100%;
             height: 100%;
             pointer-events: none;
-            z-index: 100001;
+            z-index: 100005;
             display: none;
         }
                 /* 桌面版樣式 - 維持原始文字和花色大小 */
@@ -1560,30 +1560,38 @@
      * 使用逆向模擬法：從勝利狀態開始反向移動牌
      */
     function createOptimizedDeck() {
-        console.log("正在生成 100% 可解且分佈自然的牌局...");
+        console.log("正在啟動智慧發牌員演算法...");
         
-        // 1. 初始化所有牌
+        // 1. 建立標準牌組
         let allCards = [];
         for (let s = 0; s < 4; s++) {
             for (let r = 1; r <= 13; r++) {
                 allCards.push({
-                    suit: SUITS[s],
-                    rank: r,
-                    text: RANKS[r - 1],
-                    color: COLORS[SUITS[s]],
-                    faceUp: false,
+                    suit: SUITS[s], rank: r, text: RANKS[r - 1],
+                    color: COLORS[SUITS[s]], faceUp: false,
                     id: Math.random().toString(36).substr(2, 9)
                 });
             }
         }
 
-        // 2. 隨機打亂
-        for (let i = allCards.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [allCards[i], allCards[j]] = [allCards[j], allCards[i]];
-        }
+        // 2. 智慧權重洗牌：將大牌 (K, Q, J) 稍微往後排，小牌 (A, 2, 3) 稍微往前排
+        // 這不是絕對的，只是增加機率，所以看起來依然很自然
+        allCards.sort((a, b) => {
+            let weightA = Math.random() * 100;
+            let weightB = Math.random() * 100;
+            
+            // 給予小牌額外的「前移」權重
+            if (a.rank <= 3) weightA -= 15;
+            if (b.rank <= 3) weightB -= 15;
+            
+            // 給予大牌額外的「後移」權重
+            if (a.rank >= 11) weightA += 10;
+            if (b.rank >= 11) weightB += 10;
+            
+            return weightA - weightB;
+        });
 
-        // 3. 分配到表格和牌堆
+        // 3. 初步分配
         let tableau = [[], [], [], [], [], [], []];
         let cardIdx = 0;
         for (let col = 0; col < 7; col++) {
@@ -1595,10 +1603,12 @@
         }
         let stock = allCards.slice(cardIdx);
 
-        // 4. 保底優化：確保 A 和 2 不被壓在最底層（前兩層）
+        // 4. 智慧修正：消除死鎖並優化關鍵路徑
+        // A. 確保 A 不被壓在任何列的最底層（第 0 或 1 張）
         for (let col = 0; col < 7; col++) {
-            for (let row = 0; row < Math.min(tableau[col].length - 1, 2); row++) {
-                if (tableau[col][row].rank <= 2) {
+            for (let row = 0; row < Math.min(tableau[col].length, 2); row++) {
+                if (tableau[col][row].rank === 1) {
+                    // 發現被深埋的 A，將它與牌堆中隨機一張非 A 的牌交換
                     for (let sIdx = 0; sIdx < stock.length; sIdx++) {
                         if (stock[sIdx].rank > 5) {
                             let temp = tableau[col][row];
@@ -1613,7 +1623,82 @@
             }
         }
 
-        console.log("100% 可解牌局生成完成");
+        // B. 建立「連鎖反應」：確保至少有 3-4 對翻開的牌是可以立即移動的
+        let connections = 0;
+        let maxAttempts = 50;
+        while (connections < 3 && maxAttempts > 0) {
+            maxAttempts--;
+            let col1 = Math.floor(Math.random() * 7);
+            let col2 = Math.floor(Math.random() * 7);
+            if (col1 === col2) continue;
+            
+            let card1 = tableau[col1][tableau[col1].length - 1];
+            let card2 = tableau[col2][tableau[col2].length - 1];
+            
+            // 檢查是否已經可以移動
+            if (card1.color !== card2.color && (card1.rank === card2.rank - 1 || card2.rank === card1.rank - 1)) {
+                connections++;
+                continue;
+            }
+            
+            // 嘗試從牌堆中找一張牌來建立連接
+            for (let sIdx = 0; sIdx < stock.length; sIdx++) {
+                let sCard = stock[sIdx];
+                if (sCard.color !== card2.color && sCard.rank === card2.rank - 1) {
+                    // 交換，建立 col1 到 col2 的連接
+                    let temp = tableau[col1][tableau[col1].length - 1];
+                    tableau[col1][tableau[col1].length - 1] = stock[sIdx];
+                    stock[sIdx] = temp;
+                    tableau[col1][tableau[col1].length - 1].faceUp = true;
+                    stock[sIdx].faceUp = false;
+                    connections++;
+                    break;
+                }
+            }
+        }
+
+        // C. 牌堆優化：確保 A 和 2 出現在牌堆的前 12 張內（第一輪翻牌必見）
+        let stockAces = stock.filter(c => c.rank <= 2);
+        stockAces.forEach(ace => {
+            let oldIdx = stock.indexOf(ace);
+            if (oldIdx > 12) {
+                let newIdx = Math.floor(Math.random() * 12);
+                let temp = stock[oldIdx];
+                stock[oldIdx] = stock[newIdx];
+                stock[newIdx] = temp;
+            }
+        });
+
+        // D. 確保 K 不會壓在 A 上面（在同一列中）
+        for (let col = 0; col < 7; col++) {
+            let hasK = false;
+            for (let row = 0; row < tableau[col].length; row++) {
+                if (tableau[col][row].rank === 13) hasK = true;
+                if (hasK && tableau[col][row].rank === 1) {
+                    // 發現 K 壓在 A 上，將 A 與牌堆隨機交換
+                    for (let sIdx = 0; sIdx < stock.length; sIdx++) {
+                        if (stock[sIdx].rank > 2 && stock[sIdx].rank < 12) {
+                            let temp = tableau[col][row];
+                            tableau[col][row] = stock[sIdx];
+                            stock[sIdx] = temp;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // E. 最終檢查：強制確保所有表格最頂層的牌都是翻開的，其餘是蓋著的
+        // 這是修復「有時候頂層牌是蓋著的」Bug 的關鍵
+        for (let col = 0; col < 7; col++) {
+            for (let row = 0; row < tableau[col].length; row++) {
+                tableau[col][row].faceUp = (row === tableau[col].length - 1);
+            }
+        }
+        // 確保牌堆中的牌全是蓋著的
+        stock.forEach(c => c.faceUp = false);
+
+        console.log("智慧發牌完成：Bug 已修復，通關率優化且分佈自然。");
         return { tableau, stock, waste: [] };
     }
 
@@ -2048,7 +2133,7 @@
             if (fireworks.isActive) {
                 createFirework();
             }
-        }, Math.random() * 500 + 500);
+        }, Math.random() * 500 + 10);
     }
     
     /**
