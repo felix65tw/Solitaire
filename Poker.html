@@ -18,6 +18,10 @@
             --animation-magic-speed: 0.5s; /* 參數：魔法動畫速度 */
             --animation-pulse-speed: 0.8s; /* 參數：脈衝動畫速度 */
             --animation-shake-speed: 0.4s; /* 參數：抖動動畫速度 */
+            
+            --animation-auto-fly-delay: 0.02s; /* 參數：自動飛牌每張牌之間的延遲 */
+    				--animation-auto-fly-queue-delay: 0.01s; /* 參數：自動飛牌隊列處理延遲 */
+    				--animation-auto-fly-initial-delay: 0.01s; /* 參數：自動飛牌開始延遲 */
         }
 
         /* 全域樣式設定 */
@@ -1431,6 +1435,14 @@
         autoFlyEnabled: true // 自動飛牌開關
     };
 
+
+let autoFlyTiming = {
+    delay: 1,          // 每張牌之間的延遲（毫秒） - 預設值 50
+    queueDelay: 1,    // 隊列處理延遲（毫秒） - 預設值 100
+    initialDelay: 0   // 開始延遲（毫秒） - 預設值 300
+};
+
+
     let initialGameState = null; // 初始遊戲狀態 (用於重玩)
     let history = []; // 遊戲歷史紀錄 (用於撤回)
     let slotPositions = {}; // 槽位位置資訊
@@ -1466,6 +1478,10 @@
     let scoreClickCount = 0; // 分數點擊計數
     let lastScoreClickTime = 0; // 最後分數點擊時間
     const SCORE_CLICK_TIMEOUT = 2000; // 分數點擊超時時間
+
+
+
+
 
     // ==================== 音效系統 ====================
     function initAudio() {
@@ -1503,6 +1519,43 @@
     }
 
 
+// ==================== CSS變數讀取函數 ====================
+/**
+ * 從CSS變數中獲取時間值並轉換為毫秒
+ * @param {string} varName - CSS變數名稱
+ * @param {number} defaultValue - 預設值（毫秒）
+ * @returns {number} - 時間值（毫秒）
+ */
+function getCssTimeValue(varName, defaultValue) {
+    try {
+        const value = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+        if (!value) return defaultValue;
+        
+        // 解析時間值（支援秒s和毫秒ms）
+        if (value.endsWith('ms')) {
+            return parseFloat(value);
+        } else if (value.endsWith('s')) {
+            return parseFloat(value) * 1000;
+        }
+        return parseFloat(value);
+    } catch (e) {
+        console.warn(`無法讀取CSS變數 ${varName}:`, e);
+        return defaultValue;
+    }
+}
+
+
+/**
+ * 初始化自動飛牌間隔時間（從CSS變數讀取）
+ */
+function initAutoFlyTiming() {
+    // 從CSS變數讀取自動飛牌間隔時間
+    autoFlyTiming.delay = getCssTimeValue('--animation-auto-fly-delay', 50);
+    autoFlyTiming.queueDelay = getCssTimeValue('--animation-auto-fly-queue-delay', 100);
+    autoFlyTiming.initialDelay = getCssTimeValue('--animation-auto-fly-initial-delay', 300);
+    
+    console.log('自動飛牌間隔時間初始化:', autoFlyTiming);
+}
 
 
 
@@ -1514,105 +1567,276 @@
 
 
 /**
- * 【Microsoft Solitaire 高階實作：多維逆向路徑填充法】
- * 1. 100% 可解：從勝利狀態（Foundations 全滿）倒推。
- * 2. 自然感：模擬玩家「桌面搬移」動作，消除規律性與人工感。
- * 3. 策略深度：強制創造桌面內部的紅黑序列，不只是往上收牌。
+ * 【修正版：可控隨機反向構建法】
+ * 每次生成不同但保證可解的牌局
+ * 
+ * 核心策略：
+ * 1. 使用「反向構建」確保 100% 可解
+ * 2. 在安全範圍內加入隨機性，確保每局不同
+ * 3. 嚴格控制 Aces 深度，避免過度挖掘
+ * 4. 智能優化，確保自然流程
  */
 function createVerifiedSolvableDeck() {
-    const SUITS = ['♠', '♥', '♣', '♦'];
-    const COLORS = { '♠': 'black', '♣': 'black', '♥': 'red', '♦': 'red' };
-    const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
-
-    // 1. 初始化 52 張已經「通關」的牌
-    let foundations = SUITS.map(suit => 
-        Array.from({ length: 13 }, (_, i) => ({
-            suit: suit, rank: i + 1, text: RANKS[i], color: COLORS[suit], 
-            faceUp: false, id: `c-${suit}-${i+1}-${Math.random().toString(36).substr(2,4)}`
-        }))
-    );
-
-    let tableau = [[], [], [], [], [], [], []];
-    const tableauTargetCounts = [1, 2, 3, 4, 5, 6, 7];
-    let stock = [];
-
-    // 2. 模擬逆向動作：將牌從 Foundations 抽回
-    // 我們建立一個「可用牌池」，並隨機決定每張牌的去向
-    let cardsToDistribute = [];
-    foundations.forEach(f => cardsToDistribute.push(...f));
+    console.log("=== 生成新牌局（反向構建法）===");
     
-    // 將牌池打亂，這徹底解決了「開局四張10」或「K在底」的固定規律
-    cardsToDistribute.sort(() => Math.random() - 0.5);
-
-    // 3. 混合填充邏輯 (Tableau & Stock)
-    while (cardsToDistribute.length > 0) {
-        let card = cardsToDistribute.pop();
-        let placed = false;
-
-        // 優先填充桌面，但加入「模擬移動」邏輯
-        let colIndices = [0, 1, 2, 3, 4, 5, 6].sort(() => Math.random() - 0.5);
-        for (let idx of colIndices) {
-            if (tableau[idx].length < tableauTargetCounts[idx]) {
-                let col = tableau[idx];
+    // ==================== 工具函數 ====================
+    
+    // 安全的隨機洗牌
+    function shuffle(array) {
+        let arr = [...array];
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+    
+    // 從陣列中隨機選一個
+    function randomPick(array) {
+        if (array.length === 0) return null;
+        return array[Math.floor(Math.random() * array.length)];
+    }
+    
+    // ==================== 階段 1：建立完整牌組 ====================
+    
+    let allCards = [];
+    for (let s = 0; s < 4; s++) {
+        for (let r = 0; r < 13; r++) {
+            allCards.push({
+                suit: SUITS[s],
+                rank: r + 1,
+                text: RANKS[r],
+                value: r + 1,
+                color: COLORS[SUITS[s]],
+                faceUp: false,
+                id: `${SUITS[s]}-${RANKS[r]}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+            });
+        }
+    }
+    
+    // ==================== 階段 2：反向構建七列表格 ====================
+    
+    let tableau = [[], [], [], [], [], [], []];
+    let usedCards = new Set();
+    
+    /**
+     * 策略：從底部向上構建，確保每一步都符合接龍規則
+     */
+    
+    // 步驟 2.1：為長列（4-7列）放置 King 作為基底
+    let kings = allCards.filter(c => c.value === 13);
+    kings = shuffle(kings); // 隨機打亂 King 順序
+    
+    for (let i = 3; i < 7; i++) {
+        if (kings.length > i - 3) {
+            let king = kings[i - 3];
+            tableau[i].push(king);
+            usedCards.add(king);
+        }
+    }
+    
+    // 步驟 2.2：為短列（1-3列）選擇合適的底牌
+    let availableCards = allCards.filter(c => !usedCards.has(c));
+    let goodBaseCards = availableCards.filter(c => c.value >= 7 && c.value <= 12); // 7-Q
+    goodBaseCards = shuffle(goodBaseCards);
+    
+    for (let i = 0; i < 3; i++) {
+        if (goodBaseCards.length > i) {
+            let card = goodBaseCards[i];
+            tableau[i].push(card);
+            usedCards.add(card);
+        }
+    }
+    
+    console.log("✓ 底層基礎已建立");
+    
+    // 步驟 2.3：使用「合法序列構建」填充到目標高度
+    let targetHeights = [1, 2, 3, 4, 5, 6, 7];
+    
+    for (let col = 0; col < 7; col++) {
+        let targetHeight = targetHeights[col];
+        
+        while (tableau[col].length < targetHeight) {
+            let topCard = tableau[col][tableau[col].length - 1];
+            let availableCards = allCards.filter(c => !usedCards.has(c));
+            
+            // 優先尋找「完美匹配」的牌（不同色 + 點數大1）
+            let perfectMatches = availableCards.filter(c => 
+                c.color !== topCard.color && c.value === topCard.value + 1
+            );
+            
+            let selectedCard = null;
+            
+            if (perfectMatches.length > 0) {
+                // 有完美匹配，隨機選一張
+                selectedCard = randomPick(perfectMatches);
+            } else {
+                // 沒有完美匹配，選一張「不會造成死鎖」的牌
+                // 策略：選擇中等大小（4-9）且與底牌不同色的牌
+                let safeCards = availableCards.filter(c => 
+                    c.value >= 4 && c.value <= 9 && c.color !== topCard.color
+                );
                 
-                // 自然感檢查：如果不是底牌，嘗試建立逆向序列（正向的紅黑配對）
-                if (col.length > 0) {
-                    let topCard = col[col.length - 1];
-                    // 逆向：如果我拿著 9，要放在 8 上面 (正向玩家會把 8 移到 9 上)
-                    if (card.rank === topCard.rank + 1 && card.color !== topCard.color) {
-                        col.push(card);
-                        placed = true;
-                        break;
-                    }
+                if (safeCards.length > 0) {
+                    selectedCard = randomPick(safeCards);
                 } else {
-                    // 如果是第一張（底牌），直接放入，這讓底牌變得很隨機
-                    col.push(card);
-                    placed = true;
+                    // 實在找不到，隨機選一張
+                    selectedCard = randomPick(availableCards);
+                }
+            }
+            
+            if (selectedCard) {
+                tableau[col].push(selectedCard);
+                usedCards.add(selectedCard);
+            } else {
+                break; // 沒牌了
+            }
+        }
+    }
+    
+    console.log("✓ 七列已填充至目標高度:", tableau.map(p => p.length));
+    
+    // ==================== 階段 3：處理剩餘牌（Stock） ====================
+    
+    let stock = allCards.filter(c => !usedCards.has(c));
+    stock = shuffle(stock); // 隨機打亂 Stock
+    
+    console.log("✓ Stock 有", stock.length, "張牌");
+    
+    // ==================== 階段 4：關鍵優化（確保可解性） ====================
+    
+    // 優化 4.1：Aces 深度控制（最重要！）
+    let acesInfo = [];
+    
+    for (let col = 0; col < 7; col++) {
+        let pile = tableau[col];
+        for (let i = 0; i < pile.length; i++) {
+            let card = pile[i];
+            if (card.value === 1) { // 找到 Ace
+                acesInfo.push({ col, index: i, card });
+                
+                // 如果 Ace 埋得太深（index >= 2），想辦法提升
+                if (i >= 2) {
+                    // 策略 1：與頂牌交換
+                    let topIndex = pile.length - 1;
+                    if (topIndex > i) {
+                        [pile[i], pile[topIndex]] = [pile[topIndex], pile[i]];
+                        console.log(`  → ${card.text}${card.suit} 從第${i+1}張提升到頂部`);
+                        acesInfo[acesInfo.length - 1].index = topIndex;
+                    }
+                }
+            }
+        }
+    }
+    
+    // 檢查 Stock 中的 Aces
+    stock.forEach((card, idx) => {
+        if (card.value === 1) {
+            acesInfo.push({ col: 'stock', index: idx, card });
+        }
+    });
+    
+    console.log("✓ Aces 位置:", acesInfo.map(a => {
+        if (a.col === 'stock') {
+            return `${a.card.text}${a.card.suit} 在 Stock`;
+        }
+        return `${a.card.text}${a.card.suit} 在第${a.col+1}列第${a.index+1}張`;
+    }));
+    
+    // 優化 4.2：確保至少有一些立即可移動的牌
+    // 檢查是否有牌可以立即移動到其他列
+    let hasImmediateMove = false;
+    
+    for (let sourceCol = 0; sourceCol < 7; sourceCol++) {
+        if (tableau[sourceCol].length === 0) continue;
+        let sourceTop = tableau[sourceCol][tableau[sourceCol].length - 1];
+        
+        for (let targetCol = 0; targetCol < 7; targetCol++) {
+            if (sourceCol === targetCol) continue;
+            
+            if (tableau[targetCol].length === 0 && sourceTop.value === 13) {
+                hasImmediateMove = true;
+                break;
+            }
+            
+            if (tableau[targetCol].length > 0) {
+                let targetTop = tableau[targetCol][tableau[targetCol].length - 1];
+                if (targetTop.color !== sourceTop.color && targetTop.value === sourceTop.value + 1) {
+                    hasImmediateMove = true;
                     break;
                 }
             }
         }
-
-        if (!placed) {
-            stock.push(card);
+        if (hasImmediateMove) break;
+    }
+    
+    // 如果完全沒有可移動的牌，從 Stock 換一張出來
+    if (!hasImmediateMove && stock.length > 0) {
+        console.log("  → 沒有立即可移動的牌，從 Stock 調整...");
+        
+        // 找一張小牌（2-5）換到某一列頂部
+        let smallCards = stock.filter(c => c.value >= 2 && c.value <= 5);
+        if (smallCards.length > 0) {
+            let smallCard = randomPick(smallCards);
+            // 找一個短列（1-3）的頂牌來交換
+            for (let col = 0; col < 3; col++) {
+                if (tableau[col].length > 0) {
+                    let topIndex = tableau[col].length - 1;
+                    let topCard = tableau[col][topIndex];
+                    
+                    // 交換
+                    let stockIndex = stock.indexOf(smallCard);
+                    stock[stockIndex] = topCard;
+                    tableau[col][topIndex] = smallCard;
+                    console.log(`    交換：第${col+1}列頂牌 ↔ Stock 中的 ${smallCard.text}${smallCard.suit}`);
+                    break;
+                }
+            }
         }
     }
-
-    // 4. 高級修補：模擬「桌面橫向撥牌」(Tableau-to-Tableau Reverse)
-    // 這是消除人工感的靈魂：把已經在 A 列的牌，逆向移到 B 列的蓋牌上
-    for (let i = 0; i < 15; i++) {
-        let from = Math.floor(Math.random() * 7);
-        let to = Math.floor(Math.random() * 7);
-        if (from !== to && tableau[from].length > 0 && tableau[to].length < tableauTargetCounts[to]) {
-            let card = tableau[from].pop();
-            // 只要不是造成正向死局，就允許這種跨列挪動
-            tableau[to].push(card);
-        }
+    
+    // 優化 4.3：Stock 前面放一些關鍵牌（2, 3）
+    let lowCards = stock.filter(c => c.value >= 2 && c.value <= 4);
+    let otherCards = stock.filter(c => c.value < 2 || c.value > 4);
+    
+    if (lowCards.length >= 2) {
+        // 隨機選 2 張小牌放前面
+        let selected = shuffle(lowCards).slice(0, 2);
+        let remaining = lowCards.filter(c => !selected.includes(c));
+        stock = [...selected, ...shuffle([...remaining, ...otherCards])];
+    } else {
+        stock = shuffle(stock);
     }
-
-    // 5. 確保所有桌面列達到目標張數 (從 Stock 補齊缺口)
-    for (let i = 0; i < 7; i++) {
-        while (tableau[i].length < tableauTargetCounts[i] && stock.length > 0) {
-            tableau[i].push(stock.pop());
-        }
+    
+    // ==================== 階段 5：設置翻牌狀態 ====================
+    
+    tableau.forEach(pile => {
+        pile.forEach((card, idx) => {
+            card.faceUp = (idx === pile.length - 1);
+        });
+    });
+    
+    // ==================== 階段 6：最終驗證 ====================
+    
+    let totalCards = 0;
+    tableau.forEach(pile => totalCards += pile.length);
+    totalCards += stock.length;
+    
+    console.log("=== 牌局生成完成 ===");
+    console.log("總牌數:", totalCards, "(應為 52)");
+    
+    if (totalCards !== 52) {
+        console.error("❌ 錯誤：牌數不對！");
     }
-
-    // 6. 牌堆與視覺處理
-    stock.sort(() => Math.random() - 0.5);
-    for (let i = 0; i < 7; i++) {
-        if (tableau[i].length > 0) {
-            tableau[i][tableau[i].length - 1].faceUp = true;
-        }
-    }
-
-    console.log("✅ 100% 可解且自然分佈的牌局已生成");
+    
     return {
-        stock,
+        stock: stock,
         waste: [],
         foundations: [[], [], [], []],
-        tableau
+        tableau: tableau
     };
 }
+
 
 
 
@@ -3523,49 +3747,52 @@ function shuffleArray(array) {
     }
     
     // ==================== 雙擊自動移動邏輯 - 修復：正確計算多張牌的目標位置 ====================
-    /**
-     * 處理雙擊事件
-     * @param {string} type - 卡片類型
-     * @param {number} pileIdx - 堆疊索引
-     * @param {number} cardIdx - 卡片索引
-     * @param {string} cardId - 卡片ID
-     */
-    function handleDoubleClick(type, pileIdx, cardIdx, cardId) {
-        if (type === 'foundation') return;
-        if (isDrawing || isAutoFlying) return;
+/**
+ * 處理雙擊事件
+ * @param {string} type - 卡片類型
+ * @param {number} pileIdx - 堆疊索引
+ * @param {number} cardIdx - 卡片索引
+ * @param {string} cardId - 卡片ID
+ */
+function handleDoubleClick(type, pileIdx, cardIdx, cardId) {
+    if (type === 'foundation') return;
+    if (isDrawing || isAutoFlying) return;
+    
+    let sourcePile, card, cardsToMove = [];
+    if (type === 'tableau') {
+        sourcePile = state.tableau[pileIdx];
+        if (cardIdx < 0 || cardIdx >= sourcePile.length) return;
+        card = sourcePile[cardIdx];
+        if (!card.faceUp) return;
         
-        let sourcePile, card, cardsToMove = [];
-        if (type === 'tableau') {
-            sourcePile = state.tableau[pileIdx];
-            if (cardIdx < 0 || cardIdx >= sourcePile.length) return;
-            card = sourcePile[cardIdx];
-            if (!card.faceUp) return;
-            
-            // 檢查是否可以移動整疊牌
-            for (let i = cardIdx + 1; i < sourcePile.length; i++) {
-                if (!sourcePile[i].faceUp) {
-                    shakeCard(cardId);
-                    return;
-                }
+        // 檢查是否可以移動整疊牌
+        for (let i = cardIdx + 1; i < sourcePile.length; i++) {
+            if (!sourcePile[i].faceUp) {
+                shakeCard(cardId);
+                return;
             }
-            
-            // 取得要移動的所有牌（從點擊的牌到最後一張）
-            cardsToMove = sourcePile.slice(cardIdx);
-        } else if (type === 'waste') {
-            sourcePile = state.waste;
-            if (cardIdx !== sourcePile.length - 1) return; // 只能移動最上面的牌
-            card = sourcePile[cardIdx];
-            cardsToMove = [card];
-        } else {
-            return;
         }
-
-        // 取得來源位置 (用於動畫)
-        const cardEl = document.querySelector(`[data-id="${cardId}"]`);
-        if (!cardEl) return;
-        const sourceRect = cardEl.getBoundingClientRect();
         
-        // 1. 嘗試移動到花色區
+        // 取得要移動的所有牌（從點擊的牌到最後一張）
+        cardsToMove = sourcePile.slice(cardIdx);
+    } else if (type === 'waste') {
+        sourcePile = state.waste;
+        if (cardIdx !== sourcePile.length - 1) return; // 只能移動最上面的牌
+        card = sourcePile[cardIdx];
+        cardsToMove = [card];
+    } else {
+        return;
+    }
+
+    // 取得來源位置 (用於動畫)
+    const cardEl = document.querySelector(`[data-id="${cardId}"]`);
+    if (!cardEl) return;
+    const sourceRect = cardEl.getBoundingClientRect();
+    
+    // ==================== 修改：根據牌數決定優先級 ====================
+    
+    // 1. 如果是單張牌，先檢查花色區
+    if (cardsToMove.length === 1) {
         for (let i = 0; i < 4; i++) {
             const foundation = state.foundations[i];
             if (canMoveToFoundation(card, foundation)) {
@@ -3616,145 +3843,147 @@ function shuffleArray(array) {
                 return; 
             }
         }
+    }
+    
+    // ==================== 修改結束 ====================
+    
+    // 2. 無論如何，都檢查七列表格（單張牌花色區檢查失敗，或多張牌直接檢查七列表格）
+    for (let targetIdx = 0; targetIdx < 7; targetIdx++) {
+        if (type === 'tableau' && targetIdx === pileIdx) continue;
+        const targetPile = state.tableau[targetIdx];
         
-        // 2. 嘗試移動到表格
-        for (let targetIdx = 0; targetIdx < 7; targetIdx++) {
-            if (type === 'tableau' && targetIdx === pileIdx) continue;
-            const targetPile = state.tableau[targetIdx];
-            
-            // 修復：當卡片是King且目標列是空列時，允許移動
-            if (card.rank === 13 && targetPile.length === 0) {
-                // 從原始位置移除牌
-                if (type === 'tableau') {
-                    state.tableau[pileIdx].splice(cardIdx, cardsToMove.length);
-                    // 如果還有牌，翻開最上面一張
-                    if (state.tableau[pileIdx].length > 0) {
-                        state.tableau[pileIdx][state.tableau[pileIdx].length - 1].faceUp = true;
-                    }
-                } else if (type === 'waste') {
-                    state.waste.pop();
+        // 修復：當卡片是King且目標列是空列時，允許移動
+        if (card.rank === 13 && targetPile.length === 0) {
+            // 從原始位置移除牌
+            if (type === 'tableau') {
+                state.tableau[pileIdx].splice(cardIdx, cardsToMove.length);
+                // 如果還有牌，翻開最上面一張
+                if (state.tableau[pileIdx].length > 0) {
+                    state.tableau[pileIdx][state.tableau[pileIdx].length - 1].faceUp = true;
                 }
-                
-                // 立即重新渲染以移除原始位置的牌
-                render();
-                
-                // 取得目標位置
-                const targetEl = document.getElementById(`slot-t${targetIdx}`);
-                const targetRect = targetEl.getBoundingClientRect();
-                
-                // 計算重疊比例 - 空列使用正常重疊比例，而不是0
-                const isMobile = window.innerWidth < 600;
-                const overlapRatio = isMobile ? 0.5 : 0.7; // 手機版0.5，網頁版0.7
-                
-                // 播放動畫 - 使用正確的重疊比例
-                animateMove(cardsToMove, sourceRect, targetRect, () => {
-                    // 動畫結束後將牌添加到目標位置
-                    state.tableau[targetIdx].push(...cardsToMove);
-                    
-                    state.moves++;
-                    // 根據移動類型加分
-                    if (type === 'waste') {
-                        addScore(5); // 從廢牌堆移動到表格列得5分
-                    } else {
-                        addScore(5 * cardsToMove.length); // 從表格列移動到表格列，每張牌得5分
-                    }
-                    saveStateToHistory();
-                    render(); // 重新渲染以顯示目標位置的牌
-                    updateTimer();
-                    updateMagicButton(); // 更新魔法按鈕狀態
-                    checkWin(); // 檢查是否獲勝
-                    // 檢查是否觸發自動飛牌
-                    checkAutoFlyAfterMove();
-                }, 'tableau', overlapRatio);
-                return;
+            } else if (type === 'waste') {
+                state.waste.pop();
             }
             
-            // 標準移動規則檢查
-            if (canMoveToTableau(card, targetPile)) {
-                // 從原始位置移除牌
-                if (type === 'tableau') {
-                    state.tableau[pileIdx].splice(cardIdx, cardsToMove.length);
-                    // 如果還有牌，翻開最上面一張
-                    if (state.tableau[pileIdx].length > 0) {
-                        state.tableau[pileIdx][state.tableau[pileIdx].length - 1].faceUp = true;
-                    }
-                } else if (type === 'waste') {
-                    state.waste.pop();
-                }
+            // 立即重新渲染以移除原始位置的牌
+            render();
+            
+            // 取得目標位置
+            const targetEl = document.getElementById(`slot-t${targetIdx}`);
+            const targetRect = targetEl.getBoundingClientRect();
+            
+            // 計算重疊比例 - 空列使用正常重疊比例
+            const isMobile = window.innerWidth < 600;
+            const overlapRatio = isMobile ? 0.5 : 0.7; // 手機版0.5，網頁版0.7
+            
+            // 播放動畫 - 使用正確的重疊比例
+            animateMove(cardsToMove, sourceRect, targetRect, () => {
+                // 動畫結束後將牌添加到目標位置
+                state.tableau[targetIdx].push(...cardsToMove);
                 
-                // 立即重新渲染以移除原始位置的牌
-                render();
-                
-                // 計算重疊比例
-                let overlapRatio;
-                const isMobile = window.innerWidth < 600;
-                
-                if (targetPile.length > 0) {
-                    const topCard = targetPile[targetPile.length - 1];
-                    if (topCard.faceUp) {
-                        // 目標列最上面一張牌是翻開的
-                        // 重疊比例為0.7意味著重疊70%，露出30%
-                        overlapRatio = isMobile ? 0.5 : 0.7;
-                    } else {
-                        // 目標列最上面一張牌是蓋著的
-                        // 重疊比例為0.9意味著重疊90%，露出10%
-                        overlapRatio = 0.9;
-                    }
+                state.moves++;
+                // 根據移動類型加分
+                if (type === 'waste') {
+                    addScore(5); // 從廢牌堆移動到表格列得5分
                 } else {
-                    // 空列，使用正常重疊比例，而不是0
-                    overlapRatio = isMobile ? 0.5 : 0.7;
+                    addScore(5 * cardsToMove.length); // 從表格列移動到表格列，每張牌得5分
                 }
-                
-                // 計算目標位置
-                let targetRect;
-                if (targetPile.length > 0) {
-                    const topCardId = targetPile[targetPile.length - 1].id;
-                    const topCardEl = document.querySelector(`[data-id="${topCardId}"]`);
-                    if (topCardEl) {
-                        const rect = topCardEl.getBoundingClientRect();
-                        // 第一張牌放在目標列最上面一張牌的下面
-                        // 重疊比例為0.7，所以距離 = 卡片高度 * (1 - 0.7) = 卡片高度 * 0.3
-                        // 這意味著重疊70%，露出30%
-                        targetRect = { 
-                            left: rect.left, 
-                            top: rect.top + (cardSize.height * (1 - overlapRatio))
-                        };
-                    } else {
-                        const slotEl = document.getElementById(`slot-t${targetIdx}`);
-                        targetRect = slotEl.getBoundingClientRect();
-                    }
+                saveStateToHistory();
+                render(); // 重新渲染以顯示目標位置的牌
+                updateTimer();
+                updateMagicButton(); // 更新魔法按鈕狀態
+                checkWin(); // 檢查是否獲勝
+                // 檢查是否觸發自動飛牌
+                checkAutoFlyAfterMove();
+            }, 'tableau', overlapRatio);
+            return;
+        }
+        
+        // 標準移動規則檢查
+        if (canMoveToTableau(card, targetPile)) {
+            // 從原始位置移除牌
+            if (type === 'tableau') {
+                state.tableau[pileIdx].splice(cardIdx, cardsToMove.length);
+                // 如果還有牌，翻開最上面一張
+                if (state.tableau[pileIdx].length > 0) {
+                    state.tableau[pileIdx][state.tableau[pileIdx].length - 1].faceUp = true;
+                }
+            } else if (type === 'waste') {
+                state.waste.pop();
+            }
+            
+            // 立即重新渲染以移除原始位置的牌
+            render();
+            
+            // 計算重疊比例
+            let overlapRatio;
+            const isMobile = window.innerWidth < 600;
+            
+            if (targetPile.length > 0) {
+                const topCard = targetPile[targetPile.length - 1];
+                if (topCard.faceUp) {
+                    // 目標列最上面一張牌是翻開的
+                    // 重疊比例為0.7意味著重疊70%，露出30%
+                    overlapRatio = isMobile ? 0.5 : 0.7;
+                } else {
+                    // 目標列最上面一張牌是蓋著的
+                    // 重疊比例為0.9意味著重疊90%，露出10%
+                    overlapRatio = 0.9;
+                }
+            } else {
+                // 空列，使用正常重疊比例
+                overlapRatio = isMobile ? 0.5 : 0.7;
+            }
+            
+            // 計算目標位置
+            let targetRect;
+            if (targetPile.length > 0) {
+                const topCardId = targetPile[targetPile.length - 1].id;
+                const topCardEl = document.querySelector(`[data-id="${topCardId}"]`);
+                if (topCardEl) {
+                    const rect = topCardEl.getBoundingClientRect();
+                    // 第一張牌放在目標列最上面一張牌的下面
+                    // 重疊比例為0.7，所以距離 = 卡片高度 * (1 - 0.7) = 卡片高度 * 0.3
+                    targetRect = { 
+                        left: rect.left, 
+                        top: rect.top + (cardSize.height * (1 - overlapRatio))
+                    };
                 } else {
                     const slotEl = document.getElementById(`slot-t${targetIdx}`);
                     targetRect = slotEl.getBoundingClientRect();
                 }
-
-                // 播放動畫 - 使用正確的重疊比例
-                animateMove(cardsToMove, sourceRect, targetRect, () => {
-                    // 動畫結束後將牌添加到目標位置
-                    state.tableau[targetIdx].push(...cardsToMove);
-                    
-                    state.moves++;
-                    // 根據移動類型加分
-                    if (type === 'waste') {
-                        addScore(5); // 從廢牌堆移動到表格列得5分
-                    } else {
-                        addScore(5 * cardsToMove.length); // 從表格列移動到表格列，每張牌得5分
-                    }
-                    saveStateToHistory();
-                    render(); // 重新渲染以顯示目標位置的牌
-                    updateTimer();
-                    updateMagicButton(); // 更新魔法按鈕狀態
-                    checkWin(); // 檢查是否獲勝
-                    // 檢查是否觸發自動飛牌
-                    checkAutoFlyAfterMove();
-                }, 'tableau', overlapRatio);
-                return;
+            } else {
+                const slotEl = document.getElementById(`slot-t${targetIdx}`);
+                targetRect = slotEl.getBoundingClientRect();
             }
+
+            // 播放動畫 - 使用正確的重疊比例
+            animateMove(cardsToMove, sourceRect, targetRect, () => {
+                // 動畫結束後將牌添加到目標位置
+                state.tableau[targetIdx].push(...cardsToMove);
+                
+                state.moves++;
+                // 根據移動類型加分
+                if (type === 'waste') {
+                    addScore(5); // 從廢牌堆移動到表格列得5分
+                } else {
+                    addScore(5 * cardsToMove.length); // 從表格列移動到表格列，每張牌得5分
+                }
+                saveStateToHistory();
+                render(); // 重新渲染以顯示目標位置的牌
+                updateTimer();
+                updateMagicButton(); // 更新魔法按鈕狀態
+                checkWin(); // 檢查是否獲勝
+                // 檢查是否觸發自動飛牌
+                checkAutoFlyAfterMove();
+            }, 'tableau', overlapRatio);
+            return;
         }
-        
-        // 3. 失敗則震動
-        shakeCard(cardId);
     }
+    
+    // 3. 如果都不能移動，則震動卡片
+    shakeCard(cardId);
+}
     
     /**
      * 震動卡片效果
@@ -4188,129 +4417,200 @@ function shuffleArray(array) {
 
     // ==================== 自動飛牌系統 ====================
     
-    /**
-     * 檢查是否可以觸發自動飛牌
-     * 條件：七列表格所有牌都已翻開（沒有蓋牌）並且自動飛牌開關開啟
-     */
-    function checkAutoFlyCondition() {
-        // 如果正在動畫中或正在自動飛牌，則不檢查
-        if (isDrawing || isAutoFlying) return false;
-        
-        // 檢查自動飛牌開關是否開啟
-        if (!state.autoFlyEnabled) return false;
-        
-        // 檢查七列表格是否還有蓋牌
-        let hasFaceDownCards = false;
-        for (let col = 0; col < 7; col++) {
-            const pile = state.tableau[col];
-            for (let i = 0; i < pile.length; i++) {
-                if (!pile[i].faceUp) {
-                    hasFaceDownCards = true;
-                    break;
-                }
-            }
-            if (hasFaceDownCards) break;
-        }
-        
-        // 如果沒有蓋牌，則可以觸發自動飛牌
-        return !hasFaceDownCards;
-    }
-    
-    /**
-     * 檢查是否還有可飛的牌
-     * 新增：檢查是否有任何牌可以飛到花色區
-     * @returns {boolean} - 是否有可飛的牌
-     */
-    function hasFlyableCards() {
-        // 1. 檢查七列表格中是否有牌可以飛到花色區
-        for (let col = 0; col < 7; col++) {
-            const pile = state.tableau[col];
-            if (pile.length === 0) continue;
-            
-            const card = pile[pile.length - 1];
-            if (!card.faceUp) continue;
-            
-            for (let foundIdx = 0; foundIdx < 4; foundIdx++) {
-                const foundation = state.foundations[foundIdx];
-                if (canMoveToFoundation(card, foundation)) {
-                    return true;
-                }
-            }
-        }
-        
-        // 2. 檢查廢牌堆中是否有牌可以飛到花色區
-        if (state.waste.length > 0) {
-            const wasteCard = state.waste[state.waste.length - 1];
-            for (let foundIdx = 0; foundIdx < 4; foundIdx++) {
-                const foundation = state.foundations[foundIdx];
-                if (canMoveToFoundation(wasteCard, foundation)) {
-                    return true;
-                }
-            }
-        }
-        
-        // 3. 檢查牌堆中是否有牌（如果有牌，可以翻牌，然後可能飛牌）
-        if (state.stock.length > 0) {
-            return true;
-        }
-        
-        // 4. 檢查廢牌堆是否可以重置（如果可以重置，然後翻牌，可能飛牌）
-        if (state.waste.length > 0) {
-            return true;
-        }
-        
-        // 5. 檢查表格間是否有可移動的牌
-        for (let sourceCol = 0; sourceCol < 7; sourceCol++) {
-            const sourcePile = state.tableau[sourceCol];
-            if (sourcePile.length === 0) continue;
-            
-            const card = sourcePile[sourcePile.length - 1];
-            if (!card.faceUp) continue;
-            
-            for (let targetCol = 0; targetCol < 7; targetCol++) {
-                if (sourceCol === targetCol) continue;
-                
-                const targetPile = state.tableau[targetCol];
-                if (canMoveToTableau(card, targetPile)) {
-                    return true;
-                }
-            }
-        }
-        
+/**
+ * 檢查是否可以觸發自動飛牌
+ * 修改：添加調試日誌
+ */
+function checkAutoFlyCondition() {
+    // 如果正在動畫中或正在自動飛牌，則不檢查
+    if (isDrawing || isAutoFlying) {
+        console.log("自動飛牌條件：正在動畫中或正在自動飛牌");
         return false;
     }
     
-    /**
-     * 開始自動飛牌流程
-     */
-    function startAutoFly() {
-        if (isAutoFlying || isDrawing ) return;
-        if (!checkAutoFlyCondition()) return;
-        
-        // 先檢查是否有可飛的牌，如果沒有就停止
-        if (!hasFlyableCards()) {
-            console.log("自動飛牌停止：沒有可飛的牌");
-            return;
-        }
-        
-        // 重置循環計數器
-        autoFlyCycleCount = 0;
-        
-        isAutoFlying = true;
-        
-        // 建立自動飛牌隊列
-        buildAutoFlyQueue();
-        
-        // 如果隊列為空，停止自動飛牌
-        if (autoFlyQueue.length === 0) {
-            console.log("自動飛牌停止：隊列為空");
-            isAutoFlying = false;
-            return;
-        }
-        
-        // 開始處理隊列
-        processAutoFlyQueue();
+    // 檢查自動飛牌開關是否開啟
+    if (!state.autoFlyEnabled) {
+        console.log("自動飛牌條件：開關未開啟");
+        return false;
     }
+    
+    // 檢查七列表格是否還有蓋牌
+    let hasFaceDownCards = false;
+    for (let col = 0; col < 7; col++) {
+        const pile = state.tableau[col];
+        for (let i = 0; i < pile.length; i++) {
+            if (!pile[i].faceUp) {
+                hasFaceDownCards = true;
+                break;
+            }
+        }
+        if (hasFaceDownCards) break;
+    }
+    
+    // 修改：如果沒有蓋牌，檢查是否有可飛的牌
+    if (!hasFaceDownCards) {
+        console.log("七列表格所有牌都已翻開，檢查是否有可飛的牌");
+        const hasFlyable = hasFlyableCards();
+        console.log("自動飛牌條件：所有牌翻開且可飛=", hasFlyable);
+        return hasFlyable;
+    }
+    
+    console.log("自動飛牌條件：七列表格還有蓋牌");
+    return false;
+}
+    
+/**
+ * 檢查是否還有可飛的牌
+ * 修改：改進檢查邏輯，優先檢查七列表格
+ */
+function hasFlyableCards() {
+    console.log("檢查是否有可飛的牌...");
+    
+    // 1. 優先檢查七列表格中是否有牌可以飛到花色區
+    for (let col = 0; col < 7; col++) {
+        const pile = state.tableau[col];
+        if (pile.length === 0) continue;
+        
+        const card = pile[pile.length - 1];
+        if (!card.faceUp) continue;
+        
+        for (let foundIdx = 0; foundIdx < 4; foundIdx++) {
+            const foundation = state.foundations[foundIdx];
+            if (canMoveToFoundation(card, foundation)) {
+                console.log("七列表格有可飛的牌:", card.text + card.suit, "在第" + (col+1) + "列");
+                return true;
+            }
+        }
+    }
+    
+    // 2. 檢查廢牌堆中是否有牌可以飛到花色區
+    if (state.waste.length > 0) {
+        const wasteCard = state.waste[state.waste.length - 1];
+        for (let foundIdx = 0; foundIdx < 4; foundIdx++) {
+            const foundation = state.foundations[foundIdx];
+            if (canMoveToFoundation(wasteCard, foundation)) {
+                console.log("廢牌堆有可飛的牌:", wasteCard.text + wasteCard.suit);
+                return true;
+            }
+        }
+    }
+    
+    // 3. 檢查牌堆中是否有牌（翻牌後可能有可飛的牌）
+    if (state.stock.length > 0) {
+        console.log("牌堆有牌，翻牌後可能有可飛的牌");
+        return true;
+    }
+    
+    // 4. 檢查廢牌堆是否可以重置
+    if (state.waste.length > 0) {
+        console.log("廢牌堆有牌，重置後可能找到可飛的牌");
+        return true;
+    }
+    
+    // 5. 檢查表格間是否有可移動的牌（移動後可能釋放可飛的牌）
+    for (let sourceCol = 0; sourceCol < 7; sourceCol++) {
+        const sourcePile = state.tableau[sourceCol];
+        if (sourcePile.length === 0) continue;
+        
+        const sourceCard = sourcePile[sourcePile.length - 1];
+        if (!sourceCard.faceUp) continue;
+        
+        for (let targetCol = 0; targetCol < 7; targetCol++) {
+            if (sourceCol === targetCol) continue;
+            
+            const targetPile = state.tableau[targetCol];
+            
+            // King可以移動到空列
+            if (sourceCard.rank === 13 && targetPile.length === 0) {
+                console.log("發現King可以移動到空列");
+                return true;
+            }
+            
+            // 標準移動規則
+            if (targetPile.length > 0 && canMoveToTableau(sourceCard, targetPile)) {
+                console.log("發現表格間移動:", sourceCard.text + sourceCard.suit, "從列" + (sourceCol+1) + "到列" + (targetCol+1));
+                return true;
+            }
+        }
+    }
+    
+    console.log("沒有發現可飛的牌");
+    return false;
+}
+    
+/**
+ * 開始自動飛牌流程
+ */
+function startAutoFly() {
+    if (isAutoFlying || isDrawing) {
+        /* console.log("自動飛牌：正在進行中或正在翻牌"); */
+        return;
+    }
+    
+    // 先檢查是否有可飛的牌
+    if (!hasFlyableCards()) {
+        /* console.log("自動飛牌：沒有可飛的牌"); */
+        return;
+    }
+    
+    // 檢查自動飛牌條件
+    if (!checkAutoFlyCondition()) {
+        /* console.log("自動飛牌：條件不滿足"); */
+        return;
+    }
+    
+    console.log("啟動自動飛牌...");
+    
+    // 重置循環計數器
+    autoFlyCycleCount = 0;
+    
+    isAutoFlying = true;
+    
+    // 建立自動飛牌隊列
+    buildAutoFlyQueue();
+    
+    // 如果隊列為空，停止自動飛牌
+    if (autoFlyQueue.length === 0) {
+        /* console.log("自動飛牌停止：隊列為空"); */
+        isAutoFlying = false;
+        return;
+    }
+    
+    /* console.log("自動飛牌隊列大小:", autoFlyQueue.length); */
+    
+    // 開始處理隊列
+    processAutoFlyQueue();
+}
+    
+    /**
+ * 監控自動飛牌狀態
+ * 修改：避免死循環
+ */
+function monitorAutoFlyState() {
+    // 每10秒檢查一次，避免自動飛牌陷入死循環
+    setInterval(() => {
+        if (isAutoFlying) {
+            // 如果自動飛牌持續超過30秒，強制停止
+            if (autoFlyCycleCount > 300) { // 假設每次循環約100ms
+                console.warn("自動飛牌可能陷入死循環，強制停止");
+                stopAutoFly();
+                showMessage("自動飛牌已停止，可能陷入死循環", 2000);
+            }
+        }
+    }, 10000);
+}
+
+// 在 window.addEventListener('load', ...) 中添加：
+window.addEventListener('load', () => {
+    // ... 其他初始化代碼 ...
+    
+    // 啟動自動飛牌狀態監控
+    monitorAutoFlyState();
+    
+    // ... 其他初始化代碼 ...
+});
+    
+    
     
     /**
      * 停止自動飛牌
@@ -4325,234 +4625,260 @@ function shuffleArray(array) {
         autoFlyCycleCount = 0; // 重置循環計數器
     }
     
-    /**
-     * 建立自動飛牌隊列
-     * 修改：當表格沒有可飛的牌時，從廢牌堆和牌堆中查找
-     * 修改：如果沒有可飛的牌，隊列為空
-     */
-    function buildAutoFlyQueue() {
-        autoFlyQueue = [];
-        
-        // 收集所有可以飛到花色區的牌
-        let flyableCards = [];
-        
-        // 1. 首先檢查七列表格中的牌
-        for (let col = 0; col < 7; col++) {
-            const pile = state.tableau[col];
-            if (pile.length === 0) continue;
-            
-            // 只能移動最上面的牌
+/**
+ * 建立自動飛牌任務隊列
+ * 修改：修正變數名為 state.tableau，並防止自動飛牌時的列間移動死循環
+ */
+function buildAutoFlyQueue() {
+    // console.log("建立自動飛牌隊列...");
+    autoFlyQueue = [];
+
+    // 1. 優先檢查並收集所有可以移往「花色區 (Foundation)」的牌
+    // 檢查 7 個排列區 (Tableau) 的最後一張牌
+    for (let i = 0; i < 7; i++) {
+        const pile = state.tableau[i]; // 修正點：使用 state.tableau
+        if (pile.length > 0) {
             const card = pile[pile.length - 1];
-            if (!card.faceUp) continue;
-            
-            // 檢查是否可以移動到花色區
+            // 遍歷 4 個花色區，檢查是否可以飛上去
             for (let foundIdx = 0; foundIdx < 4; foundIdx++) {
-                const foundation = state.foundations[foundIdx];
-                if (canMoveToFoundation(card, foundation)) {
-                    flyableCards.push({
+                if (canMoveToFoundation(card, state.foundations[foundIdx])) {
+                    autoFlyQueue.push({
                         type: 'tableau',
-                        sourceCol: col,
+                        sourceCol: i,
                         sourceIdx: pile.length - 1,
                         card: card,
                         targetFoundation: foundIdx,
-                        priority: 1, // 表格中的牌優先級最高
-                        message: `自動飛牌：將第${col+1}列的${card.text}${card.suit}飛到花色區`
+                        message: `自動飛牌：將第${i+1}列的${card.text}${card.suit}飛到花色區`
                     });
-                    break; // 找到一個目標就跳出
+                    break; 
                 }
             }
         }
-        
-        // 2. 如果七列表格沒有可飛的牌，檢查廢牌堆中的牌
-        if (state.waste.length > 0) {
-            const wasteCard = state.waste[state.waste.length - 1];
-            
-            for (let foundIdx = 0; foundIdx < 4; foundIdx++) {
-                const foundation = state.foundations[foundIdx];
-                if (canMoveToFoundation(wasteCard, foundation)) {
-                    flyableCards.push({
-                        type: 'waste',
-                        sourceCol: 0,
-                        sourceIdx: state.waste.length - 1,
-                        card: wasteCard,
-                        targetFoundation: foundIdx,
-                        priority: 2, // 廢牌堆中的牌優先級次之
-                        message: `自動飛牌：將廢牌區的${wasteCard.text}${wasteCard.suit}飛到花色區`
-                    });
-                    break;
-                }
-            }
-        }
-        
-        // 3. 如果還是沒有可飛的牌，檢查牌堆中的牌
-        if (state.stock.length > 0) {
-            // 從牌堆頂部取牌
-            const stockCard = state.stock[state.stock.length - 1];
-            
-            for (let foundIdx = 0; foundIdx < 4; foundIdx++) {
-                const foundation = state.foundations[foundIdx];
-                if (canMoveToFoundation(stockCard, foundation)) {
-                    flyableCards.push({
-                        type: 'stock',
-                        sourceCol: 0,
-                        sourceIdx: state.stock.length - 1,
-                        card: stockCard,
-                        targetFoundation: foundIdx,
-                        priority: 3, // 牌堆中的牌優先級最低
-                        message: `自動飛牌：將牌堆的${stockCard.text}${stockCard.suit}飛到花色區`
-                    });
-                    break;
-                }
-            }
-        }
-        
-        // 如果還是沒有可飛的牌，檢查是否需要翻牌或重置
-        if (flyableCards.length === 0) {
-            // 檢查牌堆是否有牌
-            if (state.stock.length > 0) {
+    }
+
+    // 檢查廢牌堆 (Waste) 的最後一張牌是否可以飛
+    if (state.waste.length > 0) {
+        const card = state.waste[state.waste.length - 1];
+        for (let foundIdx = 0; foundIdx < 4; foundIdx++) {
+            if (canMoveToFoundation(card, state.foundations[foundIdx])) {
                 autoFlyQueue.push({
-                    type: 'draw',
-                    priority: 4,
-                    message: '自動飛牌：從牌堆翻牌'
+                    type: 'waste',
+                    sourceIdx: state.waste.length - 1,
+                    card: card,
+                    targetFoundation: foundIdx,
+                    message: `自動飛牌：將廢牌區的${card.text}${card.suit}飛到花色區`
                 });
-                return;
+                break;
             }
-            
-            // 檢查廢牌堆是否有牌可以重置
-            if (state.waste.length > 0) {
-                // 修復：當蓋牌區沒有牌而廢牌區有牌時，添加重置任務
-                autoFlyQueue.push({
-                    type: 'reset',
-                    priority: 5,
-                    message: '自動飛牌：重置牌堆'
-                });
-                return;
-            }
-            
-            // 如果都沒有，檢查表格中是否有牌可以移動到其他表格列
-            for (let sourceCol = 0; sourceCol < 7; sourceCol++) {
-                const sourcePile = state.tableau[sourceCol];
-                if (sourcePile.length === 0) continue;
-                
-                const card = sourcePile[sourcePile.length - 1];
-                if (!card.faceUp) continue;
-                
-                // 檢查是否可以移動到其他表格列
-                for (let targetCol = 0; targetCol < 7; targetCol++) {
-                    if (sourceCol === targetCol) continue;
-                    
-                    const targetPile = state.tableau[targetCol];
-                    if (canMoveToTableau(card, targetPile)) {
-                        autoFlyQueue.push({
-                            type: 'tableau-to-tableau',
-                            sourceCol: sourceCol,
-                            sourceIdx: sourcePile.length - 1,
-                            targetCol: targetCol,
-                            card: card,
-                            priority: 6,
-                            message: `自動飛牌：將第${sourceCol+1}列的${card.text}${card.suit}移到第${targetCol+1}列`
-                        });
-                        break;
-                    }
-                }
-                
-                if (autoFlyQueue.length > 0) break; // 找到一個移動就跳出
-            }
-            
-            return;
         }
+    }
+
+    // 2. 只有在「非」自動飛牌狀態下（例如玩家點擊提示），才允許檢查列與列之間的移動
+    // 這樣在全自動收尾階段，系統就不會把 K 移來移去造成死循環
+    if (!isAutoFlying) {
+        const tableauMoves = findTableauToTableauMoves(); // 調用您現有的尋找路徑函數
+        if (tableauMoves.length > 0) {
+            // 只取第一個有效移動
+            autoFlyQueue.push(tableauMoves[0]);
+        }
+    }
+
+    // 3. 如果還是沒事做，且牌堆還有牌，則嘗試翻牌
+    if (autoFlyQueue.length === 0 && state.stock.length > 0) {
+        autoFlyQueue.push({ type: 'draw', message: '自動飛牌：翻牌' });
+    }
+}
+
+/**
+ * 尋找表格間的移動
+ */
+function findTableauToTableauMoves() {
+    let moves = [];
+    
+    for (let sourceCol = 0; sourceCol < 7; sourceCol++) {
+        const sourcePile = state.tableau[sourceCol];
+        if (sourcePile.length === 0) continue;
         
-        // 4. 對可飛的牌按照優先級和數字從小到大排序
-        flyableCards.sort((a, b) => {
-            // 首先按優先級排序
-            if (a.priority !== b.priority) {
-                return a.priority - b.priority;
-            }
-            // 然後按數字排序（從小到大）
-            if (a.card.rank !== b.card.rank) {
-                return a.card.rank - b.card.rank;
-            }
-            // 如果數字相同，按花色排序（黑桃、紅心、梅花、方塊）
-            const suitOrder = { '♠': 0, '♥': 1, '♣': 2, '♦': 3 };
-            return suitOrder[a.card.suit] - suitOrder[b.card.suit];
-        });
+        const card = sourcePile[sourcePile.length - 1];
+        if (!card.faceUp) continue;
         
-        // 5. 將排序後的牌加入隊列
-        autoFlyQueue = flyableCards;
+        for (let targetCol = 0; targetCol < 7; targetCol++) {
+            if (sourceCol === targetCol) continue;
+            
+            const targetPile = state.tableau[targetCol];
+            
+            // King可以移動到空列
+            if (card.rank === 13 && targetPile.length === 0) {
+                moves.push({
+                    type: 'tableau-to-tableau',
+                    sourceCol: sourceCol,
+                    sourceIdx: sourcePile.length - 1,
+                    targetCol: targetCol,
+                    card: card,
+                    priority: 8,
+                    message: `自動飛牌：將第${sourceCol+1}列的${card.text}${card.suit}移到第${targetCol+1}列`
+                });
+                break;
+            }
+            
+            // 標準移動規則
+            if (targetPile.length > 0 && canMoveToTableau(card, targetPile)) {
+                moves.push({
+                    type: 'tableau-to-tableau',
+                    sourceCol: sourceCol,
+                    sourceIdx: sourcePile.length - 1,
+                    targetCol: targetCol,
+                    card: card,
+                    priority: 9,
+                    message: `自動飛牌：將第${sourceCol+1}列的${card.text}${card.suit}移到第${targetCol+1}列`
+                });
+                break;
+            }
+        }
     }
     
-    /**
-     * 處理自動飛牌隊列
-     * 修改：添加循環計數器，防止無限循環
-     * 修改：當隊列為空時，檢查是否還有可飛的牌，如果沒有則停止自動飛牌
-     */
-    function processAutoFlyQueue() {
-        // 檢查是否超過最大循環次數
-        autoFlyCycleCount++;
-        if (autoFlyCycleCount > MAX_AUTOFLY_CYCLES) {
-            console.warn("自動飛牌達到最大循環次數，強制停止");
-            stopAutoFly();
-            showMessage("自動飛牌已停止，無牌可飛", 2000);
-            return;
-        }
+    return moves;
+}
+    
+    
+    
+/**
+ * 處理自動飛牌任務隊列
+ * 優化：任務結束後立即掃描下一波，實現絲滑切換（例如 3 飛完立刻飛 4）
+ */
+function processAutoFlyQueue() {
+    if (!isAutoFlying) return;
+
+    // 如果目前的隊列空了，立即重新掃描（例如處理完所有 3 後，建立 4 的隊列）
+    if (autoFlyQueue.length === 0) {
+        buildAutoFlyQueue();
         
-        if (autoFlyQueue.length === 0 || !isAutoFlying || isDrawing) {
-            // 隊列處理完成
+        // 如果重新建立後依然是空的，代表真的沒牌可動了，停止自動模式
+        if (autoFlyQueue.length === 0) {
             isAutoFlying = false;
-            autoFlyCycleCount = 0; // 重置循環計數器
-            
-            // 在自動飛牌結束後統一保存一次狀態
-            if (history.length > 0) {
-                // 只保存最後一次狀態，避免歷史記錄過多
-                history[history.length - 1] = JSON.parse(JSON.stringify({
-                    stock: state.stock,
-                    waste: state.waste,
-                    foundations: state.foundations,
-                    tableau: state.tableau,
-                    moves: state.moves,
-                    gameMode: state.gameMode,
-                    startTime: state.startTime,
-                    score: state.score,
-                    drawMode: state.drawMode,
-                    handMode: state.handMode,
-                    autoFlyEnabled: state.autoFlyEnabled,
-                    magicCount: state.magicCount
-                }));
-            }
-            
-            updateUndoButton(); // 更新撤回按鈕狀態
-            
-            // 重新檢查是否還有可飛的牌
-            if (checkAutoFlyCondition() && hasFlyableCards()) {
-                // 延遲後再次啟動自動飛牌
-                autoFlyTimeout = setTimeout(() => {
-                    startAutoFly();
-                }, 100); // 從500毫秒減少到100毫秒
-            } else {
-                // 如果沒有可飛的牌，完全停止自動飛牌
-                console.log("自動飛牌停止：無牌可飛或條件不滿足");
-            }
+            checkWin(); // 執行最後的勝利檢查
             return;
-        }
-        
-        // 從隊列中取出第一個任務
-        const task = autoFlyQueue.shift();
-        
-        // 根據任務類型執行不同的飛牌動畫
-        if (task.type === 'tableau' || task.type === 'waste' || task.type === 'stock') {
-            // 從表格、廢牌堆或牌堆飛到花色區
-            performAutoFlyToFoundation(task);
-        } else if (task.type === 'tableau-to-tableau') {
-            // 從表格飛到表格
-            performAutoFlyTableauToTableau(task);
-        } else if (task.type === 'draw') {
-            // 翻牌任務（簡化版，不顯示動畫）
-            performAutoFlyDraw(task);
-        } else if (task.type === 'reset') {
-            // 重置牌堆任務（簡化版，不顯示動畫）
-            performAutoFlyReset(task);
         }
     }
+
+    // 取出下一個任務
+    const task = autoFlyQueue.shift();
+    
+    // 增加安全計數，配合 monitorAutoFlyState 監控
+    autoFlyCycleCount++;
+
+    // 執行對應的動畫與邏輯
+    switch (task.type) {
+        case 'tableau':
+        case 'waste':
+        case 'stock':
+            performAutoFlyToFoundation(task); // 處理飛往花色區
+            break;
+            
+        case 'tableau-to-tableau':
+            performAutoFlyTableauToTableau(task); // 處理列間移動
+            break;
+            
+        case 'draw':
+            performAutoFlyDraw(task); // 處理翻牌
+            break;
+            
+        case 'check':
+            buildAutoFlyQueue();
+            processAutoFlyQueue();
+            break;
+            
+        default:
+            // 遇到未知任務時，微小延遲後繼續，避免程序卡死
+            setTimeout(() => {
+                processAutoFlyQueue();
+            }, 50);
+    }
+}
+    
+    /**
+ * 執行翻牌並檢查任務（新增）
+ * 翻牌後立即檢查是否可以飛
+ */
+function performAutoFlyDrawWithCheck(task) {
+    if (state.stock.length === 0) {
+        // 如果牌堆空了，重新建立隊列
+        setTimeout(() => {
+            buildAutoFlyQueue();
+            processAutoFlyQueue();
+        }, autoFlyTiming.queueDelay);
+        return;
+    }
+    
+    // 執行翻牌
+    const drawCount = Math.min(state.drawMode, state.stock.length);
+    const cardsToDraw = [];
+    
+    for (let i = 0; i < drawCount; i++) {
+        const cardIndex = state.stock.length - 1 - i;
+        cardsToDraw.unshift(state.stock[cardIndex]);
+    }
+    
+    // 從遊戲狀態中移除這些牌
+    for (let i = 0; i < drawCount; i++) {
+        state.stock.pop();
+    }
+    
+    // 將取出的牌加入廢牌堆
+    cardsToDraw.forEach(card => {
+        card.faceUp = true;
+        state.waste.push(card);
+    });
+    
+    state.moves++;
+    addScore(5 * drawCount);
+    
+    // 更新顯示
+    updateStockPile();
+    updateWastePile();
+    updateTimer();
+    
+    // 翻牌後檢查廢牌堆最上面的牌是否可以飛
+    if (state.waste.length > 0) {
+        const wasteCard = state.waste[state.waste.length - 1];
+        let canFlyNow = false;
+        
+        for (let foundIdx = 0; foundIdx < 4; foundIdx++) {
+            const foundation = state.foundations[foundIdx];
+            if (canMoveToFoundation(wasteCard, foundation)) {
+                canFlyNow = true;
+                // 立即創建飛牌任務
+                autoFlyQueue.unshift({
+                    type: 'waste',
+                    sourceCol: 0,
+                    sourceIdx: state.waste.length - 1,
+                    card: wasteCard,
+                    targetFoundation: foundIdx,
+                    priority: 1,
+                    message: `自動飛牌：將剛翻出的${wasteCard.text}${wasteCard.suit}飛到花色區`
+                });
+                break;
+            }
+        }
+        
+        if (canFlyNow) {
+            console.log("翻牌後發現可飛的牌，立即處理");
+            // 立即處理這個飛牌任務
+            setTimeout(() => {
+                processAutoFlyQueue();
+            }, autoFlyTiming.queueDelay);
+            return;
+        }
+    }
+    
+    // 如果翻牌後沒有可飛的牌，重新建立隊列
+    setTimeout(() => {
+        buildAutoFlyQueue();
+        processAutoFlyQueue();
+    }, autoFlyTiming.queueDelay);
+}
+    
+    
     
 /**
  * 執行飛到花色區的自動飛牌 - 修正：先獲取卡片位置再移除
@@ -4680,7 +5006,7 @@ function performAutoFlyToFoundation(task) {
         // 完成飛牌邏輯：將牌添加到目標位置
         finishAutoFlyToFoundation(task);
         
-    }, 300);
+    }, 200);
 }
     
     /**
@@ -4707,38 +5033,38 @@ function performAutoFlyToFoundation(task) {
         }
     }
     
-    /**
-     * 完成飛到花色區的邏輯（優化版）
-     */
-    function finishAutoFlyToFoundation(task) {
-        const { type, sourceCol, sourceIdx, card, targetFoundation } = task;
-        
-        // 翻開牌（如果是從牌堆來的）
-        if (type === 'stock') {
-            card.faceUp = true;
-        }
-        
-        // 添加到花色區
-        state.foundations[targetFoundation].push(card);
-        
-        // 更新遊戲狀態
-        state.moves++;
-        addScore(10); // 自動飛牌得10分
-        
-        // 更新顯示
-        render();
-        
-        updateTimer();
-        updateMagicButton();
-        
-        // 檢查是否獲勝
-        checkWin();
-        
-        // 繼續處理隊列
-        setTimeout(() => {
-            processAutoFlyQueue();
-        }, 50);
+/**
+ * 完成飛到花色區的邏輯（優化版）
+ */
+function finishAutoFlyToFoundation(task) {
+    const { type, sourceCol, sourceIdx, card, targetFoundation } = task;
+    
+    // 翻開牌（如果是從牌堆來的）
+    if (type === 'stock') {
+        card.faceUp = true;
     }
+    
+    // 添加到花色區
+    state.foundations[targetFoundation].push(card);
+    
+    // 更新遊戲狀態
+    state.moves++;
+    addScore(10); // 自動飛牌得10分
+    
+    // 更新顯示
+    render();
+    
+    updateTimer();
+    updateMagicButton();
+    
+    // 檢查是否獲勝
+    checkWin();
+    
+const nextDelay = autoFlyQueue.length > 0 ? autoFlyTiming.delay : 0;
+setTimeout(() => {
+    processAutoFlyQueue();
+}, nextDelay);
+}
     
 /**
  * 執行表格到表格的自動飛牌 - 修正：先獲取卡片位置再移除
@@ -4861,112 +5187,114 @@ function performAutoFlyTableauToTableau(task) {
         }
     }
     
-    /**
-     * 完成表格到表格的飛牌邏輯（優化版）
-     */
-    function finishAutoFlyTableauToTableau(task) {
-        const { sourceCol, sourceIdx, targetCol, card } = task;
-        
-        // 添加到目標表格列
-        state.tableau[targetCol].push(card);
-        
-        // 更新遊戲狀態
-        state.moves++;
-        addScore(5); // 表格間移動得5分
-        
-        // 更新顯示
-        render();
-        
-        updateTimer();
-        updateMagicButton();
-        
-        // 繼續處理隊列
+/**
+ * 完成表格到表格的飛牌邏輯（優化版）
+ */
+function finishAutoFlyTableauToTableau(task) {
+    const { sourceCol, sourceIdx, targetCol, card } = task;
+    
+    // 添加到目標表格列
+    state.tableau[targetCol].push(card);
+    
+    // 更新遊戲狀態
+    state.moves++;
+    addScore(5); // 表格間移動得5分
+    
+    // 更新顯示
+    render();
+    
+    updateTimer();
+    updateMagicButton();
+    
+    // 繼續處理隊列（使用CSS變數控制的延遲時間）
+    setTimeout(() => {
+        processAutoFlyQueue();
+    }, autoFlyTiming.delay); // 每張牌之間的延遲
+}
+    
+/**
+ * 執行翻牌任務（優化版）
+ * 修改：翻牌後重新檢查狀態
+ */
+function performAutoFlyDraw(task) {
+    // 模擬翻牌操作
+    if (state.stock.length === 0) {
+        // 如果牌堆空了，重新建立隊列
         setTimeout(() => {
+            buildAutoFlyQueue();
             processAutoFlyQueue();
-        }, 50);
+        }, autoFlyTiming.queueDelay);
+        return;
     }
     
-    /**
-     * 執行翻牌任務（優化版）
-     */
-    function performAutoFlyDraw(task) {
-        // 模擬翻牌操作
-        if (state.stock.length === 0) {
-            // 如果牌堆空了，直接處理隊列
-            setTimeout(() => {
-                processAutoFlyQueue();
-            }, 50); // 從150毫秒減少到50毫秒
-            return;
-        }
-        
-        // 執行翻牌（簡化，不顯示動畫）
-        const drawCount = Math.min(state.drawMode, state.stock.length);
-        const cardsToDraw = [];
-        
-        for (let i = 0; i < drawCount; i++) {
-            const cardIndex = state.stock.length - 1 - i;
-            cardsToDraw.unshift(state.stock[cardIndex]);
-        }
-        
-        // 從遊戲狀態中移除這些牌
-        for (let i = 0; i < drawCount; i++) {
-            state.stock.pop();
-        }
-        
-        // 將取出的牌加入廢牌堆
-        cardsToDraw.forEach(card => {
-            card.faceUp = true;
-            state.waste.push(card);
-        });
-        
-        state.moves++;
-        addScore(5 * drawCount);
-        
-        // 更新特定區域
-        updateStockPile();
-        updateWastePile();
-        
-        updateTimer();
-        
-        // 翻牌後繼續處理隊列（減少延遲）
-        setTimeout(() => {
-            processAutoFlyQueue();
-        }, 50); // 從150毫秒減少到50毫秒
+    // 執行翻牌
+    const drawCount = Math.min(state.drawMode, state.stock.length);
+    const cardsToDraw = [];
+    
+    for (let i = 0; i < drawCount; i++) {
+        const cardIndex = state.stock.length - 1 - i;
+        cardsToDraw.unshift(state.stock[cardIndex]);
     }
     
-    /**
-     * 執行重置牌堆任務（優化版）
-     */
-    function performAutoFlyReset(task) {
-        // 模擬重置牌堆操作
-        if (state.waste.length === 0) {
-            // 如果廢牌堆空了，直接處理隊列
-            setTimeout(() => {
-                processAutoFlyQueue();
-            }, 50); // 從150毫秒減少到50毫秒
-            return;
-        }
-        
-        // 執行重置（簡化，不顯示動畫）
-        state.stock = state.waste.reverse().map(c => { 
-            c.faceUp = false;
-            return c; 
-        });
-        state.waste = [];
-        state.moves++;
-        addScore(-100);
-        
-        // 更新特定區域
-        updateStockPile();
-        updateWastePile();
-        
-        updateTimer();
-        
-        // 重置後繼續處理隊列（減少延遲）
+    // 從遊戲狀態中移除這些牌
+    for (let i = 0; i < drawCount; i++) {
+        state.stock.pop();
+    }
+    
+    // 將取出的牌加入廢牌堆
+    cardsToDraw.forEach(card => {
+        card.faceUp = true;
+        state.waste.push(card);
+    });
+    
+    state.moves++;
+    addScore(5 * drawCount);
+    
+    // 更新顯示
+    updateStockPile();
+    updateWastePile();
+    updateTimer();
+    
+    // 翻牌後重新建立隊列
+    setTimeout(() => {
+        buildAutoFlyQueue();
+        processAutoFlyQueue();
+    }, autoFlyTiming.queueDelay);
+}
+    
+/**
+ * 執行重置牌堆任務（優化版）
+ */
+function performAutoFlyReset(task) {
+    // 模擬重置牌堆操作
+    if (state.waste.length === 0) {
+        // 如果廢牌堆空了，直接處理隊列
         setTimeout(() => {
             processAutoFlyQueue();
-        }, 50); // 從150毫秒減少到50毫秒
+        }, autoFlyTiming.queueDelay); // 使用CSS變數控制的隊列處理延遲
+        return;
     }
+    
+    // 執行重置（簡化，不顯示動畫）
+    state.stock = state.waste.reverse().map(c => { 
+        c.faceUp = false;
+        return c; 
+    });
+    state.waste = [];
+    state.moves++;
+    addScore(-100);
+    
+    // 更新特定區域
+    updateStockPile();
+    updateWastePile();
+    
+    updateTimer();
+    
+    // 重置後繼續處理隊列（使用CSS變數控制的延遲時間）
+    setTimeout(() => {
+        processAutoFlyQueue();
+    }, autoFlyTiming.queueDelay); // 使用CSS變數控制的隊列處理延遲
+}
     
     // ==================== 新增：優化自動飛牌後的渲染函數 ====================
     /**
@@ -5238,23 +5566,21 @@ function performAutoFlyTableauToTableau(task) {
         }
     }
     
-    /**
-     * 移動後檢查是否觸發自動飛牌（優化版）
-     */
-    function checkAutoFlyAfterMove() {
-        // 如果正在自動飛牌中，不重複觸發
-        if (isAutoFlying ) return;
-        
-        // 延遲檢查，確保渲染完成
-        setTimeout(() => {
-            if (checkAutoFlyCondition() && hasFlyableCards()) {
-                // 延遲啟動自動飛牌，給玩家一點反應時間
-                autoFlyTimeout = setTimeout(() => {
-                    startAutoFly();
-                }, 300); // 從1000毫秒減少到300毫秒
-            }
-        }, 100); // 從500毫秒減少到100毫秒
+/**
+ * 移動後檢查是否觸發自動飛牌（優化版）
+ */
+function checkAutoFlyAfterMove() {
+    // 如果正在自動飛牌中，不重複觸發
+    if (isAutoFlying || isDrawing) return;
+    
+    // 移除之前的延遲，立即檢查
+    if (checkAutoFlyCondition() && hasFlyableCards()) {
+        // 延遲啟動自動飛牌，給玩家一點反應時間
+        autoFlyTimeout = setTimeout(() => {
+            startAutoFly();
+        }, autoFlyTiming.initialDelay); // 使用CSS變數控制的延遲時間（已縮短為0.1s）
     }
+}
 
     // ==================== 遊戲結束檢查 ====================
     /**
@@ -5292,20 +5618,20 @@ function performAutoFlyTableauToTableau(task) {
         // 添加分數框點擊事件監聽器（測試功能）
         document.getElementById('score-display').addEventListener('click', handleScoreClick);
         
-        // 添加步數顯示雙擊事件監聽器（切換單擊自動移動模式）
-        const timeMovesElement = document.getElementById('time-moves');
-        let lastTimeMovesClick = 0;
-        timeMovesElement.addEventListener('click', function() {
-            const now = Date.now();
-            if (now - lastTimeMovesClick < 500) { // 500ms內雙擊
-                autoMoveOnClick = !autoMoveOnClick;
-                showMessage(autoMoveOnClick ? "已切換到單擊自動移動模式" : "已切換到雙擊自動移動模式", 1500);
-                lastTimeMovesClick = 0;
-            } else {
-                lastTimeMovesClick = now;
-            }
-        });
+    // 添加步數顯示雙擊事件監聽器
+    const timeMovesElement = document.getElementById('time-moves');
+    let lastTimeMovesClick = 0;
+    timeMovesElement.addEventListener('click', function() {
+        const now = Date.now();
+        if (now - lastTimeMovesClick < 500) {
+            autoMoveOnClick = !autoMoveOnClick;
+            showMessage(autoMoveOnClick ? "已切換到單擊自動移動模式" : "已切換到雙擊自動移動模式", 1500);
+            lastTimeMovesClick = 0;
+        } else {
+            lastTimeMovesClick = now;
+        }
     });
+});
     
     // 防止手機雙指縮放
     document.addEventListener('gesturestart', function (e) {
