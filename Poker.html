@@ -8,8 +8,8 @@
         /* CSS 變數定義，方便全域調整樣式 */
         :root {
             --bg-color: #35654d; /* 遊戲背景顏色 */
-            --card-width: 13vw; /* 手機版卡片預設寬度 (視窗寬度百分比) 13 */
-            --card-height: 18.2vw; /* 手機版卡片預設高度 (視窗寬度百分比) 18.2 */
+            --card-width: 13vw; /* 卡片預設寬度 (視窗寬度百分比) 13 */
+            --card-height: 18.2vw; /* 卡片預設高度 (視窗寬度百分比) 18.2 */
             --max-w: 100px; /* 卡片最大寬度 */
             --max-h: 140px; /* 卡片最大高度 */
             --gap: 2vw; /* 卡片間距 */
@@ -30,13 +30,9 @@
             margin: 0;
             overflow: hidden; /* 隱藏滾動條 */
             user-select: none; /* 禁止文字選取 */
-            -webkit-user-select: none; /* Safari/Chrome */
-            -moz-user-select: none; /* Firefox */
-            -ms-user-select: none; /* IE/Edge */
             font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif; /* 字型設定 */
             -webkit-tap-highlight-color: transparent; /* 移除移動端點擊高亮 */
             touch-action: manipulation; /* 改善觸控響應 */
-            -webkit-touch-callout: none; /* 禁止 iOS 長按選單 */
         }
 
         /* 工具欄樣式 */
@@ -1015,9 +1011,9 @@
         /* 手機版專用樣式 - 已調整 */
         @media (max-width: 599px) {
             :root {
-                --card-width: 12.5vw; /* 卡片寬度 (從12.5vw增加) */
-                --card-height: 17.5vw; /* 卡片高度 (從17.5vw增加) */
-                --gap: 0.5vw; /* 縮小牌間距 (從1.5vw減少) */
+                --card-width: 12.5vw; /* 卡片寬度 (從11vw增加) */
+                --card-height: 17.5vw; /* 卡片高度 (從15.4vw增加) */
+                --gap: 1vw; /* 縮小牌間距 (從1.5vw減少) */
             }
             
             /* 顯示手機版功能鍵容器 */
@@ -1779,6 +1775,7 @@ function createVerifiedSolvableDeck() {
         tableau: tableau
     };
 }
+
 
 
 
