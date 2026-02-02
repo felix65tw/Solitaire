@@ -30,9 +30,13 @@
             margin: 0;
             overflow: hidden; /* 隱藏滾動條 */
             user-select: none; /* 禁止文字選取 */
+            -webkit-user-select: none; /* Chrome/Safari/Opera */
+            -moz-user-select: none; /* Firefox */
+            -ms-user-select: none; /* Internet Explorer/Edge */
             font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif; /* 字型設定 */
             -webkit-tap-highlight-color: transparent; /* 移除移動端點擊高亮 */
             touch-action: manipulation; /* 改善觸控響應 */
+            -webkit-touch-callout: none; /* 禁止 iOS 長按選單 */
         }
 
         /* 工具欄樣式 */
