@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>經典接龍</title>
+    <title>經典接龍 V1.07</title>
     <style>
         /* CSS 變數定義，方便全域調整樣式 */
         :root {
@@ -13,15 +13,15 @@
             --max-w: 100px; /* 卡片最大寬度 */
             --max-h: 140px; /* 卡片最大高度 */
             --gap: 2vw; /* 卡片間距 */
-            --animation-draw-speed: 0.2s; /* 參數：翻牌動畫速度 */
-            --animation-move-speed: 0.15s; /* 參數：卡片移動動畫速度 */
-            --animation-magic-speed: 0.5s; /* 參數：魔法動畫速度 */
-            --animation-pulse-speed: 0.8s; /* 參數：脈衝動畫速度 */
-            --animation-shake-speed: 0.4s; /* 參數：抖動動畫速度 */
+            --animation-draw-speed: 0.2s; /* 參數：翻牌動畫速度 0.2*/
+            --animation-move-speed: 0.15s; /* 參數：卡片移動動畫速度 0.15 */
+            --animation-magic-speed: 0.5s; /* 參數：魔法動畫速度 0.5 */
+            --animation-pulse-speed: 0.6s; /* 參數：脈衝動畫速度 0.8 */
+            --animation-shake-speed: 0.3s; /* 參數：抖動動畫速度 0.4 */
             
-            --animation-auto-fly-delay: 0.02s; /* 參數：自動飛牌每張牌之間的延遲 */
-    				--animation-auto-fly-queue-delay: 0.01s; /* 參數：自動飛牌隊列處理延遲 */
-    				--animation-auto-fly-initial-delay: 0.01s; /* 參數：自動飛牌開始延遲 */
+            --animation-auto-fly-delay: 0.02s; /* 參數：自動飛牌每張牌之間的延遲 0.02 */
+    		--animation-auto-fly-queue-delay: 0.01s; /* 參數：自動飛牌隊列處理延遲 0.01 */
+    		--animation-auto-fly-initial-delay: 0.01s; /* 參數：自動飛牌開始延遲 0.01 */
         }
 
         /* 全域樣式設定 */
@@ -1350,7 +1350,7 @@
 </div>
 
 <!-- 勝利對話框 -->
-<div class="dialog-overlay" id="victory-overlay" onclick="closeVictoryDialog()"></div>
+<div class="dialog-overlay" id="victory-overlay"></div>
 <div class="victory-dialog" id="victory-dialog">
     <h2>🎉 YOU WIN！ 🎉</h2>
     <div class="victory-stats">
@@ -1419,6 +1419,16 @@
     const SUITS = ['♠', '♥', '♣', '♦']; // 花色陣列
     const COLORS = { '♠': 'black', '♥': 'red', '♣': 'black', '♦': 'red' }; // 花色對應顏色
     const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K']; // 牌面值陣列
+    
+    // 將 0..51 的數字牌轉換為遊戲內卡片物件（數字映射以 ♣,♦,♥,♠ 順序）
+    function cardFromId(id) {
+        const suitOrder = ['♣','♦','♥','♠'];
+        const suitChar = suitOrder[id % 4];
+        const rank = Math.floor(id / 4) + 1;
+        const text = RANKS[rank - 1];
+        const color = COLORS[suitChar];
+        return { suit: suitChar, rank, text, color, faceUp: false, id };
+    }
 
     // ==================== 遊戲狀態變數 ====================
     let state = {
@@ -1479,6 +1489,7 @@ let autoFlyTiming = {
         isActive: false,
         animationId: null
     };
+
     let scoreClickCount = 0; // 分數點擊計數
     let lastScoreClickTime = 0; // 最後分數點擊時間
     const SCORE_CLICK_TIMEOUT = 2000; // 分數點擊超時時間
@@ -1564,221 +1575,6 @@ function initAutoFlyTiming() {
 
 
 /* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% */
-
-
-
-
-
-
-/**
- * 【修正版：可控隨機反向構建法】
- * 每次生成不同但保證可解的牌局
- * 
- * 核心策略：
- * 1. 使用「反向構建」確保 100% 可解
- * 2. 在安全範圍內加入隨機性，確保每局不同
- * 3. 嚴格控制 Aces 深度，避免過度挖掘
- * 4. 智能優化，確保自然流程
- */
-function createVerifiedSolvableDeck() {
-    console.log("=== 生成新牌局（自然發牌逆向構建，100%可解）===");
-    
-    // 使用時間確保變化
-    const variation = Date.now() % 10000;
-    
-    // ==================== 階段 1：創建完整牌組 ====================
-    
-    let allCards = [];
-    for (let s = 0; s < 4; s++) {
-        for (let r = 0; r < 13; r++) {
-            allCards.push({
-                suit: SUITS[s],
-                rank: r + 1,
-                text: RANKS[r],
-                value: r + 1,
-                color: COLORS[SUITS[s]],
-                faceUp: false,
-                id: SUITS[s] + "-" + RANKS[r] + "-var" + variation
-            });
-        }
-    }
-    
-    // 基於變化因子進行循環移位
-    const shiftAmount = variation % allCards.length;
-    allCards = allCards.slice(shiftAmount).concat(allCards.slice(0, shiftAmount));
-    
-    // ==================== 階段 2：構建自然的tableau，避免連續序列 ====================
-    
-    let tableau = [[], [], [], [], [], [], []];
-    
-    // 將牌按花色和點數分組，以便於隨機分配
-    let suitGroups = [[], [], [], []]; // 每個花色一組
-    for (let i = 0; i < allCards.length; i++) {
-        let suitIndex = SUITS.indexOf(allCards[i].suit);
-        if (suitIndex !== -1) {
-            suitGroups[suitIndex].push(allCards[i]);
-        }
-    }
-    
-    // 重新分配牌以避免同一花色和連續點數的聚集
-    let assignedCards = new Set();
-    let cardIndex = 0;
-    
-    // 標準發牌，但嘗試混合不同花色和點數
-    for (let col = 0; col < 7; col++) {
-        for (let row = 0; row <= col; row++) {
-            // 嘗試使用變化因子來選擇不同類型的牌
-            let chosenCard = null;
-            let attempt = 0;
-            
-            // 基於col, row和variation來決定取哪一張牌
-            let targetIndex = (col * 7 + row + variation) % allCards.length;
-            
-            // 確保不重複使用已分配的牌
-            while (assignedCards.has(targetIndex) && attempt < allCards.length) {
-                targetIndex = (targetIndex + 1) % allCards.length;
-                attempt++;
-            }
-            
-            if (attempt < allCards.length && !assignedCards.has(targetIndex)) {
-                chosenCard = allCards[targetIndex];
-                assignedCards.add(targetIndex);
-                
-                tableau[col].push({
-                    suit: chosenCard.suit,
-                    rank: chosenCard.rank,
-                    text: chosenCard.text,
-                    value: chosenCard.value,
-                    color: chosenCard.color,
-                    faceUp: (row === col), // 只有頂部正面朝上
-                    id: chosenCard.id + "-tableau"
-                });
-            }
-        }
-    }
-    
-    // ==================== 階段 3：構建stock（24張）====================
-    
-    let stock = [];
-    for (let i = 0; i < allCards.length; i++) {
-        if (!assignedCards.has(i) && stock.length < 24) {
-            stock.push({
-                suit: allCards[i].suit,
-                rank: allCards[i].rank,
-                text: allCards[i].text,
-                value: allCards[i].value,
-                color: allCards[i].color,
-                faceUp: false,
-                id: allCards[i].id + "-stock"
-            });
-        }
-    }
-    
-    // ==================== 階段 4：確保100%可解，但保持自然性 ====================
-    
-    // 確保遊戲開始時有可執行的操作
-    let gameReady = false;
-    
-    // 檢查是否有A在頂部（可以直接移到foundation）
-    for (let col = 0; col < 7; col++) {
-        if (tableau[col].length > 0 && tableau[col][tableau[col].length - 1].value === 1) {
-            gameReady = true;
-            break;
-        }
-    }
-    
-    // 如果沒有A在頂部，檢查是否有其他可移動操作
-    if (!gameReady) {
-        for (let srcCol = 0; srcCol < 7; srcCol++) {
-            if (tableau[srcCol].length === 0) continue;
-            
-            let srcTop = tableau[srcCol][tableau[srcCol].length - 1];
-            
-            for (let dstCol = 0; dstCol < 7; dstCol++) {
-                if (srcCol === dstCol) continue;
-                
-                if (tableau[dstCol].length === 0 && srcTop.value === 13) {
-                    gameReady = true;
-                    break;
-                } else if (tableau[dstCol].length > 0) {
-                    let dstTop = tableau[dstCol][tableau[dstCol].length - 1];
-                    if (dstTop.color !== srcTop.color && dstTop.value === srcTop.value + 1) {
-                        gameReady = true;
-                        break;
-                    }
-                }
-            }
-            if (gameReady) break;
-        }
-    }
-    
-    // 如果沒有可執行操作，進行最小的自然調整
-    if (!gameReady) {
-        // 尋找一個A並移到某列頂部，而不是構建明顯的序列
-        for (let col = 0; col < 7; col++) {
-            if (tableau[col].length > 1) {
-                // 在該列中尋找A
-                for (let pos = 0; pos < tableau[col].length - 1; pos++) {
-                    if (tableau[col][pos].value === 1) {
-                        // 將A移到頂部
-                        let ace = tableau[col].splice(pos, 1)[0];
-                        ace.faceUp = true;
-                        
-                        // 原頂部牌背面朝上
-                        if (tableau[col].length > 0) {
-                            tableau[col][tableau[col].length - 1].faceUp = false;
-                        }
-                        
-                        // 將A放到頂部
-                        tableau[col].push(ace);
-                        gameReady = true;
-                        break;
-                    }
-                }
-                if (gameReady) break;
-            }
-        }
-    }
-    
-    // ==================== 階段 5：最終驗證 ====================
-    
-    // 確保每列頂部牌正面朝上
-    for (let col = 0; col < 7; col++) {
-        if (tableau[col].length > 0) {
-            tableau[col][tableau[col].length - 1].faceUp = true;
-        }
-    }
-    
-    let totalCards = 0;
-    for (let col = 0; col < 7; col++) {
-        totalCards += tableau[col].length;
-    }
-    totalCards += stock.length;
-    
-    console.log("✓ 自然發牌逆向構建完成");
-    console.log("✓ 變化因子:", variation);
-    console.log("✓ Tableau構建完成，各列高度:", tableau.map(p => p.length));
-    console.log("✓ Stock有", stock.length, "張牌 (目標24張)");
-    console.log("✓ 每列頂部牌已正面朝上");
-    console.log("✓ 遊戲可開始:", gameReady ? "是" : "已調整");
-    console.log("=== 100%可解牌局生成完成 ===");
-    console.log("總牌數:", totalCards, "(應為 52)");
-    
-    if (totalCards !== 52) {
-        console.error("❌ 錯誤：牌數不對！", totalCards);
-    }
-    
-    if (stock.length !== 24) {
-        console.error("❌ 錯誤：Stock牌數不正確！", stock.length);
-    }
-    
-    return {
-        stock: stock,
-        waste: [],
-        foundations: [[], [], [], []],
-        tableau: tableau
-    };
-}
 
 
 
@@ -2688,8 +2484,9 @@ function shuffleArray(array) {
     /**
      * 開始新遊戲
      */
+
+
     function startNewGame() {
-        
         closeNewGameDialog();
         initGame('guaranteed');
     }
@@ -2728,6 +2525,7 @@ function shuffleArray(array) {
         
         showMessage("遊戲已重新開始", 1500);
     }
+
     
     // ==================== 計時器相關函數 ====================
     /**
@@ -2774,7 +2572,7 @@ function shuffleArray(array) {
     /**
      * 初始化遊戲（使用可解牌局生成器）
      */
-    function initGame(mode = 'guaranteed') {
+    async function initGame(mode = 'guaranteed') {
         // 先停止可能存在的計時器
         if (state.timerInterval) {
             clearInterval(state.timerInterval);
@@ -2797,17 +2595,56 @@ function shuffleArray(array) {
         updateMagicButton(); // 更新魔法按鈕狀態
         
         let gameState = null;
-        if (mode === 'guaranteed') {
-            gameState = createVerifiedSolvableDeck(); // 使用優化牌局生成器
-        } else {
-            // 備用模式（正常隨機）
+        try {
+            if (mode === 'guaranteed') {
+                console.log("开始生成可解牌局...");
+                const startTime = Date.now();
+                
+                // 使用Promise包装牌局生成，添加超时机制
+                const generateDeckPromise = new Promise((resolve, reject) => {
+                    try {
+                        const deck = createVerifiedSolvableDeck(); // 使用優化牌局生成器
+                        resolve(deck);
+                    } catch (error) {
+                        reject(error);
+                    }
+                });
+                
+                // 设置3秒超时
+                const timeoutPromise = new Promise((_, reject) => {
+                    setTimeout(() => reject(new Error('牌局生成超时')), 3000);
+                });
+                
+                // 优先使用牌局生成结果，如果超时则使用随机牌局
+                gameState = await Promise.race([generateDeckPromise, timeoutPromise]);
+                console.log("牌局生成完成，耗时:", Date.now() - startTime, "ms");
+            } else {
+                // 備用模式（正常隨機）
+                console.log("开始生成随机牌局...");
+                const startTime = Date.now();
+                gameState = createRandomDeck();
+                console.log("随机牌局生成完成，耗时:", Date.now() - startTime, "ms");
+            }
+        } catch (error) {
+            console.error("生成牌局时出错:", error);
+            // 如果生成牌局失败或超时，使用随机牌局作为备用
             gameState = createRandomDeck();
+        }
+        
+        if (!gameState) {
+            console.error("无法生成牌局，使用默认空牌局");
+            gameState = {
+                stock: [],
+                waste: [],
+                foundations: [[], [], [], []],
+                tableau: [[], [], [], [], [], [], []]
+            };
         }
 
         // 重置遊戲狀態
         state.stock = gameState.stock || [];
         state.waste = gameState.waste || [];
-        state.foundations = [[], [], [], []];
+        state.foundations = gameState.foundations || [[], [], [], []];
         state.tableau = gameState.tableau || [[], [], [], [], [], [], []];
 
         console.log("遊戲初始化完成：");
@@ -3399,7 +3236,7 @@ function shuffleArray(array) {
             updateMagicButton(); // 更新魔法按鈕狀態
             // 檢查是否觸發自動飛牌
             checkAutoFlyAfterMove();
-        }, 400 + (drawCount * 50));
+        }, 400 + (drawCount * 50)); // 補牌區的延遲 400+50
     }
 
     /**
@@ -4551,6 +4388,10 @@ window.addEventListener('load', () => {
     monitorAutoFlyState();
     
     // ... 其他初始化代碼 ...
+
+    // 禁用滑鼠右鍵功能
+    document.addEventListener('contextmenu', (e) => { e.preventDefault(); });
+
 });
     
     
@@ -4629,6 +4470,11 @@ function buildAutoFlyQueue() {
     // 3. 如果還是沒事做，且牌堆還有牌，則嘗試翻牌
     if (autoFlyQueue.length === 0 && state.stock.length > 0) {
         autoFlyQueue.push({ type: 'draw', message: '自動飛牌：翻牌' });
+    }
+
+    // 4. 若隊列仍為空且牌堆已空，但廢牌堆仍有牌，則重置廢牌回補牌
+    if (autoFlyQueue.length === 0 && state.stock.length === 0 && state.waste.length > 0) {
+        autoFlyQueue.push({ type: 'reset', message: '自動飛牌：重置廢牌堆' });
     }
 }
 
@@ -4724,6 +4570,10 @@ function processAutoFlyQueue() {
             
         case 'draw':
             performAutoFlyDraw(task); // 處理翻牌
+            break;
+        
+        case 'reset':
+            performAutoFlyReset(task); // 重置廢牌堆回補牌
             break;
             
         case 'check':
@@ -5552,8 +5402,7 @@ function checkAutoFlyAfterMove() {
         // 從本地儲存載入設定
         loadSettingsFromLocalStorage();
         
-        // 初始化遊戲
-        initGame('guaranteed'); // 初始化遊戲
+        // 初始不顯示新牌局對話框；請使用工具列按鈕操作
         
         // 監聽視窗大小變化
         window.addEventListener('resize', layoutSlots);
@@ -5579,6 +5428,1787 @@ function checkAutoFlyAfterMove() {
     // 防止手機雙指縮放
     document.addEventListener('gesturestart', function (e) {
         e.preventDefault();
+    });
+
+    // KlondikeSolver类 - 实现游戏的逆推算法
+    class KlondikeSolver {
+        constructor(seed) {
+            this.seed = Math.abs(seed);
+            if (this.seed === 0) this.seed = 1;
+            this.SUIT_CHAR = ['♣', '♦', '♥', '♠'];
+            this.RANK_CHAR = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+            this.COLORS = {'♣': 'black', '♦': 'red', '♥': 'red', '♠': 'black'};
+            this.allCards = [];
+            this.gameDecks = Array(7).fill().map(() => []);
+            this.drawDeck = [];
+            this.asDecks = Array(4).fill().map(() => []);
+            this.randomState = this.seed;
+        }
+        
+        // 生成随机数（模拟Unity的Random.Range）
+        random(min, max) {
+            // 线性同余生成器
+            this.randomState = (1664525 * this.randomState + 1013904223) % 4294967296;
+            const value = this.randomState / 4294967296;
+            // Unity的Random.Range(min, max)返回[min, max)，但游戏中实际使用了[min, max]
+            return Math.floor(value * (max - min + 1)) + min;
+        }
+        
+        // 创建完整牌组
+        createCompleteDeck() {
+            let allCards = [];
+            for (let s = 0; s < 4; s++) {
+                for (let r = 0; r < 13; r++) {
+                    allCards.push({
+                        suit: this.SUIT_CHAR[s],
+                        rank: r + 1,
+                        text: this.RANK_CHAR[r],
+                        value: r, // 游戏中使用0-12，A=0，K=12
+                        color: this.COLORS[this.SUIT_CHAR[s]],
+                        faceUp: false,
+                        index: s * 13 + r,
+                        id: this.SUIT_CHAR[s] + "-" + this.RANK_CHAR[r] + "-seed" + this.seed
+                    });
+                }
+            }
+            return allCards;
+        }
+        
+        // 检查两张牌是否同色
+        isSameColor(card1, card2) {
+            if (!card1 || !card2) return false;
+            return card1.color === card2.color;
+        }
+        
+        // 检查牌是否背面朝上
+        isBack(card) {
+            return !card.faceUp;
+        }
+        
+        // 检查牌是否正面朝上
+        isFront(card) {
+            return card.faceUp;
+        }
+        
+        // 获取牌堆最后一张牌
+        getLastCard(deck) {
+            return deck[deck.length - 1];
+        }
+        
+        // 获取牌堆第一张牌
+        getFirstCard(deck) {
+            return deck[0];
+        }
+        
+        // 分割牌堆
+        splitDeck() {
+            let num = this.moreTwoCardsDeck();
+            let num2 = this.emptyOrReturnedDeck();
+            if (num === -1 || num2 === -1) {
+                return false;
+            }
+            
+            let i;
+            for (i = 0; i < this.gameDecks[num].length && this.isBack(this.gameDecks[num][i]); i++) {
+            }
+            
+            if (this.gameDecks[num].length - i < 1) {
+                return this.splitDeck();
+            }
+            
+            let splitIndex = this.random(i, this.gameDecks[num].length);
+            let count = this.gameDecks[num].length;
+            
+            for (let j = splitIndex; j < count; j++) {
+                let card = this.gameDecks[num][splitIndex];
+                this.gameDecks[num].splice(splitIndex, 1);
+                this.gameDecks[num2].push(card);
+            }
+            return true;
+        }
+        
+        // 找到有两张以上正面朝上牌的牌堆
+        moreTwoCardsDeck() {
+            let count = 0;
+            for (let i = 0; i < this.gameDecks.length; i++) {
+                if (this.gameDecks[i].length > 1 && this.isFront(this.getLastCard(this.gameDecks[i])) && this.isFront(this.gameDecks[i][this.gameDecks[i].length - 2])) {
+                    count++;
+                }
+            }
+            
+            switch (count) {
+                case 0:
+                    return -1;
+                default:
+                    count = this.random(1, count - 1);
+                    break;
+                case 1:
+                    break;
+            }
+            
+            for (let i = 0; i < this.gameDecks.length; i++) {
+                if (this.gameDecks[i].length > 1 && this.isFront(this.getLastCard(this.gameDecks[i])) && this.isFront(this.gameDecks[i][this.gameDecks[i].length - 2])) {
+                    count--;
+                    if (count === 0) {
+                        return i;
+                    }
+                }
+            }
+            return -1;
+        }
+        
+        // 找到空牌堆或最后一张牌背面朝上的牌堆
+        emptyOrReturnedDeck() {
+            let count = 0;
+            for (let i = 0; i < this.gameDecks.length; i++) {
+                if (this.gameDecks[i].length === 0 || this.isBack(this.getLastCard(this.gameDecks[i]))) {
+                    count++;
+                }
+            }
+            
+            switch (count) {
+                case 0:
+                    return -1;
+                default:
+                    count = this.random(1, count - 1);
+                    break;
+                case 1:
+                    break;
+            }
+            
+            for (let i = 0; i < this.gameDecks.length; i++) {
+                if (this.gameDecks[i].length === 0 || this.isBack(this.getLastCard(this.gameDecks[i]))) {
+                    count--;
+                    if (count === 0) {
+                        return i;
+                    }
+                }
+            }
+            return -1;
+        }
+        
+        // 找到空牌堆
+        emptyDeck() {
+            let count = 0;
+            for (let i = 0; i < this.gameDecks.length; i++) {
+                if (this.gameDecks[i].length === 0) {
+                    count++;
+                }
+            }
+            
+            switch (count) {
+                case 0:
+                    return -1;
+                default:
+                    count = this.random(1, count - 1);
+                    break;
+                case 1:
+                    break;
+            }
+            
+            for (let i = 0; i < this.gameDecks.length; i++) {
+                if (this.gameDecks[i].length === 0) {
+                    count--;
+                    if (count === 0) {
+                        return i;
+                    }
+                }
+            }
+            return -1;
+        }
+        
+        // 找到有正面朝上牌的牌堆
+        fullDeck() {
+            let count = 0;
+            for (let i = 0; i < this.gameDecks.length; i++) {
+                if (this.gameDecks[i].length > 0 && this.isFront(this.getFirstCard(this.gameDecks[i]))) {
+                    count++;
+                }
+            }
+            
+            switch (count) {
+                case 0:
+                    return -1;
+                default:
+                    count = this.random(1, count - 1);
+                    break;
+                case 1:
+                    break;
+            }
+            
+            for (let i = 0; i < this.gameDecks.length; i++) {
+                if (this.gameDecks[i].length > 0 && this.isFront(this.getFirstCard(this.gameDecks[i]))) {
+                    count--;
+                    if (count === 0) {
+                        return i;
+                    }
+                }
+            }
+            return -1;
+        }
+        
+        // 填充牌堆
+        fillHeap(toDraw, nCards) {
+            let num;
+            do {
+                num = this.emptyDeck();
+                if (num === -1) {
+                    toDraw = this.emptyHeap(toDraw);
+                }
+            } while (num === -1);
+            
+            while (nCards !== 0) {
+                let num2 = this.moreTwoCardsDeck();
+                if (num2 === -1) {
+                    return toDraw;
+                }
+                
+                if (num2 !== num) {
+                    let lastCard = this.getLastCard(this.gameDecks[num2]);
+                    this.gameDecks[num2].pop();
+                    lastCard.faceUp = false;
+                    
+                    if (toDraw !== 0 && this.random(0, 5) <= 1) {
+                        this.drawDeck.push(lastCard);
+                        toDraw--;
+                    } else {
+                        this.gameDecks[num].push(lastCard);
+                        nCards--;
+                    }
+                }
+            }
+            return toDraw;
+        }
+        
+        // 清空牌堆到抽牌堆
+        emptyHeap(toDraw) {
+            for (let i = 0; i < 100; i++) {
+                let index = this.fullDeck();
+                if (index === -1) continue;
+                
+                if (this.isFront(this.getFirstCard(this.gameDecks[index]))) {
+                    toDraw -= this.gameDecks[index].length;
+                    while (this.gameDecks[index].length !== 0) {
+                        let lastCard = this.getLastCard(this.gameDecks[index]);
+                        this.gameDecks[index].pop();
+                        this.drawDeck.push(lastCard);
+                    }
+                    return toDraw;
+                }
+            }
+            return toDraw;
+        }
+        
+        // 游戏中的ParametricAssignation算法
+        parametricAssignation() {
+            console.log('开始parametricAssignation方法，种子:', this.seed);
+            const startTime = Date.now();
+            
+            // 清空所有牌堆
+            this.gameDecks.forEach(deck => deck.length = 0);
+            this.drawDeck.length = 0;
+            this.asDecks.forEach(deck => deck.length = 0);
+            
+            // 初始化所有卡片
+            this.allCards = this.createCompleteDeck();
+            console.log('初始化所有卡片完成，耗时:', Date.now() - startTime, 'ms');
+            
+            // 按照游戏中的逻辑，将卡片添加到asDecks
+            let num = 0;
+            for (let i = 0; i < 4; i++) {
+                for (let j = 0; j < 13; j++) {
+                    this.asDecks[i].push(this.allCards[num]);
+                    this.allCards[num].faceUp = true;
+                    num++;
+                }
+            }
+            console.log('初始化asDecks完成，耗时:', Date.now() - startTime, 'ms');
+            
+            // 逆序构建牌局
+            let flag = false;
+            while (!flag) {
+                for (let k = 0; k < 4; k++) {
+                    if (this.asDecks[k].length === 0) {
+                        continue;
+                    }
+                    
+                    let cardScript = this.getLastCard(this.asDecks[k]);
+                    let targetDeck = null;
+                    
+                    for (let l = 0; l < this.gameDecks.length; l++) {
+                        if (this.gameDecks[l].length === 0) {
+                            if (targetDeck === null) {
+                                targetDeck = l;
+                            }
+                            continue;
+                        }
+                        
+                        let lastCard = this.getLastCard(this.gameDecks[l]);
+                        if (!this.isSameColor(cardScript, lastCard) && lastCard.value === cardScript.value + 1) {
+                            this.asDecks[k].pop();
+                            this.gameDecks[l].push(cardScript);
+                            cardScript = null;
+                            l = 10000;
+                        }
+                    }
+                    
+                    if (cardScript !== null && targetDeck !== null && cardScript.value === 12) {
+                        this.asDecks[k].pop();
+                        this.gameDecks[targetDeck].push(cardScript);
+                    }
+                }
+                
+                flag = true;
+                for (let m = 0; m < 4; m++) {
+                    flag = flag && (this.asDecks[m].length === 0);
+                }
+            }
+            console.log('逆序构建牌局完成，耗时:', Date.now() - startTime, 'ms');
+            
+            // 计算需要填充的牌数
+            let toDraw = 52;
+            for (let n = 0; n < 7; n++) {
+                toDraw -= n;
+            }
+            
+            // 填充牌堆
+            for (let num3 = 6; num3 >= 0; num3--) {
+                this.splitDeck();
+                toDraw = this.fillHeap(toDraw, num3);
+            }
+            console.log('填充牌堆完成，耗时:', Date.now() - startTime, 'ms');
+            
+            // 确保所有牌堆都有卡片
+            let num4 = 0;
+            while (this.splitDeck()) {
+                num4++;
+                if (num4 === 100) {
+                    break;
+                }
+            }
+            console.log('确保所有牌堆都有卡片完成，耗时:', Date.now() - startTime, 'ms');
+            
+            // 填充抽牌堆
+            for (let num5 = 0; num5 < this.gameDecks.length; num5++) {
+                while (this.gameDecks[num5].length > 1 && this.isFront(this.gameDecks[num5][this.gameDecks[num5].length - 2])) {
+                    let lastCard = this.getLastCard(this.gameDecks[num5]);
+                    this.gameDecks[num5].pop();
+                    this.drawDeck.push(lastCard);
+                }
+            }
+            console.log('填充抽牌堆完成，耗时:', Date.now() - startTime, 'ms');
+            
+            // 调整牌堆，确保每列牌数正确
+            for (let num5 = 0; num5 < this.gameDecks.length; num5++) {
+                if (this.gameDecks[num5].length === num5 + 1) {
+                    continue;
+                }
+                
+                for (let num6 = num5 + 1; num6 < this.gameDecks.length; num6++) {
+                    if (this.gameDecks[num5].length <= this.gameDecks[num6].length) {
+                        continue;
+                    }
+                    
+                    let tempList1 = [...this.gameDecks[num5]];
+                    let tempList2 = [...this.gameDecks[num6]];
+                    
+                    this.gameDecks[num5].length = 0;
+                    this.gameDecks[num6].length = 0;
+                    
+                    tempList1.forEach(card => this.gameDecks[num6].push(card));
+                    tempList2.forEach(card => this.gameDecks[num5].push(card));
+                }
+            }
+            console.log('调整牌堆完成，耗时:', Date.now() - startTime, 'ms');
+            
+            // 检查并修正牌堆数量
+    let flag2 = false;
+    for (let num7 = 0; num7 < 7; num7++) {
+        if (this.gameDecks[num7].length !== num7 + 1) {
+            flag2 = true;
+            console.log(`牌堆${num7}数量不正确: ${this.gameDecks[num7].length}, 应该是: ${num7 + 1}`);
+        }
+    }
+    
+    if (flag2) {
+        console.log('牌堆数量不正确，使用备用方法调整');
+        // 使用备用方法调整牌堆数量，避免无限递归
+        this.adjustDeckSizes();
+    }
+            
+            // 随机化抽牌堆
+            this.randomizeDrawDeck();
+            
+            // 确保所有牌堆最后一张牌是正面朝上
+            for (let num8 = 0; num8 < this.gameDecks.length; num8++) {
+                if (this.gameDecks[num8].length > 0) {
+                    this.gameDecks[num8][this.gameDecks[num8].length - 1].faceUp = true;
+                }
+            }
+            
+            console.log('parametricAssignation方法完成，耗时:', Date.now() - startTime, 'ms');
+        }
+        
+        // 随机化抽牌堆
+        randomizeDrawDeck() {
+            // 使用与游戏相同的随机化算法
+            let tempList = [...this.drawDeck];
+            this.drawDeck.length = 0;
+            
+            while (tempList.length > 0) {
+                const randomIndex = this.random(0, tempList.length - 1);
+                const card = tempList[randomIndex];
+                this.drawDeck.push(card);
+                tempList.splice(randomIndex, 1);
+            }
+            
+            // 设置所有抽牌堆的牌为背面朝上
+            for (let card of this.drawDeck) {
+                card.faceUp = false;
+            }
+        }
+        
+        // 调整牌堆大小的备用方法
+        adjustDeckSizes() {
+            console.log('=== 调整牌堆大小 ===');
+            
+            // 计算每个牌堆应该有的卡片数量
+            const expectedSizes = [1, 2, 3, 4, 5, 6, 7];
+            
+            // 收集所有多余的卡片
+            let extraCards = [];
+            
+            // 首先处理每个牌堆
+            for (let i = 0; i < 7; i++) {
+                const expectedSize = expectedSizes[i];
+                const currentSize = this.gameDecks[i].length;
+                
+                if (currentSize > expectedSize) {
+                    // 移除多余的卡片
+                    while (this.gameDecks[i].length > expectedSize) {
+                        extraCards.push(this.gameDecks[i].pop());
+                    }
+                }
+            }
+            
+            // 然后添加缺少的卡片
+            for (let i = 0; i < 7; i++) {
+                const expectedSize = expectedSizes[i];
+                
+                while (this.gameDecks[i].length < expectedSize && this.drawDeck.length > 0) {
+                    // 从抽牌堆中获取卡片
+                    const card = this.drawDeck.pop();
+                    if (card) {
+                        // 确保卡片是背面朝上的
+                        card.faceUp = false;
+                        this.gameDecks[i].push(card);
+                    }
+                }
+                
+                // 如果抽牌堆没有卡片了，使用多余的卡片
+                while (this.gameDecks[i].length < expectedSize && extraCards.length > 0) {
+                    const card = extraCards.pop();
+                    if (card) {
+                        // 确保卡片是背面朝上的
+                        card.faceUp = false;
+                        this.gameDecks[i].push(card);
+                    }
+                }
+            }
+            
+            // 将剩余的多余卡片添加到抽牌堆
+            while (extraCards.length > 0) {
+                this.drawDeck.push(extraCards.pop());
+            }
+            
+            console.log('牌堆大小调整完成');
+        }
+        
+        // 生成可解牌局
+        generateSolvableDeck() {
+            console.log('开始generateSolvableDeck方法，种子:', this.seed);
+            const startTime = Date.now();
+            
+            // 执行游戏中的ParametricAssignation算法
+            this.parametricAssignation();
+            
+            // 构建返回对象
+            let tableau = this.gameDecks.map(deck => {
+                return deck.map(card => ({
+                    suit: card.suit,
+                    rank: card.rank,
+                    text: card.text,
+                    value: card.value, // 保持与游戏一致，使用0-12，A=0，K=12
+                    color: card.color,
+                    faceUp: card.faceUp,
+                    id: card.id
+                }));
+            });
+            
+            let stock = this.drawDeck.map(card => ({
+                suit: card.suit,
+                rank: card.rank,
+                text: card.text,
+                value: card.value, // 保持与游戏一致，使用0-12，A=0，K=12
+                color: card.color,
+                faceUp: false,
+                id: card.id + "-stock"
+            }));
+            
+            console.log('generateSolvableDeck方法完成，耗时:', Date.now() - startTime, 'ms');
+            
+            // 直接返回构建好的tableau和stock
+            return {
+                tableau: tableau,
+                stock: stock
+            };
+        }
+        
+        // 构建牌局对象
+        buildDeckObject() {
+            return this.generateSolvableDeck();
+        }
+    }
+
+    // 循环移位生成方法 - 基于offline-s.html的实现
+    function createCycleShiftDeck(seed) {
+        // 确保种子为正整数
+        seed = Math.abs(seed);
+        if (seed === 0) seed = 1;
+        
+        // ==================== 阶段1：创建完整牌组 ====================
+        // 花色顺序：梅花、方块、红桃、黑桃
+        const SUIT_CHAR = ['♣', '♦', '♥', '♠'];
+        const RANK_CHAR = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+        const COLORS = {'♣': 'black', '♦': 'red', '♥': 'red', '♠': 'black'};
+        
+        // 创建初始牌组，按照花色分组，每种花色A到K
+        let allCards = [];
+        for (let s = 0; s < 4; s++) {
+            for (let r = 0; r < 13; r++) {
+                allCards.push({
+                    suit: SUIT_CHAR[s],
+                    rank: r + 1,
+                    text: RANK_CHAR[r],
+                    value: r + 1,
+                    color: COLORS[SUIT_CHAR[s]],
+                    faceUp: false,
+                    id: SUIT_CHAR[s] + "-" + RANK_CHAR[r] + "-seed" + seed
+                });
+            }
+        }
+        
+        // ==================== 阶段2：基于种子的洗牌算法 ====================
+        // 使用线性同余生成器(LCG)实现更复杂的洗牌，确保能生成超过52种不同牌局
+        function shuffleArray(array, seed) {
+            let copy = [...array];
+            let n = copy.length;
+            let lcg = (() => {
+                // LCG参数
+                const m = 2147483647;
+                const a = 16807;
+                const c = 0;
+                let state = seed % m;
+                return () => {
+                    state = (a * state + c) % m;
+                    return state / m;
+                };
+            })();
+            
+            for (let i = n - 1; i > 0; i--) {
+                let j = Math.floor(lcg() * (i + 1));
+                [copy[i], copy[j]] = [copy[j], copy[i]];
+            }
+            return copy;
+        }
+        
+        // 使用LCG洗牌算法代替简单的循环移位
+        allCards = shuffleArray(allCards, seed);
+        
+        // ==================== 阶段3：构建tableau ====================
+        let tableau = [[], [], [], [], [], [], []];
+        
+        // 记录已使用的牌
+        let usedCards = new Set();
+        
+        // 为每列生成连续的数字，严格按照v100逻辑
+        for (let i = 0; i < 7; i++) {
+            let columnLength = i + 1;
+            
+            // 使用完全独立的起始点数计算，确保每列之间没有任何关联
+            // 基于列索引和种子值的不同组合，确保每列的起始点都是唯一的
+            let lcgSeed = seed * (i + 1) * 12345;
+            let lcgA = 1103515245;
+            let lcgC = 12345;
+            let lcgM = 2147483648;
+            
+            // 生成随机起始rank (1-13)
+            let randomStartRank = ((lcgSeed * lcgA + lcgC) % lcgM) % 13 + 1;
+            
+            let columnCards = [];
+            let availableCards = allCards.filter(card => !usedCards.has(card.suit + card.rank));
+            
+            // 1. 尝试生成连续序列：从随机起始rank开始构建
+            let sequenceGenerated = false;
+            
+            // 1.1 找到起始rank的牌
+            let startCards = availableCards.filter(card => card.rank === randomStartRank);
+            
+            // 1.2 尝试每种可能的起始牌
+            for (let startCard of startCards) {
+                let tempColumnCards = [];
+                let tempUsedCards = new Set([...usedCards]);
+                
+                tempColumnCards.push(startCard);
+                tempUsedCards.add(startCard.suit + startCard.rank);
+                
+                let isContinuous = true;
+                let currentRank = startCard.rank;
+                let currentSuit = startCard.suit;
+                
+                // 1.3 尝试构建剩余的连续牌
+                for (let j = 1; j < columnLength; j++) {
+                    let nextRank = currentRank === 13 ? 1 : currentRank + 1;
+                    let found = false;
+                    
+                    // 1.4 从可用牌中找到下一张连续的牌
+                    for (let card of availableCards) {
+                        let cardKey = card.suit + card.rank;
+                        if (card.rank === nextRank && !tempUsedCards.has(cardKey)) {
+                            // 检查花色是否相同，或者是K后接A的情况（K后接A时花色必须不同）
+                            if (currentRank !== 13 && card.suit !== currentSuit) {
+                                continue;
+                            }
+                            // K后接A时花色必须不同
+                            if (currentRank === 13 && card.suit === currentSuit) {
+                                continue;
+                            }
+                            tempColumnCards.push(card);
+                            tempUsedCards.add(cardKey);
+                            currentRank = nextRank;
+                            // 如果是K后接A，更新花色
+                            if (currentRank === 1) {
+                                currentSuit = card.suit;
+                            }
+                            found = true;
+                            break;
+                        }
+                    }
+                    
+                    // 1.5 如果找不到连续的牌，标记为失败
+                    if (!found) {
+                        isContinuous = false;
+                        break;
+                    }
+                }
+                
+                // 1.6 如果生成了连续序列，使用它
+                if (isContinuous) {
+                    columnCards = tempColumnCards;
+                    usedCards = tempUsedCards;
+                    sequenceGenerated = true;
+                    break;
+                }
+            }
+            
+            // 2. 如果无法生成连续序列，尝试所有可能的起始rank
+            if (!sequenceGenerated) {
+                // 2.1 尝试每种可能的起始rank
+                for (let r = 1; r <= 13; r++) {
+                    let rankStartCards = availableCards.filter(card => card.rank === r);
+                    
+                    for (let startCard of rankStartCards) {
+                        let tempColumnCards = [];
+                        let tempUsedCards = new Set([...usedCards]);
+                        
+                        tempColumnCards.push(startCard);
+                        tempUsedCards.add(startCard.suit + startCard.rank);
+                        
+                        let isContinuous = true;
+                        let currentRank = startCard.rank;
+                        let currentSuit = startCard.suit;
+                        
+                        // 2.2 尝试构建剩余的连续牌
+                        for (let j = 1; j < columnLength; j++) {
+                            let nextRank = currentRank === 13 ? 1 : currentRank + 1;
+                            let found = false;
+                            
+                            // 2.3 从可用牌中找到下一张连续的牌
+                            for (let card of availableCards) {
+                                let cardKey = card.suit + card.rank;
+                                if (card.rank === nextRank && !tempUsedCards.has(cardKey)) {
+                                    // 检查花色是否相同，或者是K后接A的情况
+                                    if (currentRank !== 13 && card.suit !== currentSuit) {
+                                        continue;
+                                    }
+                                    tempColumnCards.push(card);
+                                    tempUsedCards.add(cardKey);
+                                    currentRank = nextRank;
+                                    // 如果是K后接A，更新花色
+                                    if (currentRank === 1) {
+                                        currentSuit = card.suit;
+                                    }
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            
+                            // 2.4 如果找不到连续的牌，标记为失败
+                            if (!found) {
+                                isContinuous = false;
+                                break;
+                            }
+                        }
+                        
+                        // 2.5 如果生成了连续序列，使用它
+                        if (isContinuous) {
+                            columnCards = tempColumnCards;
+                            usedCards = tempUsedCards;
+                            sequenceGenerated = true;
+                            break;
+                        }
+                    }
+                    
+                    if (sequenceGenerated) break;
+                }
+            }
+            
+            // 3. 如果仍然无法生成连续序列，使用备用方法
+            if (!sequenceGenerated) {
+                // 3.1 尝试所有可能的起始牌和花色组合
+                let allPossibleStartCards = [];
+                for (let card of allCards) {
+                    let cardKey = card.suit + card.rank;
+                    if (!usedCards.has(cardKey)) {
+                        allPossibleStartCards.push(card);
+                    }
+                }
+                
+                // 3.2 尝试每种可能的起始牌
+                for (let startCard of allPossibleStartCards) {
+                    let tempColumnCards = [];
+                    let tempUsedCards = new Set([...usedCards]);
+                    
+                    tempColumnCards.push(startCard);
+                    tempUsedCards.add(startCard.suit + startCard.rank);
+                    
+                    let isContinuous = true;
+                    let currentRank = startCard.rank;
+                    let currentSuit = startCard.suit;
+                    
+                    // 3.3 尝试构建剩余的连续牌
+                    for (let j = 1; j < columnLength; j++) {
+                        let nextRank = currentRank === 13 ? 1 : currentRank + 1;
+                        let found = false;
+                        
+                        // 3.4 从所有牌中找到下一张连续的牌
+                        for (let card of allCards) {
+                            let cardKey = card.suit + card.rank;
+                            if (card.rank === nextRank && !tempUsedCards.has(cardKey)) {
+                                // 检查花色是否相同，或者是K后接A的情况
+                                if (currentRank !== 13 && card.suit !== currentSuit) {
+                                    continue;
+                                }
+                                tempColumnCards.push(card);
+                                tempUsedCards.add(cardKey);
+                                currentRank = nextRank;
+                                // 如果是K后接A，更新花色
+                                if (currentRank === 1) {
+                                    currentSuit = card.suit;
+                                }
+                                found = true;
+                                break;
+                            }
+                        }
+                        
+                        // 3.5 如果找不到连续的牌，标记为失败
+                        if (!found) {
+                            isContinuous = false;
+                            break;
+                        }
+                    }
+                    
+                    // 3.6 如果生成了连续序列，使用它
+                    if (isContinuous) {
+                        columnCards = tempColumnCards;
+                        usedCards = tempUsedCards;
+                        sequenceGenerated = true;
+                        break;
+                    }
+                }
+            }
+            
+            // 4. 如果仍然无法生成连续序列，使用最后手段：创建连续序列但允许花色变化
+            if (!sequenceGenerated) {
+                // 4.1 从可用牌中选择一张作为起始牌
+                let startCard = null;
+                for (let card of allCards) {
+                    let cardKey = card.suit + card.rank;
+                    if (!usedCards.has(cardKey)) {
+                        startCard = card;
+                        break;
+                    }
+                }
+                
+                if (startCard) {
+                    columnCards.push(startCard);
+                    usedCards.add(startCard.suit + startCard.rank);
+                    
+                    // 4.2 为每列生成严格连续的序列
+                    let currentRank = startCard.rank;
+                    let currentSuit = startCard.suit;
+                    
+                    for (let j = 1; j < columnLength; j++) {
+                        let nextRank = currentRank === 13 ? 1 : currentRank + 1;
+                        let found = false;
+                        
+                        // 4.3 尝试找到下一张连续的牌，优先同花色
+                        for (let card of allCards) {
+                            let cardKey = card.suit + card.rank;
+                            if (card.rank === nextRank && !usedCards.has(cardKey)) {
+                                columnCards.push(card);
+                                usedCards.add(cardKey);
+                                currentRank = nextRank;
+                                found = true;
+                                break;
+                            }
+                        }
+                        
+                        // 4.4 如果找不到连续的牌，使用任意牌
+                        if (!found) {
+                            for (let card of allCards) {
+                                let cardKey = card.suit + card.rank;
+                                if (!usedCards.has(cardKey)) {
+                                    columnCards.push(card);
+                                    usedCards.add(cardKey);
+                                    found = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // 5. 将生成的列添加到tableau
+            tableau[i] = columnCards;
+        }
+        
+        // ==================== 阶段4：构建stock ====================
+        // 收集未使用的牌作为stock
+        let stock = [];
+        for (let card of allCards) {
+            let cardKey = card.suit + card.rank;
+            if (!usedCards.has(cardKey)) {
+                card.faceUp = false;
+                stock.push(card);
+            }
+        }
+        
+        // ==================== 阶段5：最终调整 ====================
+        // 确保每列的牌数正确
+        for (let i = 0; i < 7; i++) {
+            if (tableau[i].length !== i + 1) {
+                // 如果牌数不正确，从stock中补充或移除
+                if (tableau[i].length > i + 1) {
+                    // 移除多余的牌
+                    while (tableau[i].length > i + 1) {
+                        let card = tableau[i].pop();
+                        stock.push(card);
+                    }
+                } else if (tableau[i].length < i + 1 && stock.length > 0) {
+                    // 从stock中补充牌
+                    while (tableau[i].length < i + 1 && stock.length > 0) {
+                        let card = stock.pop();
+                        tableau[i].push(card);
+                    }
+                }
+            }
+        }
+        
+        // 确保每列最后一张牌面朝上
+        for (let i = 0; i < 7; i++) {
+            if (tableau[i].length > 0) {
+                tableau[i][tableau[i].length - 1].faceUp = true;
+            }
+        }
+        
+        // 返回生成的牌局
+        return {
+            tableau: tableau,
+            stock: stock
+        };
+    }
+
+    // 跟踪当前使用的生成方法，用于交替模式
+    let currentGenerationMethod = 'reverse';
+    let deckCounter = 0;
+
+    // 从offline.html复制的逆向推演算法
+    function createReverseDeck(seed) {
+        // ==================== 阶段1：创建完整牌组 ====================
+        // 花色顺序：梅花、方块、红桃、黑桃
+        const SUIT_CHAR = ['♣', '♦', '♥', '♠'];
+        const RANK_CHAR = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+        const COLORS = {'♣': 'black', '♦': 'red', '♥': 'red', '♠': 'black'};
+        
+        let allCards = [];
+        for (let s = 0; s < 4; s++) {
+            for (let r = 0; r < 13; r++) {
+                allCards.push({
+                    suit: SUIT_CHAR[s],
+                    rank: r + 1,
+                    text: RANK_CHAR[r],
+                    value: r + 1,
+                    color: COLORS[SUIT_CHAR[s]],
+                    faceUp: false,
+                    id: SUIT_CHAR[s] + "-" + RANK_CHAR[r] + "-seed" + seed
+                });
+            }
+        }
+        
+        // ==================== 阶段2：基于种子的洗牌算法 ====================
+        // 使用线性同余生成器(LCG)实现更复杂的洗牌，确保能生成超过52种不同牌局
+        function shuffleArray(array, seed) {
+            let copy = [...array];
+            let n = copy.length;
+            let lcg = (() => {
+                // LCG参数
+                const m = 2147483647;
+                const a = 16807;
+                const c = 0;
+                let state = seed % m;
+                return () => {
+                    state = (a * state + c) % m;
+                    return state / m;
+                };
+            })();
+            
+            for (let i = n - 1; i > 0; i--) {
+                let j = Math.floor(lcg() * (i + 1));
+                [copy[i], copy[j]] = [copy[j], copy[i]];
+            }
+            return copy;
+        }
+        
+        // 使用LCG洗牌算法代替简单的循环移位
+        allCards = shuffleArray(allCards, seed);
+        
+        // ==================== 阶段3：构建tableau ====================
+        let tableau = [[], [], [], [], [], [], []];
+        
+        // 记录已使用的牌
+        let usedCards = new Set();
+        
+        // 存储每列顶部牌的rank，用于后续规则检查
+        let topRanks = [];
+        
+        // 为每列生成连续的数字，严格按照v100逻辑
+        for (let i = 0; i < 7; i++) {
+            let columnLength = i + 1;
+            
+            // 使用完全独立的起始点数计算，确保每列之间没有任何关联
+            // 基于列索引和种子值的不同组合，确保每列的起始点都是唯一的
+            let lcgSeed = seed * (i + 1) * 12345;
+            let lcgA = 1103515245;
+            let lcgC = 12345;
+            let lcgM = 2147483648;
+            
+            // 生成随机起始rank (1-13)
+            let randomStartRank = ((lcgSeed * lcgA + lcgC) % lcgM) % 13 + 1;
+            
+            let columnCards = [];
+            let availableCards = allCards.filter(card => !usedCards.has(card.suit + card.rank));
+            
+            // 1. 尝试生成连续序列：从随机起始rank开始构建
+            let sequenceGenerated = false;
+            
+            // 1.1 找到起始rank的牌
+            let startCards = availableCards.filter(card => card.rank === randomStartRank);
+            
+            // 1.2 尝试每种可能的起始牌
+            for (let startCard of startCards) {
+                let tempColumnCards = [];
+                let tempUsedCards = new Set([...usedCards]);
+                
+                tempColumnCards.push(startCard);
+                tempUsedCards.add(startCard.suit + startCard.rank);
+                
+                let isContinuous = true;
+                let currentRank = startCard.rank;
+                let currentSuit = startCard.suit;
+                
+                // 1.3 尝试构建剩余的连续牌
+                for (let j = 1; j < columnLength; j++) {
+                    let nextRank = currentRank === 13 ? 1 : currentRank + 1;
+                    let found = false;
+                    
+                    // 1.4 从可用牌中找到下一张连续的牌
+                    for (let card of availableCards) {
+                        let cardKey = card.suit + card.rank;
+                        if (card.rank === nextRank && !tempUsedCards.has(cardKey)) {
+                            // 检查花色是否相同，或者是K后接A的情况（K后接A时花色必须不同）
+                            if (currentRank !== 13 && card.suit !== currentSuit) {
+                                continue;
+                            }
+                            // K后接A时花色必须不同
+                            if (currentRank === 13 && card.suit === currentSuit) {
+                                continue;
+                            }
+                            tempColumnCards.push(card);
+                            tempUsedCards.add(cardKey);
+                            currentRank = nextRank;
+                            // 如果是K后接A，更新花色
+                            if (currentRank === 1) {
+                                currentSuit = card.suit;
+                            }
+                            found = true;
+                            break;
+                        }
+                    }
+                    
+                    // 1.5 如果找不到连续的牌，标记为失败
+                    if (!found) {
+                        isContinuous = false;
+                        break;
+                    }
+                }
+                
+                // 1.6 如果生成了连续序列，使用它
+                if (isContinuous) {
+                    columnCards = tempColumnCards;
+                    usedCards = tempUsedCards;
+                    sequenceGenerated = true;
+                    break;
+                }
+            }
+            
+            // 2. 如果无法生成连续序列，尝试所有可能的起始rank
+            if (!sequenceGenerated) {
+                // 2.1 尝试每种可能的起始rank
+                for (let r = 1; r <= 13; r++) {
+                    let rankStartCards = availableCards.filter(card => card.rank === r);
+                    
+                    for (let startCard of rankStartCards) {
+                        let tempColumnCards = [];
+                        let tempUsedCards = new Set([...usedCards]);
+                        
+                        tempColumnCards.push(startCard);
+                        tempUsedCards.add(startCard.suit + startCard.rank);
+                        
+                        let isContinuous = true;
+                        let currentRank = startCard.rank;
+                        let currentSuit = startCard.suit;
+                        
+                        // 2.2 尝试构建剩余的连续牌
+                        for (let j = 1; j < columnLength; j++) {
+                            let nextRank = currentRank === 13 ? 1 : currentRank + 1;
+                            let found = false;
+                            
+                            // 2.3 从可用牌中找到下一张连续的牌
+                            for (let card of availableCards) {
+                                let cardKey = card.suit + card.rank;
+                                if (card.rank === nextRank && !tempUsedCards.has(cardKey)) {
+                                    // 检查花色是否相同，或者是K后接A的情况
+                                    if (currentRank !== 13 && card.suit !== currentSuit) {
+                                        continue;
+                                    }
+                                    tempColumnCards.push(card);
+                                    tempUsedCards.add(cardKey);
+                                    currentRank = nextRank;
+                                    // 如果是K后接A，更新花色
+                                    if (currentRank === 1) {
+                                        currentSuit = card.suit;
+                                    }
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            
+                            // 2.4 如果找不到连续的牌，标记为失败
+                            if (!found) {
+                                isContinuous = false;
+                                break;
+                            }
+                        }
+                        
+                        // 2.5 如果生成了连续序列，使用它
+                        if (isContinuous) {
+                            columnCards = tempColumnCards;
+                            usedCards = tempUsedCards;
+                            sequenceGenerated = true;
+                            break;
+                        }
+                    }
+                    
+                    if (sequenceGenerated) break;
+                }
+            }
+            
+            // 3. 如果仍然无法生成连续序列，使用备用方法
+            if (!sequenceGenerated) {
+                // 3.1 尝试所有可能的起始牌和花色组合
+                let allPossibleStartCards = [];
+                for (let card of allCards) {
+                    let cardKey = card.suit + card.rank;
+                    if (!usedCards.has(cardKey)) {
+                        allPossibleStartCards.push(card);
+                    }
+                }
+                
+                // 3.2 尝试每种可能的起始牌
+                for (let startCard of allPossibleStartCards) {
+                    let tempColumnCards = [];
+                    let tempUsedCards = new Set([...usedCards]);
+                    
+                    tempColumnCards.push(startCard);
+                    tempUsedCards.add(startCard.suit + startCard.rank);
+                    
+                    let isContinuous = true;
+                    let currentRank = startCard.rank;
+                    let currentSuit = startCard.suit;
+                    
+                    // 3.3 尝试构建剩余的连续牌
+                    for (let j = 1; j < columnLength; j++) {
+                        let nextRank = currentRank === 13 ? 1 : currentRank + 1;
+                        let found = false;
+                        
+                        // 3.4 从所有牌中找到下一张连续的牌
+                        for (let card of allCards) {
+                            let cardKey = card.suit + card.rank;
+                            if (card.rank === nextRank && !tempUsedCards.has(cardKey)) {
+                                // 检查花色是否相同，或者是K后接A的情况
+                                if (currentRank !== 13 && card.suit !== currentSuit) {
+                                    continue;
+                                }
+                                tempColumnCards.push(card);
+                                tempUsedCards.add(cardKey);
+                                currentRank = nextRank;
+                                // 如果是K后接A，更新花色
+                                if (currentRank === 1) {
+                                    currentSuit = card.suit;
+                                }
+                                found = true;
+                                break;
+                            }
+                        }
+                        
+                        // 3.5 如果找不到连续的牌，标记为失败
+                        if (!found) {
+                            isContinuous = false;
+                            break;
+                        }
+                    }
+                    
+                    // 3.6 如果生成了连续序列，使用它
+                    if (isContinuous) {
+                        columnCards = tempColumnCards;
+                        usedCards = tempUsedCards;
+                        sequenceGenerated = true;
+                        break;
+                    }
+                }
+            }
+            
+            // 4. 如果仍然无法生成连续序列，使用最后手段：创建连续序列但允许花色变化
+            if (!sequenceGenerated) {
+                // 4.1 从可用牌中选择一张作为起始牌
+                let startCard = null;
+                for (let card of allCards) {
+                    let cardKey = card.suit + card.rank;
+                    if (!usedCards.has(cardKey)) {
+                        startCard = card;
+                        break;
+                    }
+                }
+                
+                if (startCard) {
+                    columnCards.push(startCard);
+                    usedCards.add(startCard.suit + startCard.rank);
+                    
+                    // 4.2 为每列生成严格连续的序列
+                    let currentRank = startCard.rank;
+                    let currentSuit = startCard.suit;
+                    
+                    for (let j = 1; j < columnLength; j++) {
+                        let nextRank = currentRank === 13 ? 1 : currentRank + 1;
+                        let found = false;
+                        
+                        // 4.3 尝试找到下一张连续的牌，优先同花色
+                        for (let card of allCards) {
+                            let cardKey = card.suit + card.rank;
+                            if (card.rank === nextRank && !usedCards.has(cardKey) && card.suit === currentSuit) {
+                                columnCards.push(card);
+                                usedCards.add(cardKey);
+                                currentRank = nextRank;
+                                found = true;
+                                break;
+                            }
+                        }
+                        
+                        // 4.4 如果找不到同花色的连续牌，尝试不同花色的连续牌（特别是K后接A的情况）
+                        if (!found) {
+                            for (let card of allCards) {
+                                let cardKey = card.suit + card.rank;
+                                if (card.rank === nextRank && !usedCards.has(cardKey)) {
+                                    columnCards.push(card);
+                                    usedCards.add(cardKey);
+                                    currentRank = nextRank;
+                                    currentSuit = card.suit;
+                                    found = true;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        // 4.5 如果找不到连续的牌，使用任意可用牌
+                        if (!found) {
+                            for (let card of allCards) {
+                                let cardKey = card.suit + card.rank;
+                                if (!usedCards.has(cardKey)) {
+                                    columnCards.push(card);
+                                    usedCards.add(cardKey);
+                                    currentRank = card.rank;
+                                    currentSuit = card.suit;
+                                    found = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // 4. 确保列长度正确
+            while (columnCards.length < columnLength) {
+                // 尝试找到符合连续性的牌
+                let found = false;
+                let lastCard = columnCards[columnCards.length - 1];
+                let nextRank = lastCard.rank === 13 ? 1 : lastCard.rank + 1;
+                
+                // 首先尝试找到连续的牌
+                for (let card of allCards) {
+                    let cardKey = card.suit + card.rank;
+                    if (!usedCards.has(cardKey) && card.rank === nextRank) {
+                        // 检查花色是否相同，或者是K后接A的情况
+                        if (lastCard.rank !== 13 && card.suit !== lastCard.suit) {
+                            continue;
+                        }
+                        columnCards.push(card);
+                        usedCards.add(cardKey);
+                        found = true;
+                        break;
+                    }
+                }
+                
+                // 如果找不到连续的牌，使用任意可用牌
+                if (!found) {
+                    for (let card of allCards) {
+                        let cardKey = card.suit + card.rank;
+                        if (!usedCards.has(cardKey)) {
+                            columnCards.push(card);
+                            usedCards.add(cardKey);
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            // 5. 验证连续性和花色一致性
+            let continuityCheckPassed = true;
+            for (let j = 1; j < columnCards.length; j++) {
+                let prevCard = columnCards[j-1];
+                let currCard = columnCards[j];
+                let expectedRank = prevCard.rank === 13 ? 1 : prevCard.rank + 1;
+                if (currCard.rank !== expectedRank) {
+                    continuityCheckPassed = false;
+                    break;
+                }
+                // 检查花色是否相同，或者是K后接A的情况
+                if (prevCard.rank !== 13 && currCard.suit !== prevCard.suit) {
+                    continuityCheckPassed = false;
+                    break;
+                }
+            }
+            
+            // 6. 如果不连续，重新生成整个列
+            if (!continuityCheckPassed) {
+                // 6.1 移除当前列的所有牌
+                for (let k = 0; k < columnCards.length; k++) {
+                    usedCards.delete(columnCards[k].suit + columnCards[k].rank);
+                }
+                columnCards = [];
+                
+                // 6.2 按 rank 排序所有可用牌
+                let sortedAvailableCards = allCards.filter(card => !usedCards.has(card.suit + card.rank))
+                                                  .sort((a, b) => a.rank - b.rank);
+                
+                // 6.3 选择连续的牌
+                if (sortedAvailableCards.length >= columnLength) {
+                    // 找到一个连续序列
+                    for (let start = 0; start <= sortedAvailableCards.length - columnLength; start++) {
+                        let isContinuous = true;
+                        let tempColumn = [];
+                        let tempUsed = new Set([...usedCards]);
+                        
+                        tempColumn.push(sortedAvailableCards[start]);
+                        tempUsed.add(sortedAvailableCards[start].suit + sortedAvailableCards[start].rank);
+                        
+                        for (let j = 1; j < columnLength; j++) {
+                            let prevCard = tempColumn[j-1];
+                            let currCard = sortedAvailableCards[start + j];
+                            let expectedRank = prevCard.rank === 13 ? 1 : prevCard.rank + 1;
+                            
+                            if (currCard.rank === expectedRank) {
+                                // 检查花色是否相同，或者是K后接A的情况
+                                if (prevCard.rank !== 13 && currCard.suit !== prevCard.suit) {
+                                    isContinuous = false;
+                                    break;
+                                }
+                                tempColumn.push(currCard);
+                                tempUsed.add(currCard.suit + currCard.rank);
+                            } else {
+                                isContinuous = false;
+                                break;
+                            }
+                        }
+                        
+                        if (isContinuous) {
+                            columnCards = tempColumn;
+                            usedCards = tempUsed;
+                            continuityCheckPassed = true;
+                            break;
+                        }
+                    }
+                }
+                
+                // 6.4 如果仍然没有连续序列，使用任意牌
+                if (columnCards.length === 0) {
+                    for (let j = 0; j < columnLength; j++) {
+                        for (let card of allCards) {
+                            let cardKey = card.suit + card.rank;
+                            if (!usedCards.has(cardKey)) {
+                                columnCards.push(card);
+                                usedCards.add(cardKey);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // 7. 记录顶部牌的rank
+            if (columnCards.length > 0) {
+                topRanks.push(columnCards[columnCards.length - 1].rank);
+            } else {
+                topRanks.push(0);
+            }
+            
+            // 将找到的牌添加到tableau，并设置faceUp
+            for (let j = 0; j < columnCards.length; j++) {
+                let card = columnCards[j];
+                tableau[i].push({
+                    suit: card.suit,
+                    rank: card.rank,
+                    text: card.text,
+                    value: card.value,
+                    color: card.color,
+                    faceUp: j === columnCards.length - 1, // 只有最上面一张是翻开的
+                    id: card.id + "-tableau"
+                });
+            }
+        }
+        
+        // 辅助函数：重新生成列以避免规则冲突，同时保持连续性和花色一致性
+        function regenerateColumn(colIndex) {
+            let columnLength = colIndex + 1;
+            
+            // 1. 移除当前列的所有牌
+            let column = tableau[colIndex];
+            for (let card of column) {
+                usedCards.delete(card.suit + card.rank);
+            }
+            tableau[colIndex] = [];
+            
+            // 2. 找到所有可用牌
+            let availableCards = allCards.filter(card => !usedCards.has(card.suit + card.rank));
+            
+            // 3. 尝试找到一个连续序列
+            let sequenceFound = false;
+            let newColumnCards = [];
+            let newUsedCards = new Set([...usedCards]);
+            
+            // 3.1 遍历所有可用牌，寻找可能的起始点
+            for (let startCard of availableCards) {
+                let tempColumn = [];
+                let tempUsed = new Set([...usedCards]);
+                
+                tempColumn.push(startCard);
+                tempUsed.add(startCard.suit + startCard.rank);
+                
+                // 3.2 构建连续序列
+                let currentRank = startCard.rank;
+                let currentSuit = startCard.suit;
+                let isContinuous = true;
+                
+                for (let j = 1; j < columnLength; j++) {
+                    let nextRank = currentRank === 13 ? 1 : currentRank + 1;
+                    let found = false;
+                    
+                    for (let card of availableCards) {
+                        if (card.rank === nextRank && !tempUsed.has(card.suit + card.rank)) {
+                            // 检查花色是否相同，或者是K后接A的情况（K后接A时花色必须不同）
+                            if (currentRank !== 13 && card.suit !== currentSuit) {
+                                continue;
+                            }
+                            // K后接A时花色必须不同
+                            if (currentRank === 13 && card.suit === currentSuit) {
+                                continue;
+                            }
+                            tempColumn.push(card);
+                            tempUsed.add(card.suit + card.rank);
+                            currentRank = nextRank;
+                            // 如果是K后接A，更新花色
+                            if (currentRank === 1) {
+                                currentSuit = card.suit;
+                            }
+                            found = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!found) {
+                        isContinuous = false;
+                        break;
+                    }
+                }
+                
+                // 3.3 如果生成了连续序列，使用它
+                if (isContinuous) {
+                    newColumnCards = tempColumn;
+                    newUsedCards = tempUsed;
+                    sequenceFound = true;
+                    break;
+                }
+            }
+            
+            // 4. 如果找不到合适的序列，使用备用方法
+            if (!sequenceFound) {
+                // 4.1 从可用牌中选择一张作为起始牌
+                let startCard = null;
+                for (let card of allCards) {
+                    let cardKey = card.suit + card.rank;
+                    if (!usedCards.has(cardKey)) {
+                        startCard = card;
+                        break;
+                    }
+                }
+                
+                if (startCard) {
+                    newColumnCards.push(startCard);
+                    newUsedCards.add(startCard.suit + startCard.rank);
+                    
+                    // 4.2 为每列生成严格连续的序列
+                    let currentRank = startCard.rank;
+                    let currentSuit = startCard.suit;
+                    
+                    for (let j = 1; j < columnLength; j++) {
+                        let nextRank = currentRank === 13 ? 1 : currentRank + 1;
+                        let found = false;
+                        
+                        // 4.3 尝试找到下一张连续的牌
+                        for (let card of allCards) {
+                            let cardKey = card.suit + card.rank;
+                            if (card.rank === nextRank && !newUsedCards.has(cardKey)) {
+                                // 检查花色是否相同，或者是K后接A的情况
+                                if (currentRank !== 13 && card.suit !== currentSuit) {
+                                    continue;
+                                }
+                                newColumnCards.push(card);
+                                newUsedCards.add(cardKey);
+                                currentRank = nextRank;
+                                // 如果是K后接A，更新花色
+                                if (currentRank === 1) {
+                                    currentSuit = card.suit;
+                                }
+                                found = true;
+                                break;
+                            }
+                        }
+                        
+                        // 4.4 如果找不到连续的牌，使用任意可用牌
+                        if (!found) {
+                            for (let card of allCards) {
+                                let cardKey = card.suit + card.rank;
+                                if (!newUsedCards.has(cardKey)) {
+                                    newColumnCards.push(card);
+                                    newUsedCards.add(cardKey);
+                                    currentRank = card.rank;
+                                    currentSuit = card.suit;
+                                    found = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // 5. 如果找到合适的序列，使用它
+            if (sequenceFound || newColumnCards.length > 0) {
+                usedCards = newUsedCards;
+                
+                // 将找到的牌添加到tableau，并设置faceUp
+                for (let j = 0; j < newColumnCards.length; j++) {
+                    let card = newColumnCards[j];
+                    tableau[colIndex].push({
+                        suit: card.suit,
+                        rank: card.rank,
+                        text: card.text,
+                        value: card.value,
+                        color: card.color,
+                        faceUp: j === newColumnCards.length - 1, // 只有最上面一张是翻开的
+                        id: card.id + "-tableau"
+                    });
+                }
+                
+                // 更新topRanks
+                if (newColumnCards.length > 0) {
+                    topRanks[colIndex] = newColumnCards[newColumnCards.length - 1].rank;
+                } else {
+                    topRanks[colIndex] = 0;
+                }
+            }
+        }
+        
+        // 剩下的牌放到补牌区
+        let remainingCards = [];
+        for (let card of allCards) {
+            let cardKey = card.suit + card.rank;
+            if (!usedCards.has(cardKey)) {
+                remainingCards.push(card);
+            }
+        }
+        
+        // 对补牌区的牌进行处理，避免太多同花色连续的数字
+        // 基于种子值的确定性重排
+        let shuffledStock = [];
+        let suitGroups = {
+            '♣': [],
+            '♦': [],
+            '♥': [],
+            '♠': []
+        };
+        
+        // 按花色分组
+        for (let card of remainingCards) {
+            suitGroups[card.suit].push(card);
+        }
+        
+        // 基于种子值打乱花色顺序
+        let suitOrder = ['♣', '♦', '♥', '♠'];
+        let seedBasedOrder = [...suitOrder];
+        for (let i = 0; i < seed % 4; i++) {
+            seedBasedOrder.push(seedBasedOrder.shift());
+        }
+        
+        // 交替从不同花色中取牌，避免同花色连续
+        let indexes = [0, 0, 0, 0];
+        let totalCards = remainingCards.length;
+        let currentSuitIndex = 0;
+        let lastSuit = null;
+        let sameSuitCount = 0;
+        
+        while (shuffledStock.length < totalCards) {
+            let currentSuit = seedBasedOrder[currentSuitIndex];
+            
+            // 避免同花色连续超过2张
+            if (currentSuit === lastSuit) {
+                sameSuitCount++;
+                if (sameSuitCount >= 2) {
+                    currentSuitIndex = (currentSuitIndex + 1) % 4;
+                    continue;
+                }
+            } else {
+                sameSuitCount = 0;
+            }
+            
+            if (indexes[currentSuitIndex] < suitGroups[currentSuit].length) {
+                shuffledStock.push(suitGroups[currentSuit][indexes[currentSuitIndex]]);
+                indexes[currentSuitIndex]++;
+                lastSuit = currentSuit;
+            }
+            
+            currentSuitIndex = (currentSuitIndex + 1) % 4;
+        }
+        
+        // 将处理后的牌放入stock
+        let stock = [];
+        for (let card of shuffledStock) {
+            stock.push({
+                suit: card.suit,
+                rank: card.rank,
+                text: card.text,
+                value: card.value,
+                color: card.color,
+                faceUp: false,
+                id: card.id + "-stock"
+            });
+        }
+        
+        // ==================== 阶段5：确保游戏可解性 ====================
+        // 参考poker-v100-1.html的逻辑，确保游戏开始时有可执行的操作
+        let gameReady = false;
+        
+        // 检查是否有A在顶部（可以直接移到foundation）
+        for (let col = 0; col < 7; col++) {
+            if (tableau[col].length > 0 && tableau[col][tableau[col].length - 1].value === 1) {
+                gameReady = true;
+                break;
+            }
+        }
+        
+        // 如果没有A在顶部，检查是否有其他可移动操作
+        if (!gameReady) {
+            for (let srcCol = 0; srcCol < 7; srcCol++) {
+                if (tableau[srcCol].length === 0) continue;
+                
+                let srcTop = tableau[srcCol][tableau[srcCol].length - 1];
+                
+                for (let dstCol = 0; dstCol < 7; dstCol++) {
+                    if (srcCol === dstCol) continue;
+                    
+                    if (tableau[dstCol].length === 0 && srcTop.value === 13) {
+                        gameReady = true;
+                        break;
+                    } else if (tableau[dstCol].length > 0) {
+                        let dstTop = tableau[dstCol][tableau[dstCol].length - 1];
+                        if (dstTop.color !== srcTop.color && dstTop.value === srcTop.value + 1) {
+                            gameReady = true;
+                            break;
+                        }
+                    }
+                }
+                if (gameReady) break;
+            }
+        }
+        
+        // 如果没有可执行操作，进行最小的自然调整
+        if (!gameReady) {
+            // 寻找一个A并移到某列顶部
+            for (let col = 0; col < 7; col++) {
+                if (tableau[col].length > 1) {
+                    // 在该列中寻找A
+                    for (let pos = 0; pos < tableau[col].length - 1; pos++) {
+                        if (tableau[col][pos].value === 1) {
+                            // 将A移到顶部
+                            let ace = tableau[col].splice(pos, 1)[0];
+                            
+                            // 原顶部牌背面朝上
+                            if (tableau[col].length > 0) {
+                                tableau[col][tableau[col].length - 1].faceUp = false;
+                            }
+                            
+                            // 将A放到顶部
+                            tableau[col].push({
+                                suit: ace.suit,
+                                rank: ace.rank,
+                                text: ace.text,
+                                value: ace.value,
+                                color: ace.color,
+                                faceUp: true,
+                                id: ace.id + "-tableau-top"
+                            });
+                            
+                            gameReady = true;
+                            break;
+                        }
+                    }
+                    if (gameReady) break;
+                }
+            }
+        }
+        
+        // 直接返回构建好的tableau和stock
+        return {
+            tableau: tableau,
+            stock: stock
+        };
+    }
+
+    // 修改createVerifiedSolvableDeck函数，使用与offline.html相同的逻辑
+    function createVerifiedSolvableDeck() {
+        console.log("=== 生成新牌局（与offline.html一致）===");
+        
+        // 生成随机种子
+        const seed = Date.now() % 9999999999;
+        
+        let deck;
+        
+        // 交替使用两种方法
+        if (deckCounter % 2 === 0) {
+            console.log("使用逆向推演算法");
+            deck = createReverseDeck(seed);
+        } else {
+            console.log("使用循环移位算法");
+            deck = createCycleShiftDeck(seed);
+        }
+        deckCounter++;
+        
+        // 为每张牌添加id属性，确保与原有格式一致
+        const tableauWithIds = deck.tableau.map((column, colIndex) => {
+            return column.map((card, cardIndex) => {
+                if (card && card.suit && card.text) {
+                    return {
+                        ...card,
+                        id: card.suit + "-" + card.text + "-seed" + seed + "-tableau-" + colIndex + "-" + cardIndex
+                    };
+                } else {
+                    console.warn('发现无效卡片:', card);
+                    return {
+                        ...card,
+                        id: "invalid-card-seed" + seed + "-tableau-" + colIndex + "-" + cardIndex,
+                        suit: card?.suit || "?",
+                        text: card?.text || "?",
+                        color: card?.color || "black"
+                    };
+                }
+            });
+        });
+        
+        const stockWithIds = deck.stock.map((card, index) => {
+            if (card && card.suit && card.text) {
+                return {
+                    ...card,
+                    id: card.suit + "-" + card.text + "-seed" + seed + "-stock-" + index
+                };
+            } else {
+                console.warn('发现无效卡片:', card);
+                return {
+                    ...card,
+                    id: "invalid-card-seed" + seed + "-stock-" + index,
+                    suit: card?.suit || "?",
+                    text: card?.text || "?",
+                    color: card?.color || "black"
+                };
+            }
+        });
+        
+        // 确保返回格式正确
+        return {
+            stock: stockWithIds,
+            waste: [],
+            foundations: [[], [], [], []],
+            tableau: tableauWithIds
+        };
+    }
+
+    // 页面加载完成后自动开始游戏
+    window.addEventListener('DOMContentLoaded', function() {
+        // 减少延迟时间，让游戏更快开始生成牌局
+        setTimeout(function() {
+            initGame('guaranteed');
+        }, 100);
     });
 </script>
 </body>
