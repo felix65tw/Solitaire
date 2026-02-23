@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>經典接龍 V1.09</title>
+    <title>經典接龍 V1.10</title>
     <style>
         /* CSS 變數定義，方便全域調整樣式 */
         :root {
@@ -5967,7 +5967,7 @@ function checkAutoFlyAfterMove() {
         }
     }
 
-    // 循环移位生成方法 - 基于offline-s.html的实现
+    // 循环移位生成方法
     function createCycleShiftDeck(seed) {
         // 确保种子为正整数
         seed = Math.abs(seed);
@@ -6341,7 +6341,7 @@ function checkAutoFlyAfterMove() {
     let currentGenerationMethod = 'reverse';
     let deckCounter = 0;
 
-    // 从offline.html复制的逆向推演算法
+    // 逆向推演算法
     function createReverseDeck(seed) {
         // ==================== 阶段1：创建完整牌组 ====================
         // 花色顺序：梅花、方块、红桃、黑桃
@@ -7133,9 +7133,9 @@ function checkAutoFlyAfterMove() {
         };
     }
 
-    // 修改createVerifiedSolvableDeck函数，使用与offline.html相同的逻辑
+    // 修改createVerifiedSolvableDeck函数
     function createVerifiedSolvableDeck() {
-        console.log("=== 生成新牌局（与offline.html一致）===");
+        console.log("=== 生成新牌局 ===");
         
         // 生成随机种子
         const seed = Date.now() % 9999999999;
