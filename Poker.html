@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>經典接龍 V1.08</title>
+    <title>經典接龍 V1.09</title>
     <style>
         /* CSS 變數定義，方便全域調整樣式 */
         :root {
@@ -2112,7 +2112,9 @@ function shuffleArray(array) {
      */
     function stopFireworks() {
         fireworks.isActive = false;
-        fireworks.canvas.style.display = 'none';
+        if (fireworks.canvas) {
+            fireworks.canvas.style.display = 'none';
+        }
         
         if (fireworks.animationId) {
             cancelAnimationFrame(fireworks.animationId);
