@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>經典接龍 V1.07</title>
+    <title>經典接龍 V1.08</title>
     <style>
         /* CSS 變數定義，方便全域調整樣式 */
         :root {
@@ -1481,7 +1481,7 @@ let autoFlyTiming = {
     let autoFlyTimeout = null; // 自動飛牌計時器
     let autoFlyCycleCount = 0; // 自動飛牌循環計數
     const MAX_AUTOFLY_CYCLES = 100; // 最大自動飛牌循環次數
-    let autoMoveOnClick = false; // 單擊自動移動模式
+    let autoMoveOnClick = true; // 單擊自動移動模式，與手機版操作一致
     let fireworks = { // 煙花效果
         canvas: null,
         ctx: null,
@@ -3801,14 +3801,21 @@ function handleDoubleClick(type, pileIdx, cardIdx, cardId) {
         const clickedCard = sourcePile[cardIdx];
         if (!clickedCard) return;
 
-        // 如果單擊自動移動模式開啟，則嘗試單擊自動移動
+        // 檢測是否為單擊
         if (autoMoveOnClick) {
-            handleDoubleClick(type, pileIdx, cardIdx, clickedCard.id);
-            return;
+            // 暫時記錄點擊信息，等待一段時間後再執行自動移動
+            // 如果在等待期間有移動，則取消自動移動，轉為拖動
+            clearTimeout(window.clickTimeout);
+            window.clickTimeout = setTimeout(() => {
+                if (!drag.isDragging && !drag.pending) {
+                    handleDoubleClick(type, pileIdx, cardIdx, clickedCard.id);
+                }
+            }, 150);
         }
         
         // 雙擊檢測
         if (clickedCard.id === lastClickCardId && now - lastClickTime < 350) {
+            clearTimeout(window.clickTimeout);
             handleDoubleClick(type, pileIdx, cardIdx, clickedCard.id);
             lastClickCardId = null;
             lastClickTime = 0;
@@ -5410,19 +5417,7 @@ function checkAutoFlyAfterMove() {
         // 添加分數框點擊事件監聽器（測試功能）
         document.getElementById('score-display').addEventListener('click', handleScoreClick);
         
-    // 添加步數顯示雙擊事件監聽器
-    const timeMovesElement = document.getElementById('time-moves');
-    let lastTimeMovesClick = 0;
-    timeMovesElement.addEventListener('click', function() {
-        const now = Date.now();
-        if (now - lastTimeMovesClick < 500) {
-            autoMoveOnClick = !autoMoveOnClick;
-            showMessage(autoMoveOnClick ? "已切換到單擊自動移動模式" : "已切換到雙擊自動移動模式", 1500);
-            lastTimeMovesClick = 0;
-        } else {
-            lastTimeMovesClick = now;
-        }
-    });
+
 });
     
     // 防止手機雙指縮放
