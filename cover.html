@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solitaire - 纸牌游戏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #35654d;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 背景动画 */
+        .background-animation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .floating-card {
+            position: absolute;
+            width: 80px;
+            height: 112px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            animation: float 15s infinite ease-in-out;
+            opacity: 0.3;
+            transform-style: preserve-3d;
+            transform: perspective(1000px) rotateY(0deg);
+        }
+
+        .floating-card::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+        }
+
+        .floating-card:nth-child(1) {
+            top: 10%;
+            left: 10%;
+            animation-delay: 0s;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .floating-card:nth-child(2) {
+            top: 20%;
+            right: 15%;
+            animation-delay: 3s;
+            background: rgba(255, 0, 0, 0.8);
+        }
+
+        .floating-card:nth-child(3) {
+            bottom: 20%;
+            left: 20%;
+            animation-delay: 6s;
+            background: rgba(0, 0, 255, 0.8);
+        }
+
+        .floating-card:nth-child(4) {
+            bottom: 10%;
+            right: 10%;
+            animation-delay: 9s;
+            background: rgba(0, 128, 0, 0.8);
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px) rotateY(0deg);
+            }
+            25% {
+                transform: translateY(-20px) rotateY(90deg);
+            }
+            50% {
+                transform: translateY(0px) rotateY(180deg);
+            }
+            75% {
+                transform: translateY(20px) rotateY(270deg);
+            }
+        }
+
+        /* 主容器 */
+        .container {
+            text-align: center;
+            padding: 20px;
+            max-width: 800px;
+            width: 90%;
+            z-index: 1;
+        }
+
+        /* 标题 */
+        .title {
+            font-size: 4rem;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 20px;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            animation: titleAnimation 2s ease-out;
+            position: relative;
+            display: inline-block;
+        }
+
+        /* 版本号 */
+        .version {
+            font-size: 1rem;
+            font-weight: normal;
+            color: rgba(255, 255, 255, 0.7);
+            position: absolute;
+            bottom: 0;
+            right: -60px;
+            transform: translateY(100%);
+        }
+
+        .title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 10%;
+            width: 80%;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, #f39c12, transparent);
+            animation: underlineAnimation 2s infinite ease-in-out;
+        }
+
+        @keyframes titleAnimation {
+            from {
+                opacity: 0;
+                transform: translateY(-50px) scale(0.5);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes underlineAnimation {
+            0%, 100% {
+                width: 20%;
+                left: 40%;
+            }
+            50% {
+                width: 80%;
+                left: 10%;
+            }
+        }
+
+
+
+        /* 按钮样式 */
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            color: white;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #27ae60, #229954);
+        }
+
+        .btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .title {
+                font-size: 2.5rem;
+            }
+
+            .version {
+                font-size: 0.8rem;
+                right: -50px;
+            }
+
+            .subtitle {
+                font-size: 1.2rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .title {
+                font-size: 2rem;
+            }
+
+            .version {
+                font-size: 0.7rem;
+                right: -40px;
+            }
+
+            .subtitle {
+                font-size: 1rem;
+            }
+        }
+
+        /* 音效控制 */
+        .audio-control {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10;
+        }
+
+        .audio-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .audio-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <!-- 背景动画 -->
+    <div class="background-animation">
+        <div class="floating-card"></div>
+        <div class="floating-card"></div>
+        <div class="floating-card"></div>
+        <div class="floating-card"></div>
+    </div>
+
+    <!-- 音效控制 -->
+    <div class="audio-control">
+        <button class="audio-btn" id="audioBtn" onclick="toggleAudio()">🔊</button>
+    </div>
+
+    <!-- 主容器 -->
+    <div class="container">
+        <h1 class="title">Solitaire <span class="version">v1.0.0</span></h1>
+    </div>
+
+    <!-- 音效元素 -->
+    <audio id="bgMusic" loop autoplay>
+        <!--  這是備份 <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">  -->
+        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3" type="audio/mpeg"> 
+    </audio>
+
+    <script>
+        // 全局变量
+        let isAudioPlaying = true;
+        const bgMusic = document.getElementById('bgMusic');
+
+        // 页面加载完成后执行
+        window.onload = function() {
+            // 禁用右键菜单
+            document.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+            });
+
+            // 添加鼠标移动效果
+            document.addEventListener('mousemove', function(e) {
+                const cards = document.querySelectorAll('.floating-card');
+                cards.forEach((card, index) => {
+                    const x = (e.clientX / window.innerWidth - 0.5) * 20;
+                    const y = (e.clientY / window.innerHeight - 0.5) * 20;
+                    card.style.transform = `translate(${x * (index + 1) / 5}px, ${y * (index + 1) / 5}px) rotateY(${x}deg) rotateX(${y}deg)`;
+                });
+            });
+
+            // 页面加载后自动播放音频
+            if (isAudioPlaying && bgMusic) {
+                try {
+                    // 尝试播放音频，即使已经添加了autoplay属性
+                    bgMusic.play().catch(e => {
+                        console.log('自动播放被阻止，需要用户交互:', e);
+                        // 自动播放被阻止时，添加点击事件作为后备
+                        document.addEventListener('click', function playOnClick() {
+                            if (isAudioPlaying && bgMusic.paused) {
+                                bgMusic.play().catch(e => {
+                                    console.log('播放失败:', e);
+                                });
+                            }
+                            // 只触发一次
+                            document.removeEventListener('click', playOnClick);
+                        });
+                    });
+                } catch (e) {
+                    console.log('音频播放错误:', e);
+                    // 静默处理错误，确保页面正常运行
+                }
+            }
+        };
+
+        // 切换音效
+        function toggleAudio() {
+            isAudioPlaying = !isAudioPlaying;
+            const audioBtn = document.getElementById('audioBtn');
+            
+            if (isAudioPlaying) {
+                // 直接播放音频，不使用catch，确保错误信息显示在控制台
+                bgMusic.play();
+                console.log('尝试播放音频');
+                audioBtn.textContent = '🔊';
+            } else {
+                bgMusic.pause();
+                bgMusic.currentTime = 0; // 重置音频播放位置
+                console.log('停止音频');
+                audioBtn.textContent = '🔇';
+            }
+        }
+
+        // 添加触摸事件支持
+        document.addEventListener('touchstart', function() {
+            // 允许音频播放
+            if (isAudioPlaying && bgMusic.paused) {
+                bgMusic.play().catch(e => console.log('播放失败:', e));
+            }
+        });
+    </script>
+</body>
+</html>
