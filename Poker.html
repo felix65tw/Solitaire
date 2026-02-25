@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>經典接龍 V1.10</title>
+    <title>經典接龍 V1.17</title>
     <style>
         /* CSS 變數定義，方便全域調整樣式 */
         :root {
@@ -37,6 +37,35 @@
             -webkit-tap-highlight-color: transparent; /* 移除移動端點擊高亮 */
             touch-action: manipulation; /* 改善觸控響應 */
             -webkit-touch-callout: none; /* 禁止 iOS 長按選單 */
+            position: relative;
+        }
+
+        /* Solitaire 浮水印样式 */
+        .solitaire-watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 4rem;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.15);
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            z-index: 0;
+            pointer-events: none;
+            text-align: center;
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .solitaire-watermark {
+                font-size: 2.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .solitaire-watermark {
+                font-size: 2rem;
+            }
         }
 
         /* 工具欄樣式 */
@@ -1271,6 +1300,9 @@
     </style>
 </head>
 <body>
+
+<!-- Solitaire 浮水印 -->
+<div class="solitaire-watermark">Solitaire</div>
 
 <!-- 工具欄區塊 -->
 <div class="toolbar">
