@@ -26,7 +26,26 @@
 
         /* 全域樣式設定 */
         body {
-            background-color: var(--bg-color); /* 使用CSS變數設定背景色 */
+            /* 扑克桌布背景 - 绿色毛毡纹理效果 */
+            background: 
+                /* 四角深色向中间变淡的渐变 */
+                radial-gradient(circle at center, #4a8e61 0%, #3a6e51 25%, #254a35 60%, #1a3a28 100%),
+                /* 纹理效果 */
+                repeating-linear-gradient(
+                    45deg,
+                    rgba(255, 255, 255, 0.03) 0px,
+                    rgba(255, 255, 255, 0.03) 2px,
+                    transparent 2px,
+                    transparent 4px
+                ),
+                repeating-linear-gradient(
+                    -45deg,
+                    rgba(255, 255, 255, 0.03) 0px,
+                    rgba(255, 255, 255, 0.03) 2px,
+                    transparent 2px,
+                    transparent 4px
+                );
+            background-blend-mode: overlay;
             margin: 0;
             overflow: hidden; /* 隱藏滾動條 */
             user-select: none; /* 禁止文字選取 */
@@ -518,20 +537,20 @@
         .mobile-toolbar-container {
             display: none;
             position: fixed; /* 改為固定定位 */
-            bottom: 80px; /* 調整位置到頁面底部 */
+            bottom: 120px; /* 調整位置到頁面底部 80px */
             left: 50%;
             transform: translateX(-50%);
             z-index: 1000;
             background: rgba(0, 0, 0, 0.6); /* 改為深色半透明背景 */
-            border-radius: 20px; /* 圓角 */
-            padding: 10px 12px; /* 調整內邊距 */
-            box-shadow: 0 10px 30px rgba(0,0,0,0.4); /* 陰影效果 */
+            border-radius: 28px; /* 圓角 (增加40%) */
+            padding: 14px 17px; /* 調整內邊距 (增加40%) */
+            box-shadow: 0 14px 42px rgba(0,0,0,0.4); /* 陰影效果 (增加40%) */
             flex-direction: row; /* 橫向排列 */
-            gap: 6px; /* 按鈕間距 */
+            gap: 8px; /* 按鈕間距 (增加40%) */
             flex-wrap: nowrap; /* 防止換行 */
             justify-content: center;
             align-items: center;
-            min-width: 280px; /* 最小寬度 */
+            min-width: 392px; /* 最小寬度 (增加40%) */
             max-width: 90vw; /* 確保不超出螢幕寬度 */
             backdrop-filter: blur(15px); /* 毛玻璃效果 */
             border: 1px solid rgba(255, 255, 255, 0.3); /* 邊框 */
@@ -543,14 +562,14 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* 漸變背景 */
             color: white;
             border: none;
-            border-radius: 15px; /* 圓角 */
-            padding: 8px 10px; /* 調整內邊距 */
+            border-radius: 21px; /* 圓角 (增加40%) */
+            padding: 11px 14px; /* 調整內邊距 (增加40%) */
             font-weight: bold;
-            font-size: 13px; /* 字體大小 */
+            font-size: 16px; /* 字體大小 (增加40%) */
             cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* 陰影效果 */
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2); /* 陰影效果 (增加40%) */
             transition: all 0.3s ease;
-            min-width: 55px; /* 最小寬度 */
+            min-width: 77px; /* 最小寬度 (增加40%) */
             white-space: nowrap;
             text-align: center;
             display: flex;
